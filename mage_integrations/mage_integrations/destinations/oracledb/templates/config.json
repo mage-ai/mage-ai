@@ -1,0 +1,10 @@
+{
+    "host": "",
+    "port": "1521",
+    "service": "",
+    "password": "",
+    "user": "",
+    "database": "",
+    "mode": "thin"
+}
+

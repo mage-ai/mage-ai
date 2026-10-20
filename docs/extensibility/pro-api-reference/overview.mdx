@@ -1,0 +1,218 @@
+---
+title: "Mage Pro API overview"
+icon: "webhook"
+sidebarTitle: "Overview"
+---
+
+Mage Pro offers two main APIs for managing your workflows and infrastructure:
+
+- **Mage Cloud API**: Used to manage and update your Mage clusters from the Mage Cloud Portal.
+- **Mage Pro Cluster API**: Runs on your Mage Pro cluster and is similar to the Mage OSS API, used to manage pipelines, runs, variables, and other resources.
+
+---
+
+# Mage Cloud API
+
+
+The Mage Cloud API is a private API used internally by the Mage Cloud Portal to manage Mage Pro clusters. It supports operations such as:
+
+- Starting, stopping, and restarting clusters
+- Updating cluster environment variables and configurations
+
+## Base URL
+`https://cloud.mage.ai/api/v1`
+
+## Authentication
+
+To interact with the Mage Cloud API, you must first authenticate with your Mage Cloud credentials and obtain a session token.
+
+### Example: Initialize session and get token
+
+```Python
+import requests
+
+
+API_KEY = 'oMqz2m320NfVERFonfytPFVETfPTHyN5N7db9dLK'
+BASE_API = 'https://cloud.mage.ai/api/v1'
+SESSION_API = f'{BASE_API}/sessions'
+
+
+def authenticate_session(username: str, password: str) -> requests.Session:
+    """
+    Authenticate with the Mage Cloud API using credentials and return an authorized session.
+
+    Args:
+        username (str): Mage Cloud login email.
+        password (str): Mage Cloud login password.
+
+    Required ENV:
+        MAGE_CLOUD_API_KEY
+
+    Returns:
+        requests.Session: An authenticated session with token set in cookies.
+    """
+
+    headers = {
+        "Content-Type": "application/json",
+        "X-API-KEY": API_KEY
+    }
+    payload = {
+        "session": {
+            "email": username,
+            "password": password
+        }
+    }
+
+    session = requests.Session()
+    session.headers = headers
+
+    response = session.post(SESSION_API, json=payload)
+    if response.json().get('error'):
+        raise ValueError(response.text)
+
+    token = response.json()['session']['token']
+    session.headers['Cookie'] = f'oauth_token={token}'
+
+    return session
+```
+
+## Start or Stop a Cluster
+Once authenticated, you can update the cluster status by modifying the replicaCount and status in the cluster's config.
+
+### Example: Start or Stop a Cluster
+```Python
+def update_cluster_status(session: requests.Session, team_id: str, cluster_id: str, start: bool = True):
+    """
+    Start or stop a Mage Pro cluster by updating replicaCount and status.
+
+    Args:
+        session (requests.Session): Authenticated Mage Cloud session.
+        team_id (str): Mage Cloud team ID.
+        cluster_id (str): Cluster ID.
+        start (bool): Set True to start, False to stop the cluster.
+    """
+    cluster_url = f'{BASE_API}/teams/{team_id}/clusters/{cluster_id}'
+
+    response = session.get(cluster_url)
+    response.raise_for_status()
+
+    cluster = response.json()['cluster']
+    config = cluster.get('config', {})
+
+    config['replicaCount'] = 1 if start else 0
+    cluster['status'] = 'Active' if start else 'Stopped'
+
+    update_payload = {
+        "cluster": {
+            "config": config,
+            "status": cluster['status']
+        }
+    }
+
+    put_response = session.put(cluster_url, json=update_payload)
+    put_response.raise_for_status()
+
+    print(f"Cluster has been {'started' if start else 'stopped'}.")
+```
+
+**Example usage**
+```Python
+# Pass in credentials from your secret manager or CLI prompt
+username = 'your_email@example.com'
+password = 'your_password_here'
+
+session = authenticate_session(username, password)
+
+# Start the cluster
+update_cluster_status(session, team_id='your_team_id', cluster_id='your_cluster_id', start=True)
+
+# Stop the cluster
+# update_cluster_status(session, team_id='your_team_id', cluster_id='your_cluster_id', start=False)
+```
+
+## Update Cluster Environment Variables
+
+To add or update environment variables in a Mage Pro cluster, modify the `extraEnvs` field in the cluster config.
+
+### Example: Update Environment Variables
+
+```Python
+def update_cluster_env_vars(session, team_id, cluster_id, updates):
+    """
+    Add or update environment variables in a Mage Pro cluster.
+
+    Args:
+        session (requests.Session): Authenticated session with Mage Cloud API.
+        team_id (str): Mage team ID.
+        cluster_id (str): Cluster ID.
+        updates (dict): Dictionary of environment variable key-value pairs to add or update.
+    """
+    cluster_url = f'https://cloud.mage.ai/api/v1/teams/{team_id}/clusters/{cluster_id}'
+
+    # Fetch current cluster config
+    response = session.get(cluster_url)
+    response.raise_for_status()
+    cluster = response.json()['cluster']
+    config = cluster.get('config', {})
+
+    # Load existing environment variables
+    existing_envs = config.get('extraEnvs', [])
+    env_map = {env['name']: env['value'] for env in existing_envs}
+
+    # Apply updates
+    env_map.update(updates)
+
+    # Convert back to list format
+    config['extraEnvs'] = [{'name': k, 'value': v} for k, v in env_map.items()]
+
+    # Build payload and apply update
+    update_payload = {
+        "cluster": {
+            "config": config
+        }
+    }
+
+    put_response = session.put(cluster_url, json=update_payload)
+    put_response.raise_for_status()
+
+    print("Cluster environment variables updated successfully.")
+```
+
+**Example usage**
+```Python
+session = authenticate_session(username='your_email@example.com', password='your_password')
+
+update_cluster_env_vars(
+    session=session,
+    team_id='your_team_id',
+    cluster_id='your_cluster_id',
+    updates={
+        'AI_SIDEKICK': '1',
+        'DEFAULT_EXECUTOR_TYPE': 'k8s',
+        'ENABLE_SOME_FEATURE': 'true'
+    }
+)
+```
+
+---
+
+
+# Mage Pro cluster API
+
+The Mage Pro Cluster API is the set of HTTP APIs available on your running Mage Pro cluster. It extends the Mage OSS API and allows:
+
+* Create/Get/Update/Delete pipelines/blocks
+* Trigger pipelines
+* CRUD pipeline schedules/triggers
+* CRUD pipeline runs
+* CRUD workspaces
+* Deploy git commits
+* More APIs available in Mage Pro UI
+
+## Base URL
+`https://<your-cluster-hostname>/api`
+
+
+For the full list of cluster API endpoints, see the [Mage Open Source API Reference](/extensibility/api-reference/overview).
+
+> Note: Mage Pro may expose additional admin or authentication APIs depending on your deployment and licensing tier.

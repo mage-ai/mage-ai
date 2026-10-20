@@ -1,0 +1,67 @@
+name: Lint Docker Images
+
+on:
+  pull_request:
+    paths:
+      - '*Dockerfile'
+
+jobs:
+  changed-images:
+    runs-on: ubuntu-latest
+    name: List changed images
+    steps:
+      - name: Check out source repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v47
+        with:
+          files: '*Dockerfile'
+          json: true
+      - name: Create Job Matrix
+        id: image-matrix
+        run: echo images=${{ steps.changed-files.outputs.all_changed_files }} >> $GITHUB_OUTPUT
+    outputs:
+      images: ${{ steps.image-matrix.outputs.images }}
+
+  hadolint:
+    name: Lint Docker Images
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    # Skip job if there are no images to test
+    # https://github.com/dorny/paths-filter/issues/66
+    if: ${{ needs.changed-images.outputs.images != '' && toJson(fromJson(needs.changed-images.outputs.images)) != '[]' }}
+    needs: [changed-images]
+    strategy:
+      matrix:
+        image: ${{ fromJSON(needs.changed-images.outputs.images) }}
+      fail-fast: false
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - uses: hadolint/hadolint-action@v3.3.0
+        id: hadolint
+        with:
+          dockerfile: ${{ matrix.image }}
+          ignore: DL3002,DL3008,DL3013,DL3016
+      - name: Annotate Pull Request
+        uses: actions/github-script@v6
+        if: github.event_name == 'pull_request' && failure()
+        with:
+          script: |
+            const output = `
+            #### Hadolint: \`${{ steps.hadolint.outcome }}\`
+            \`\`\`
+            ${process.env.HADOLINT_RESULTS}
+            \`\`\`
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })

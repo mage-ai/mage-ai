@@ -8,7 +8,7 @@ class CleanColumnNames(BaseRule):
     def is_dirty(self, name):
         if NameConventionPatterns.NON_ALNUM.search(name):
             return True
-        if REGEX_NUMBER.match(name) != None:
+        if REGEX_NUMBER.match(name) is not None:
             return True
 
         if iskeyword(name):

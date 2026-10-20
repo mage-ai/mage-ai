@@ -1,0 +1,171 @@
+{
+  "type": [
+    "null",
+    "object"
+  ],
+  "properties": {
+    "autoTaggingEnabled": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "callReportingSetting": {
+      "$ref": "#/definitions/CallReportingSetting"
+    },
+    "conversionTrackingSetting": {
+      "$ref": "#/definitions/ConversionTrackingSetting"
+    },
+    "currencyCode": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "descriptiveName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "finalUrlSuffix": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "hasPartnersBadge": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "id": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "manager": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "optimizationScore": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "singer.decimal"
+    },
+    "optimizationScoreWeight": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "singer.decimal"
+    },
+    "payPerConversionEligibilityFailureReasons": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": [
+          "null",
+          "string"
+        ]
+      }
+    },
+    "remarketingSetting": {
+      "$ref": "#/definitions/RemarketingSetting"
+    },
+    "resourceName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "testAccount": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "timeZone": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "trackingUrlTemplate": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "definitions": {
+      "CallReportingSetting": {
+        "type": [
+          "null",
+          "object"
+        ],
+        "properties": {
+          "callConversionAction": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "callConversionReportingEnabled": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          },
+          "callReportingEnabled": {
+            "type": [
+              "null",
+              "boolean"
+            ]
+          }
+        }
+      },
+      "ConversionTrackingSetting": {
+        "type": [
+          "null",
+          "object"
+        ],
+        "properties": {
+          "conversionTrackingId": {
+            "type": [
+              "null",
+              "integer"
+            ]
+          },
+          "crossAccountConversionTrackingId": {
+            "type": [
+              "null",
+              "integer"
+            ]
+          }
+        }
+      },
+      "RemarketingSetting": {
+        "type": [
+          "null",
+          "object"
+        ],
+        "properties": {
+          "googleGlobalSiteTag": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

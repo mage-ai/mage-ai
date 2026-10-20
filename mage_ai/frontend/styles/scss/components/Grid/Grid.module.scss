@@ -1,0 +1,5 @@
+@use '../../base/grid';
+
+.grid {
+  @include grid.base()
+}

@@ -1,0 +1,46 @@
+image: docker:19.03.10
+
+services:
+  - docker:dind
+
+variables:
+  REPOSITORY_URL: <REPOSITORY_URL>
+  TASK_DEFINITION_NAME: <Task_Definition>
+  CLUSTER_NAME: <CLUSTER_NAME>
+  SERVICE_NAME: <SERVICE_NAME>
+
+before_script:
+  - apk add --no-cache curl jq python py-pip
+  - pip install awscli
+  - $(aws ecr get-login --no-include-email --region "${AWS_DEFAULT_REGION}")
+  - IMAGE_TAG="$(echo $CI_COMMIT_SHA | head -c 8)"
+
+stages:
+  - build
+  - deploy
+
+build:
+  stage: build
+  script:
+    - echo "Building image..."
+    - docker build -t $REPOSITORY_URL:latest .
+    - echo "Tagging image..."
+    - docker tag $REPOSITORY_URL:latest $REPOSITORY_URL:$IMAGE_TAG
+    - echo "Pushing image..."
+    - docker push $REPOSITORY_URL:latest
+    - docker push $REPOSITORY_URL:$IMAGE_TAG
+  only:
+    - main
+
+deploy:
+  stage: deploy
+  script:
+    - echo $REPOSITORY_URL:$IMAGE_TAG
+    - TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition "$TASK_DEFINITION_NAME" --region "${AWS_DEFAULT_REGION}")
+    - NEW_TASK_DEFINTIION=$(echo $TASK_DEFINITION | jq --arg IMAGE "$REPOSITORY_URL:$IMAGE_TAG" '.taskDefinition | .containerDefinitions[0].image = $IMAGE | del(.taskDefinitionArn) | del(.revision) | del(.status) | del(.requiresAttributes) | del(.compatibilities) | del(.registeredAt) | del(.registeredBy)')
+    - echo "Registering new container definition..."
+    - aws ecs register-task-definition --region "${AWS_DEFAULT_REGION}" --family "${TASK_DEFINITION_NAME}" --cli-input-json "${NEW_TASK_DEFINTIION}"
+    - echo "Updating the service..."
+    - aws ecs update-service --region "${AWS_DEFAULT_REGION}" --cluster "${CLUSTER_NAME}" --service "${SERVICE_NAME}"  --task-definition "${TASK_DEFINITION_NAME}"
+  only:
+    - main

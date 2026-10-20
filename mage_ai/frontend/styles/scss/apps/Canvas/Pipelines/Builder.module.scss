@@ -1,0 +1,76 @@
+@use '../../../abstracts/helpers' as *;
+@use '../../../base/svg';
+
+.canvas {
+  background-color: var(--backgrounds-body);
+  height: 500%; /* Large enough to initially fit all content, will expand as needed */
+  width: 500%;  /* Large enough to initially fit all content, will expand as needed */
+  position: absolute; /* Ensure it behaves correctly inside the parent container */
+  overflow: visible; /* Ensure content can overflow without clipping */
+  transform-origin: top left;
+
+  &:before,
+  &:after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  @each $value1 in $numbers-more {
+    $size: $value1 * 10;
+
+    &.grid-size-#{$size} {
+      &:before {
+        background-image:
+          repeating-linear-gradient(
+            to right,
+            transparent,
+            transparent calc(#{$size}px - 1px),
+            var(--colors-graylo) calc(#{$size}px - 1px),
+            var(--colors-graylo) #{$size}px
+          );
+      }
+
+      &:after {
+        background-image:
+          repeating-linear-gradient(
+            to bottom,
+            transparent,
+            transparent calc(#{$size}px - 1px),
+            var(--colors-graylo) calc(#{$size}px - 1px),
+            var(--colors-graylo) #{$size}px
+          );
+      }
+    }
+  }
+
+  @each $value1 in $numbers-more {
+    &.level-#{$value1}-active {
+      .level-#{$value1} {
+        opacity: 1;
+        pointer-events: all;
+      }
+    }
+  }
+
+  .level {
+    opacity: 0;
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  .centered {
+    /* Center the container within its parent */
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+  }
+}
+
+.path {
+  @include svg.fill-stroke-colors();
+}

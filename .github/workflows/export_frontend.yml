@@ -1,0 +1,63 @@
+name: Export Frontend
+
+on:
+  workflow_dispatch:
+
+jobs:
+  export-frontend:
+    runs-on: ubuntu-latest
+    env:
+      NODE_VERSION: '20.15.1'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Change directory to frontend
+        working-directory: mage_ai/frontend
+        run: echo "Entering frontend directory"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Configure Git
+        run: |
+          git config user.email "ci@mage.ai"
+          git config user.name "GitHub Actions"
+
+      - name: Fetch and Checkout to Current Branch
+        run: |
+          git fetch origin
+          git checkout ${{ github.ref_name }}
+
+      - name: Build and Export
+        run: |
+          yarn install
+          yarn export_prod
+        working-directory: mage_ai/frontend/
+
+      - name: Build and Export Base Path Version
+        run: |
+          mv next_base_path.config.js next.config.js
+          yarn install
+          yarn export_prod_base_path
+        working-directory: mage_ai/frontend/
+
+      - name: Push changes to new branch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git checkout -b update-frontend-${{ github.run_id }}
+          git add mage_ai/server/frontend_dist
+          git add mage_ai/server/frontend_dist_base_path_template
+          git commit -m "[CI] Update frontend build"
+          git push origin update-frontend-${{ github.run_id }}
+
+      - name: Create Pull Request
+        run: |
+          gh pr create -B master -H update-frontend-${{ github.run_id }} \
+            --title '[CI] Update frontend build' \
+            --body 'This PR updates the frontend build artifacts.'
+        env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

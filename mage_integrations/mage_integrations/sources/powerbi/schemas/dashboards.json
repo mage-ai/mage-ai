@@ -1,0 +1,36 @@
+{
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "id": {
+            "type": ["string", "null"],
+            "format": "uuid"
+        },
+        "displayName": {
+            "type": ["string", "null"]
+        },
+        "isReadOnly": {
+            "type": ["boolean", "null"]
+        },
+        "webUrl": {
+            "type": ["string", "null"],
+            "format": "uri"
+        },
+        "embedUrl": {
+            "type": ["string", "null"],
+            "format": "uri"
+        },
+        "users": {
+            "type": "array",
+            "items": {
+                "type": ["string", "null"]
+            }
+        },
+        "subscriptions": {
+            "type": "array",
+            "items": {
+                "type": ["string", "null"]
+            }
+        }
+    }
+}

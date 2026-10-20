@@ -1,0 +1,31 @@
+---
+title: Delta Lake (Azure)
+description: How to configure Delta Lake on Azure as a destination in Mage to write data to a Delta table using ABFS.
+---
+
+## Configuration Parameters
+
+To use **Delta Lake on Azure** as a destination, provide the following parameters:
+
+| Key           | Description                                                                                                                                                   | Example Value                           | Required |
+|----------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------|----------|
+| `account_name` | Your Azure Storage account name. This is the name of the account that hosts your Delta table.                                                                 | `myazurestorage`                        | ✅        |
+| `access_key`   | The access key for your Azure Storage account. Used to authenticate writes to your Delta table.                                                              | `ABC123...XYZ`                          | ✅        |
+| `table_uri`    | URI for the Delta table. Must follow the `abfs://<container>/<path>` format. For more options, refer to the [delta-rs docs](https://delta-io.github.io/delta-rs/python/usage.html). | `abfs://my-container/delta/my-table`    | ✅        |
+| `mode`         | Write mode. <br/>- `append`: Adds rows to the table. Errors if schema changes.<br/>- `overwrite`: Replaces all existing rows and recreates the table.         | `append` (default) or `overwrite`       | ✅        |
+
+---
+
+## Notes
+
+- The table URI must point to a valid **Delta Lake table path** accessible via Azure Data Lake Storage (Gen2) using the **ABFS** protocol.
+- Mage uses the [delta-rs](https://delta-io.github.io/delta-rs/python/usage.html) engine for interacting with Delta Lake.
+- If using `overwrite` mode, ensure downstream systems tolerate table recreation.
+
+---
+
+## Related Resources
+
+- [Delta Lake Python API (`delta-rs`)](https://delta-io.github.io/delta-rs/python/usage.html)
+- [Delta Lake Overview](https://delta.io/)
+- [Azure Storage ABFS URI Format](https://learn.microsoft.com/en-us/azure/storage/blobs/data-lake-storage-introduction-abfs-uri)

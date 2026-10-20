@@ -3,7 +3,7 @@ from mage_ai.tests.base_test import TestCase
 from unittest.mock import patch
 
 
-class KafkaTests(TestCase):
+class AzureEventHubTests(TestCase):
     def test_init(self):
         with patch.object(AzureEventHubSource, 'init_client') as mock_init_client:
             AzureEventHubSource(dict(

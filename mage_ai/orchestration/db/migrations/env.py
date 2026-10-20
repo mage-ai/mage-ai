@@ -1,10 +1,10 @@
+import logging
+import os
+import sys
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
-
 from alembic import context
-import logging
+from sqlalchemy import engine_from_config, pool
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -12,16 +12,17 @@ config = context.config
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
-if config.config_file_name is not None:
+if (
+    config.config_file_name is not None
+    and config.attributes.get('configure_logger', True)
+):
     fileConfig(config.config_file_name)
 
 logging.getLogger('alembic').setLevel(config.get_section_option('logger_alembic', 'level'))
 
 # add your model's MetaData object here for 'autogenerate' support
-import os
-import sys
 
-sys.path.append(os.path.dirname(
+sys.path.insert(0, os.path.dirname(
     # mage_ai
     os.path.dirname(
         # orchestration
@@ -31,7 +32,11 @@ sys.path.append(os.path.dirname(
                 # migrations
                 os.path.dirname(os.path.abspath(__file__)))))))
 
-from mage_ai.orchestration.db.models import Base
+import mage_ai.orchestration.db.models.oauth  # noqa: E402, F401
+import mage_ai.orchestration.db.models.schedules  # noqa: E402, F401
+import mage_ai.orchestration.db.models.secrets  # noqa: E402, F401
+import mage_ai.orchestration.db.models.tags  # noqa: E402, F401
+from mage_ai.orchestration.db.models.base import Base  # noqa: E402
 
 target_metadata = Base.metadata
 
@@ -59,6 +64,8 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        # https://stackoverflow.com/questions/30378233/sqlite-lack-of-alter-support-alembic-migration-failing-because-of-this-solutio
+        render_as_batch=True,
     )
 
     with context.begin_transaction():
@@ -80,7 +87,10 @@ def run_migrations_online() -> None:
 
     with connectable.connect() as connection:
         context.configure(
-            connection=connection, target_metadata=target_metadata
+            connection=connection,
+            target_metadata=target_metadata,
+            # https://stackoverflow.com/questions/30378233/sqlite-lack-of-alter-support-alembic-migration-failing-because-of-this-solutio
+            render_as_batch=True,
         )
 
         with context.begin_transaction():

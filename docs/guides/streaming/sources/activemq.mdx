@@ -1,0 +1,61 @@
+---
+title: "ActiveMQ"
+description: This guide will walk you through the process of setting up and using ActiveMQ with Mage for streaming data pipelines.
+---
+
+### Step 1: Create a new streaming pipeline
+
+1. Open Mage in your browser.
+2. Click on "+ New Pipeline" and select "Streaming".
+3. Give your pipeline a name and click "Create".
+
+### Step 2: Add an ActiveMQ data loader
+
+1. In your new pipeline, click "+ Add Block" and select "Data loader".
+2. Choose "ActiveMQ" as the data source.
+
+### Step 3: Configure your ActiveMQ connection
+
+In the data loader block, use the following YAML configuration as a template:
+
+```yaml
+connector_type: 'activemq'
+connection_host: 'localhost'
+connection_port: 61613
+queue_name: 'default'
+username: 'admin'
+password: 'admin'
+```
+Adjust these values according to your ActiveMQ setup:
+
+- `connection_host`: Your ActiveMQ broker's hostname or IP address.
+- `connection_port`: The port your ActiveMQ broker is listening on (default STOMP port is 61613).
+- `queue_name`: The name of the queue you want to consume messages from.
+- `username` and `password`: Your ActiveMQ authentication credentials.
+<Note>
+Ensure that the stomp port on ActiveMQ is open, which is 61613 by default.
+</Note>
+
+### Step 4: Additional configuration (optional)
+
+Depending on your specific requirements, you may need to add additional configuration options:
+
+1. For SSL/TLS connections:
+```YAML
+use_ssl: true
+ssl_cert_path: '/path/to/cert.pem'
+ssl_key_path: '/path/to/key.pem'
+```
+2. To set a connection timeout:
+```YAML
+connection_timeout: 30 # in seconds
+```
+3. To control message prefetching:
+```YAML
+prefetch_size: 100
+```
+### Step 5: Test your connection
+
+1. Save your data loader block.
+2. Click the "Test" button to verify your connection to ActiveMQ.
+3. If successful, you should see a sample of messages from your queue.

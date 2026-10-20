@@ -1,0 +1,85 @@
+---
+title: "Athena"
+---
+
+![](https://user-images.githubusercontent.com/78053898/198754439-87922b6d-e8ed-4b6c-852c-96a1d3545612.png)
+
+## Prerequisites
+
+Before using Athena in Mage, make sure you have the following:
+
+- ✅ An **S3 bucket** to store Athena query results (this is required by Athena)
+- ✅ A **DynamoDB table** if using Athena’s table versioning (optional but recommended for Glue-backed catalogs)
+- ✅ A **database and table** defined in Athena (via AWS Glue, or manually in the Athena console)
+- ✅ An **IAM user or role** with the following permissions:
+  - `athena:StartQueryExecution`
+  - `athena:GetQueryExecution`
+  - `athena:GetQueryResults`
+  - `s3:PutObject`, `s3:GetObject`, `s3:ListBucket` (for the staging S3 bucket)
+- ✅ The [`pyathena`](https://pypi.org/project/pyathena/) Python package installed
+
+
+## Using Python block
+
+1. Create a new pipeline or open an existing pipeline.
+2. Add a data loader or transformer block (the code snippet below is for a data loader).
+3. Select `Generic (no template)`.
+4. Enter the following code snippet using `pyathena`:
+
+   ```python
+   from pyathena import connect
+   import pandas as pd
+
+   if 'data_loader' not in globals():
+       from mage_ai.data_preparation.decorators import data_loader
+
+   @data_loader
+   def load_from_athena(**kwargs) -> pd.DataFrame:
+       conn = connect(
+           aws_access_key_id='your-access-key',
+           aws_secret_access_key='your-secret-key',
+           region_name='us-west-2',
+           s3_staging_dir='s3://your-athena-query-results/'
+       )
+
+       query = 'SELECT * FROM your_database.your_table LIMIT 100'
+       df = pd.read_sql(query, conn)
+       return df
+    ```
+5. Run the block.
+
+## Install dependencies
+
+Before running the code, install the required Python package:
+
+```bash
+pip install pyathena
+```
+
+<br />
+
+## Common errors
+
+### ❌ Missing or invalid staging directory
+Athena requires a staging location in S3 to store temporary query results.
+
+Make sure `s3_staging_dir` is:
+- A valid S3 URI (e.g. `s3://your-bucket/path/`)
+- Located in the **same region** as your Athena workgroup
+- Writable by the credentials you're using
+
+### ❌ Access Denied
+If you see access-related errors:
+- Verify your AWS access key and secret are correct
+- Confirm that your IAM user or role has permissions for both Athena and S3
+- Check the S3 bucket policy to ensure it allows access from your IAM identity
+
+### ❌ Region mismatch
+Make sure all resources are in the same region:
+- Athena workgroup
+- S3 staging bucket
+- AWS region specified in your connection config (e.g. `region_name='us-west-2'`)
+
+Using mismatched regions can result in silent failures or confusing errors.
+
+<br />

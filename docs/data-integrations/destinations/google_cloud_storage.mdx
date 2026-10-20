@@ -1,0 +1,78 @@
+---
+title: Google Cloud Storage
+description: How to configure Google Cloud Storage (GCS) as a destination in Mage to write data files in Parquet or CSV format with optional date partitioning.
+---
+
+## Overview
+
+Use **Google Cloud Storage (GCS)** as a destination in Mage to write data from your pipelines directly into a GCS bucket. This is ideal for exporting pipeline outputs in formats like **Parquet** or **CSV** for downstream analytics, storage, or ML workflows.
+
+Mage supports native integration with GCS using either a service account key file or automatic authentication via GCP instance metadata.
+
+---
+
+## Configuration Parameters
+
+You must provide the following parameters when configuring GCS as a destination:
+
+| Key                           | Description                                                                                                                                                            | Example Value                                 | Required |
+|-------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------|----------|
+| `bucket`                      | Name of the target GCS bucket where files will be stored.                                                                                                              | `user_generated_content`                      | ✅        |
+| `google_application_credentials` | Path to the GCP service account JSON key file. Leave as `null` if Mage is running on GCP and should use the default instance service account.                         | `/path/to/key.json`                           | ✅        |
+| `file_type`                   | Format of the files to be written. Supported values: `parquet`, `csv`.                                                                                                | `parquet` or `csv`                            | ✅        |
+| `object_key_path`             | Relative path inside the bucket where files will be stored. Do **not** include `gs://`, bucket name, or table name.                                                   | `users/ds/20221225`                           | ✅        |
+| `date_partition_format`       | *(Optional)* Datetime format to use for partitioned folders. If `null`, partitioning will be skipped. Examples: `%Y%m%d`, `%Y%m%dT%H`.                                  | `null` or `%Y%m%d`                            | ❌        |
+
+---
+
+## Notes
+
+- The `object_key_path` defines where in the GCS bucket the data will be written. Mage will automatically append file extensions based on the selected `file_type`.
+- If you're running Mage inside a GCP service (like Cloud Run, GKE, or Compute Engine), and you leave `google_application_credentials` as `null`, Mage will use the instance's IAM identity for authentication.
+- Use `date_partition_format` to enable directory-based partitioning by time, which is useful for managing time-series datasets or incremental loads.
+
+---
+
+## Related Resources
+
+- [Google Cloud Storage Documentation](https://cloud.google.com/storage/docs/introduction)
+- [GCS URI Naming Guidelines](https://cloud.google.com/storage/docs/gsutil/addlhelp/HowNamingWorks)
+- [GCP Service Account Authentication](https://cloud.google.com/docs/authentication/getting-started)
+
+---
+
+## Frequently Asked Questions
+
+### Can Mage write to a GCS bucket if it's running inside GCP?
+
+Yes. If Mage is running inside a GCP environment (like GKE, Cloud Run, or Compute Engine), you can leave `google_application_credentials` as `null`. Mage will use the default service account attached to the instance for authentication.
+
+---
+
+### What file formats are supported when exporting data to GCS?
+
+Mage currently supports `parquet` and `csv` as the `file_type` options when writing data to Google Cloud Storage.
+
+---
+
+### How does `object_key_path` work?
+
+`object_key_path` specifies the path inside the bucket where your files will be stored. It should exclude the bucket name and should not include `gs://`. For example, `users/2025_07_08`.
+
+---
+
+### What does `date_partition_format` do?
+
+When provided, this setting tells Mage to create date-based subfolders (e.g., `20250708`, `20250708T13`) based on the run time. If set to `null`, partitioning is disabled and all files will go into the specified `object_key_path`.
+
+---
+
+### Do I need to manually set file extensions?
+
+No. Mage automatically adds the appropriate extension (`.parquet` or `.csv`) to each file based on the `file_type` you select.
+
+---
+
+### Can I write to a multi-region or dual-region GCS bucket?
+
+Yes. Mage can write to any standard, multi-region, or dual-region GCS bucket as long as the configured credentials have write access.

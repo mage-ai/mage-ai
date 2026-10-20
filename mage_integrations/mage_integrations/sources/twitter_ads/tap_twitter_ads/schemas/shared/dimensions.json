@@ -1,0 +1,87 @@
+{
+  "type": ["null", "object"],
+  "additionalProperties": false,
+  "properties": {
+    "account_id": {
+      "type": ["null", "string"]
+    },
+    "report_name": {
+      "type": ["null", "string"]
+    },
+    "entity": {
+      "type": ["null", "string"],
+      "enum": [
+        "ACCOUNT",
+        "CAMPAIGN",
+        "FUNDING_INSTRUMENT",
+        "LINE_ITEM",
+        "MEDIA_CREATIVE",
+        "ORGANIC_TWEET",
+        "PROMOTED_TWEET",
+        "PROMOTED_ACCOUNT"
+      ]
+    },
+    "entity_id": {
+      "type": ["null", "string"]
+    },
+    "granularity": {
+      "type": ["null", "string"],
+      "enum": [
+        "HOUR",
+        "DAY",
+        "TOTAL"
+      ]
+    },
+    "placement": {
+      "type": ["null", "string"]
+    },
+    "country": {
+      "type": ["null", "string"]
+    },
+    "platform": {
+      "type": ["null", "string"]
+    },
+    "start_time": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "end_time": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "segmentation_type": {
+      "type": ["null", "string"],
+      "enum": [
+        "AGE",
+        "AMPLIFY_MARKETPLACE_PREROLL_VIDEOS",
+        "AMPLIFY_PUBLISHER_TWEETS",
+        "APP_STORE_CATEGORY",
+        "AUDIENCES",
+        "CONVERSATIONS",
+        "CONVERSION_TAGS",
+        "DEVICES",
+        "EVENTS",
+        "GENDER",
+        "INTERESTS",
+        "KEYWORDS",
+        "LANGUAGES",
+        "LOCATIONS",
+        "METROS",
+        "PLATFORM_VERSIONS",
+        "PLATFORMS",
+        "POSTAL_CODES",
+        "REGIONS",
+        "SIMILAR_TO_FOLLOWERS_OF_USER",
+        "SWIPEABLE_MEDIA",
+        "TV_ADS",
+        "TV_SHOWS"
+      ]
+    },
+    "segment_name": {
+      "type": ["null", "string"]
+    },
+    "segment_value": {
+      "type": ["null", "string"]
+    }
+  }
+}

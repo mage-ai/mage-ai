@@ -1,0 +1,58 @@
+# for when we add pre-push hooks, so users only need to run pre-commit install
+default_install_hook_types: [pre-commit, pre-push]
+exclude: "^mage_ai/data_preparation/templates|^mage_ai/orchestration/db/migrations/versions|^scripts/pre-start"
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+    -   id: trailing-whitespace
+        types: [python]
+    -   id: end-of-file-fixer
+        types: [python]
+    -   id: check-yaml
+        args: [--unsafe]
+    -   id: check-json
+    -   id: debug-statements
+        types: [python]
+    -   id: name-tests-test
+        types: [python]
+        exclude: "base_test|factory|mixins|utils"
+        args:
+          - "--pytest-test-first"
+    -   id: requirements-txt-fixer
+        files: 'mage_integrations/requirements.txt'
+        # excluded ./requirements.txt as it uses groups,
+        # which are not handled correctly by requirements-txt-fixer
+- repo: local
+  hooks:
+  - id: isort
+    name: isort
+    entry: isort
+    # assumes isort is installed in local virtual environment as dev dependency
+    language: system
+    types: [python]
+  - id: flake8
+    name: flake8
+    entry: flake8
+    # assumes flake8 is installed in local virtual environment as dev dependency
+    language: system
+    types: [python]
+    exclude: "mage_integrations\/mage_integrations\/sources\/.*\/tap_.*\/*|mage_integrations\/mage_integrations\/destinations\/.*\/target_.*\/*"
+  # - id: black
+  #   name: black
+  #   entry: black
+  #   language: system
+  #   types: [python]
+# - repo: https://github.com/sourcery-ai/sourcery
+#   rev: v1.2.0
+#   hooks:
+#     - id: sourcery
+#       # The best way to use Sourcery in a pre-commit hook:
+#       # * review only changed lines:
+#       # * omit the summary
+#       args: [--diff=git diff HEAD, --no-summary]
+#       # to automatically apply the changes
+#       # args: [--diff=git diff HEAD, --fix, --no-summary]
+#       name: sourcery
+#       types: [python]
+#       stages: [push]

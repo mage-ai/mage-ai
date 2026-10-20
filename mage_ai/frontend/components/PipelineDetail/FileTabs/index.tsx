@@ -1,144 +1,151 @@
 import { useContext, useMemo } from 'react';
 import { ThemeContext } from 'styled-components';
 
-import Circle from '@oracle/elements/Circle';
+import FileTab, { FileTabProps } from './Tab';
 import FlexContainer from '@oracle/components/FlexContainer';
-import Link from '@oracle/elements/Link';
-import Spacing from '@oracle/elements/Spacing';
-import Text from '@oracle/elements/Text';
-import Tooltip from '@oracle/components/Tooltip';
-import dark from '@oracle/styles/themes/dark';
-import { Close, FileFill } from '@oracle/icons';
-import { FileTabStyle, PipelineHeaderStyle } from '../index.style';
-import { UNIT } from '@oracle/styles/units/spacing';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { goToWithQuery } from '@utils/routing';
 import { remove } from '@utils/array';
 
-type FileTabsProps = {
-  filePaths: string[];
-  filesTouched: {
-    [path: string]: boolean;
-  };
-  savePipelineContent: () => void;
-  selectedFilePath: string;
+export type TabType = {
+  label?: () => string;
+  onClick?: (opts?: {
+    onClickTab?: (filePath: string) => void;
+  }) => void;
+  uuid: string;
 };
 
-function FileTabs({
+type FileTabsProps = {
+  filePaths: string[];
+  isSelectedFilePath?: (filePath: string, selectedFilePath: string) => boolean;
+  selectedFilePath: string;
+  shouldDisableClose?: (uuid: string) => boolean;
+  tabsBefore?: TabType[];
+} & FileTabProps;
+
+export function useFileTabs({
   filePaths,
   filesTouched,
+  isSelectedFilePath,
+  onClickTab,
+  onClickTabClose,
+  onContextMenu,
+  renderTabIcon,
+  renderTabTitle,
   savePipelineContent,
   selectedFilePath,
+  shouldDisableClose,
+  tabsBefore,
 }: FileTabsProps) {
   const themeContext: ThemeType = useContext(ThemeContext);
   const filePathsMemo =
-  useMemo(() => filePaths.map(path => decodeURIComponent(path)), [filePaths]);
+    useMemo(() => filePaths?.map(path => decodeURIComponent(path)), [filePaths]);
+  const numberOfFilePaths = useMemo(() => filePathsMemo?.length || 0, [
+    filePathsMemo,
+  ]);
 
-  return (
-    <PipelineHeaderStyle secondary>
-      <FlexContainer
-        alignItems="center"
-        justifyContent="flex-start"
-      >
-        {filePathsMemo?.map((filePath: string, idx: number) => {
-          const selected: boolean = selectedFilePath === encodeURIComponent(filePath);
+  const tabsBeforeMemo = useMemo(() => tabsBefore?.length >= 1 ? tabsBefore?.map(({
+    label,
+    onClick,
+    uuid: uuidFileTab,
+  }) => {
+    const selected: boolean = isSelectedFilePath
+      ? isSelectedFilePath(uuidFileTab, selectedFilePath)
+      : selectedFilePath === encodeURIComponent(uuidFileTab);
 
-          return (
-            <FlexContainer
-              flexDirection="column"
-              fullHeight
-              key={filePath}
-              // @ts-ignore
-              onClick={(e) => {
-                e.preventDefault();
-                if (!selected) {
-                  savePipelineContent();
-                  goToWithQuery({
-                    file_path: encodeURIComponent(filePath),
-                  });
-                }
-              }}
-            >
-              <FileTabStyle
-                last={idx === filePathsMemo.length - 1}
-                selected={selected}
-              >
-                <FlexContainer
-                  alignItems="center"
-                  fullHeight
-                >
-                  {!filesTouched[filePath] && (
-                    <FileFill
-                      muted={!selected}
-                      size={UNIT * 1.5}
-                    />
-                  )}
-
-                  {filesTouched[filePath] && (
-                    <Tooltip
-                      label="Unsaved changes"
-                      size={null}
-                      widthFitContent
-                    >
-                      <div style={{ padding: 1 }}>
-                        <Circle
-                          borderColor={(themeContext || dark).borders.danger}
-                          size={UNIT * 1.25}
-                        />
-                      </div>
-                    </Tooltip>
-                  )}
-
-                  <Spacing mr={1} />
-
-                  <Text
-                    muted={!selected}
-                  >
-                    {filePath}
-                  </Text>
-
-                  <Spacing mr={2} />
-
-                  {selected && (
-                    <Tooltip
-                      appearAbove
-                      label="Close"
-                      size={null}
-                      widthFitContent
-                    >
-                      <Link
-                        autoHeight
-                        block
-                        noHoverUnderline
-                        noOutline
-                        onClick={() => {
-                          const newFilePaths = remove(filePathsMemo, path => path === filePath)
-                            .map(path => encodeURIComponent(path));
-
-                          goToWithQuery({
-                            file_path: newFilePaths[newFilePaths.length - 1] || null,
-                            'file_paths[]': newFilePaths,
-                          }, {
-                            pushHistory: true,
-                          });
-                        }}
-                        preventDefault
-                      >
-                        <Close
-                          size={UNIT * 1.25}
-                        />
-                      </Link>
-                    </Tooltip>
-                  )}
-                  {!selected && <div style={{ width: UNIT * 1.25 }} />}
-                </FlexContainer>
-              </FileTabStyle>
-
-            </FlexContainer>
-          );
+    return (
+      <FileTab
+        key={uuidFileTab}
+        onClickTab={() => onClick?.({
+          onClickTab,
         })}
-      </FlexContainer>
-    </PipelineHeaderStyle>
+        renderTabTitle={() => label ? label?.() : uuidFileTab}
+        selected={selected}
+        themeContext={themeContext}
+      />
+    );
+  }) : [], [
+      isSelectedFilePath,
+      onClickTab,
+      selectedFilePath,
+      tabsBefore,
+      themeContext,
+    ]);
+
+  const tabsMemo = useMemo(() => filePathsMemo?.map((filePath: string, idx: number) => {
+    const selected: boolean = isSelectedFilePath
+      ? isSelectedFilePath(filePath, selectedFilePath)
+      : selectedFilePath === encodeURIComponent(filePath);
+
+    return (
+      <FileTab
+        disableClose={shouldDisableClose && shouldDisableClose?.(filePath)}
+        savePipelineContent={savePipelineContent}
+        filesTouched={filesTouched}
+        filePath={filePath}
+        isLast={idx === numberOfFilePaths - 1}
+        key={filePath}
+        onClickTab={onClickTab}
+        onClickTabClose={(fp: string) => {
+          if (onClickTabClose) {
+            onClickTabClose(fp);
+          } else {
+            const newFilePaths = remove(filePathsMemo, path => path === fp)
+              .map(path => encodeURIComponent(path));
+
+            goToWithQuery({
+              file_path: newFilePaths[newFilePaths.length - 1] || null,
+              'file_paths[]': newFilePaths,
+            }, {
+              pushHistory: true,
+            });
+          }
+        }}
+        onContextMenu={onContextMenu}
+        renderTabIcon={renderTabIcon}
+        renderTabTitle={renderTabTitle}
+        selected={selected}
+        themeContext={themeContext}
+      />
+    );
+  }), [
+    filePathsMemo,
+    filesTouched,
+    isSelectedFilePath,
+    numberOfFilePaths,
+    onClickTab,
+    onClickTabClose,
+    onContextMenu,
+    renderTabIcon,
+    renderTabTitle,
+    savePipelineContent,
+    selectedFilePath,
+    shouldDisableClose,
+    themeContext,
+  ]);
+
+  return {
+    tabs: tabsMemo,
+    tabsBefore: tabsBeforeMemo,
+  };
+}
+
+export function FileTabs({
+  children,
+  ...props
+}: {
+  children?: any;
+} & FileTabsProps) {
+  return (
+    <FlexContainer
+      alignItems="center"
+      fullHeight
+      justifyContent="flex-start"
+    >
+      {useFileTabs(props)?.tabs}
+
+      {children}
+    </FlexContainer>
   );
 }
 

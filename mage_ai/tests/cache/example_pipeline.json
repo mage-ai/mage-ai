@@ -1,0 +1,142 @@
+{
+  "added_at": null,
+  "pipeline": {
+    "created_at": "2023-09-01 12:00:00",
+    "description": null,
+    "name": "example_pipeline",
+    "tags": [],
+    "type": "python",
+    "uuid": "example_pipeline",
+    "blocks": [
+      {
+        "downstream_blocks": [
+          "fill_in_missing_values",
+          "summer_dew",
+          "wandering_voice",
+          "blue_haze",
+          "solitary_moon",
+          "spring_feather",
+          "bar_chart_for_load_titanic_1695423547036"
+        ],
+        "language": "python",
+        "name": "load_titanic",
+        "type": "data_loader",
+        "upstream_blocks": [],
+        "uuid": "load_titanic"
+      },
+      {
+        "downstream_blocks": [],
+        "language": "markdown",
+        "name": "spring feather",
+        "type": "markdown",
+        "upstream_blocks": ["load_titanic"],
+        "uuid": "spring_feather"
+      },
+      {
+        "downstream_blocks": [],
+        "language": "markdown",
+        "name": "polished field",
+        "type": "markdown",
+        "upstream_blocks": [],
+        "uuid": "polished_field"
+      },
+      {
+        "downstream_blocks": [],
+        "language": "python",
+        "name": "solitary moon",
+        "type": "transformer",
+        "upstream_blocks": ["load_titanic"],
+        "uuid": "solitary_moon"
+      },
+      {
+        "downstream_blocks": ["autumn_sound"],
+        "language": "python",
+        "name": "blue haze",
+        "type": "transformer",
+        "upstream_blocks": ["load_titanic"],
+        "uuid": "blue_haze"
+      },
+      {
+        "downstream_blocks": [],
+        "language": "yaml",
+        "name": "autumn sound",
+        "type": "dbt",
+        "upstream_blocks": ["blue_haze"],
+        "uuid": "autumn_sound"
+      },
+      {
+        "downstream_blocks": [],
+        "language": "python",
+        "name": "wandering voice",
+        "type": "transformer",
+        "upstream_blocks": ["load_titanic"],
+        "uuid": "wandering_voice"
+      },
+      {
+        "downstream_blocks": [],
+        "language": "python",
+        "name": "summer dew",
+        "type": "data_exporter",
+        "upstream_blocks": ["load_titanic"],
+        "uuid": "summer_dew"
+      },
+      {
+        "downstream_blocks": ["export_titanic_clean"],
+        "language": "python",
+        "name": "fill_in_missing_values",
+        "type": "transformer",
+        "upstream_blocks": ["load_titanic"],
+        "uuid": "fill_in_missing_values"
+      },
+      {
+        "downstream_blocks": ["hidden_wildflower"],
+        "language": "python",
+        "name": "export_titanic_clean",
+        "type": "data_exporter",
+        "upstream_blocks": ["fill_in_missing_values"],
+        "uuid": "export_titanic_clean"
+      },
+      {
+        "downstream_blocks": ["empty_shadow"],
+        "language": "python",
+        "name": "hidden wildflower",
+        "type": "data_loader",
+        "upstream_blocks": ["export_titanic_clean"],
+        "uuid": "hidden_wildflower"
+      },
+      {
+        "downstream_blocks": ["aged_cloud"],
+        "language": "python",
+        "name": "empty shadow",
+        "type": "transformer",
+        "upstream_blocks": ["hidden_wildflower"],
+        "uuid": "empty_shadow"
+      },
+      {
+        "downstream_blocks": [],
+        "language": "python",
+        "name": "aged cloud",
+        "type": "data_exporter",
+        "upstream_blocks": ["empty_shadow"],
+        "uuid": "aged_cloud"
+      },
+      {
+        "downstream_blocks": [],
+        "language": "markdown",
+        "name": "winter waterfall",
+        "type": "markdown",
+        "upstream_blocks": [],
+        "uuid": "winter_waterfall"
+      },
+      {
+        "downstream_blocks": [],
+        "language": "python",
+        "name": "growth/test",
+        "type": "transformer",
+        "upstream_blocks": [],
+        "uuid": "growth/test"
+      }
+    ]
+  },
+  "updated_at": 1702284950.403907
+}

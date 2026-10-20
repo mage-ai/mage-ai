@@ -1,0 +1,20 @@
+#topbar-cta-button {}
+
+#navbar {}
+
+#sidebar {}
+
+#content-area {}
+
+#table-of-contents {}
+
+footer {}
+
+a.block {
+  display: block;
+}
+
+p.normal,
+span.normal {
+  font-weight: normal !important;
+}

@@ -1,0 +1,5 @@
+connector_type: influxdb
+url: "http://localhost:8086"
+token: "my-token"
+org: "my-org"
+bucket: "data"

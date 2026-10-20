@@ -1,10 +1,17 @@
-import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
+import { ScrollbarStyledCss, hideScrollBar } from '@oracle/styles/scrollbars';
 import styled from 'styled-components';
 
 export const OUTPUT_HEIGHT = 300;
 
+export const OutputHeaderStyle = styled.div`
+  ${hideScrollBar()}
+
+  overflow-x: auto;
+`;
+
 export const OutputContainerStyle = styled.div<{
   height?: number;
+  maxHeight?: number;
   noScrollbarTrackBackground?: boolean;
 }>`
   ${ScrollbarStyledCss}
@@ -16,6 +23,6 @@ export const OutputContainerStyle = styled.div<{
   `}
 
   ${props => !props.height && `
-    height: ${OUTPUT_HEIGHT}px;
+    max-height: ${props.maxHeight || OUTPUT_HEIGHT}px;
   `}
 `;

@@ -1,12 +1,42 @@
+import os
+from datetime import datetime, timedelta
+from unittest.mock import MagicMock, patch
+
+import pytz
+import yaml
+from freezegun import freeze_time
+
 from mage_ai.data_preparation.models.constants import PipelineType
-from mage_ai.orchestration.db.models import BlockRun, PipelineRun
-from mage_ai.orchestration.pipeline_scheduler import PipelineScheduler
+from mage_ai.data_preparation.models.triggers import (
+    ScheduleInterval,
+    ScheduleStatus,
+    ScheduleType,
+)
+from mage_ai.data_preparation.preferences import get_preferences
+from mage_ai.orchestration.backfills.service import start_backfill
+from mage_ai.orchestration.db.models.schedules import (
+    Backfill,
+    BlockRun,
+    PipelineRun,
+    PipelineSchedule,
+)
+from mage_ai.orchestration.job_manager import JobManager, JobType
+from mage_ai.orchestration.notification.sender import NotificationSender
+from mage_ai.orchestration.pipeline_scheduler import (
+    PipelineScheduler,
+    check_sla,
+    schedule_all,
+)
+from mage_ai.shared.array import find
+from mage_ai.shared.hash import ignore_keys, merge_dict
 from mage_ai.tests.base_test import DBTestCase
 from mage_ai.tests.factory import (
+    create_backfill,
+    create_integration_pipeline_with_blocks,
     create_pipeline_run_with_schedule,
     create_pipeline_with_blocks,
+    create_pipeline_with_dynamic_blocks,
 )
-from unittest.mock import MagicMock, patch
 
 
 class PipelineSchedulerTests(DBTestCase):
@@ -17,6 +47,33 @@ class PipelineSchedulerTests(DBTestCase):
             'test pipeline',
             self.repo_path,
         )
+        self.dynamic_pipeline = create_pipeline_with_dynamic_blocks(
+            'test dynamic pipeline',
+            self.repo_path,
+        )
+        self.integration_pipeline = create_integration_pipeline_with_blocks(
+            'test integration pipeline',
+            self.repo_path,
+        )
+
+    def add_pipeline_schedule_cleanup(self, pipeline_schedule):
+        self.addCleanup(self.cancel_pipeline_schedule_runs, pipeline_schedule.id)
+        self.addCleanup(lambda: pipeline_schedule.update(status=ScheduleStatus.INACTIVE))
+
+    def cancel_pipeline_schedule_runs(self, pipeline_schedule_id):
+        pipeline_runs = PipelineRun.query.filter(
+            PipelineRun.pipeline_schedule_id == pipeline_schedule_id,
+        ).all()
+        for pipeline_run in pipeline_runs:
+            pipeline_run.update(status=PipelineRun.PipelineRunStatus.CANCELLED)
+
+    def deactivate_pipeline_schedules(self, pipeline_uuid):
+        pipeline_schedules = PipelineSchedule.query.filter(
+            PipelineSchedule.pipeline_uuid == pipeline_uuid,
+        ).all()
+        for pipeline_schedule in pipeline_schedules:
+            self.cancel_pipeline_schedule_runs(pipeline_schedule.id)
+            pipeline_schedule.update(status=ScheduleStatus.INACTIVE)
 
     def test_start(self):
         pipeline_run = PipelineRun.create(pipeline_uuid='test_pipeline')
@@ -33,6 +90,25 @@ class PipelineSchedulerTests(DBTestCase):
             mock_schedule2.assert_called_once()
             self.assertEqual(pipeline_run2.status, PipelineRun.PipelineRunStatus.RUNNING)
 
+    def test_start_with_exception(self):
+        # Not create block runs at the beginning
+        pipeline_run = PipelineRun.create(pipeline_uuid='test_pipeline', create_block_runs=False)
+        scheduler = PipelineScheduler(pipeline_run=pipeline_run)
+        with patch.object(scheduler, 'schedule') as mock_schedule:
+            with patch.object(pipeline_run, 'create_block_runs') as mock_create_block_runs:
+                with patch.object(
+                    scheduler.notification_sender, 'send_pipeline_run_failure_message'
+                ) as mock_send_message:
+                    mock_create_block_runs.side_effect = Exception()
+                    scheduler.start()
+                    self.assertEqual(pipeline_run.status, PipelineRun.PipelineRunStatus.FAILED)
+                    mock_send_message.assert_called_once_with(
+                        error='Fail to initialize block runs.',
+                        pipeline=scheduler.pipeline,
+                        pipeline_run=pipeline_run,
+                    )
+                    self.assertEqual(mock_schedule.call_count, 0)
+
     def test_stop(self):
         pipeline_run = PipelineRun.create(pipeline_uuid='test_pipeline')
         block_runs = pipeline_run.block_runs
@@ -45,18 +121,20 @@ class PipelineSchedulerTests(DBTestCase):
         for b in block_runs:
             self.assertEqual(b.status, BlockRun.BlockRunStatus.CANCELLED)
 
-    @patch('mage_ai.orchestration.pipeline_scheduler.run_block')
-    @patch('mage_ai.orchestration.pipeline_scheduler.create_process')
-    def test_schedule(self, mock_create_process, mock_run_pipeline):
+    @patch('mage_ai.orchestration.pipeline_scheduler_original.run_block')
+    @patch('mage_ai.orchestration.pipeline_scheduler_original.get_job_manager')
+    def test_schedule(self, mock_get_job_manager, mock_get_pipeline_run):
+        mock_job_manager = mock_get_job_manager()
+        pipeline_run = mock_get_pipeline_run()
         pipeline_run = create_pipeline_run_with_schedule(pipeline_uuid='test_pipeline')
         scheduler = PipelineScheduler(pipeline_run=pipeline_run)
-        mock_proc = MagicMock()
-        mock_create_process.return_value = mock_proc
+        mock_job_manager.add_job = MagicMock()
         scheduler.schedule()
-        self.assertEqual(mock_create_process.call_count, 1)
+        # TODO (tommy dang): change to 2 when we resume running heartbeat in pipeline scheduler
+        self.assertEqual(mock_job_manager.add_job.call_count, 1)
         for b in pipeline_run.block_runs:
             if b.block_uuid == 'block1':
-                self.assertEqual(b.status, BlockRun.BlockRunStatus.RUNNING)
+                self.assertEqual(b.status, BlockRun.BlockRunStatus.QUEUED)
             else:
                 self.assertEqual(b.status, BlockRun.BlockRunStatus.INITIAL)
 
@@ -67,16 +145,296 @@ class PipelineSchedulerTests(DBTestCase):
             b.update(status=BlockRun.BlockRunStatus.COMPLETED)
         scheduler = PipelineScheduler(pipeline_run=pipeline_run)
         with patch.object(
-            scheduler.notification_sender,
-            'send_pipeline_run_success_message'
+            scheduler.notification_sender, 'send_pipeline_run_success_message'
         ) as mock_send_message:
             scheduler.schedule()
             self.assertEqual(pipeline_run.status, PipelineRun.PipelineRunStatus.COMPLETED)
-            mock_send_message.assert_called_once()
+            mock_send_message.assert_called_once_with(
+                pipeline=scheduler.pipeline,
+                pipeline_run=pipeline_run,
+            )
 
-    @patch('mage_ai.orchestration.pipeline_scheduler.run_pipeline')
-    @patch('mage_ai.orchestration.pipeline_scheduler.create_process')
-    def test_schedule_streaming(self, mock_create_process, mock_run_pipeline):
+    @freeze_time('2023-11-11 12:30:00')
+    def test_backfill_status_with_completed_pipeline_run(self):
+        pipeline_schedule = PipelineSchedule.create(
+            name='test_pipeline_trigger',
+            pipeline_uuid='test_pipeline',
+        )
+        backfill = create_backfill(
+            'test_pipeline',
+            end_datetime=datetime.today(),
+            pipeline_schedule_id=pipeline_schedule.id,
+            start_datetime=datetime.today(),
+        )
+        pipeline_runs = start_backfill(backfill)
+        pipeline_run = pipeline_runs[0]
+        pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+        scheduler = PipelineScheduler(pipeline_run=pipeline_run)
+        with patch.object(JobManager, 'add_job') as mock_add_br_job:
+            scheduler.schedule()
+            self.assertEqual(
+                backfill.status,
+                Backfill.Status.RUNNING,
+            )
+            mock_add_br_job.assert_called()
+
+            for b in pipeline_run.block_runs:
+                b.update(status=BlockRun.BlockRunStatus.COMPLETED)
+            scheduler.schedule()
+            self.assertEqual(
+                backfill.status,
+                Backfill.Status.COMPLETED,
+            )
+
+    @freeze_time('2023-11-11 12:30:00')
+    def test_backfill_status_with_failed_pipeline_run(self):
+        pipeline_schedule = PipelineSchedule.create(
+            name='test_pipeline_trigger',
+            pipeline_uuid='test_pipeline',
+        )
+        backfill = create_backfill(
+            'test_pipeline',
+            end_datetime=datetime.today(),
+            pipeline_schedule_id=pipeline_schedule.id,
+            start_datetime=datetime.today(),
+        )
+        pipeline_runs = start_backfill(backfill)
+        pipeline_run = pipeline_runs[0]
+        scheduler = PipelineScheduler(pipeline_run=pipeline_run)
+
+        for b in pipeline_run.block_runs:
+            b.update(status=BlockRun.BlockRunStatus.FAILED)
+        scheduler.schedule()
+        # Backfill with 1 pipeline run that fails
+        self.assertEqual(
+            backfill.status,
+            Backfill.Status.FAILED,
+        )
+
+        # Retry failed pipeline run that was associated with the existing backfill
+        retried_pipeline_run = create_pipeline_run_with_schedule(
+            'test_pipeline',
+            execution_date=pipeline_run.execution_date,
+            pipeline_schedule_id=pipeline_schedule.id,
+        )
+        scheduler2 = PipelineScheduler(pipeline_run=retried_pipeline_run)
+        backfill.update(status=Backfill.Status.INITIAL)
+        self.assertEqual(
+            backfill.status,
+            Backfill.Status.INITIAL,
+        )
+        # Retried pipeline run successfully completes, so backfill status updates to "completed"
+        for b in retried_pipeline_run.block_runs:
+            b.update(status=BlockRun.BlockRunStatus.COMPLETED)
+        scheduler2.schedule()
+        self.assertEqual(
+            backfill.status,
+            Backfill.Status.COMPLETED,
+        )
+
+    @freeze_time('2023-10-11 12:13:14')
+    def test_schedule_all_with_integration_pipeline(self):
+        integration_pipeline_schedule = PipelineSchedule.create(
+            name='integration trigger',
+            pipeline_uuid='test_integration_pipeline',
+            schedule_interval=ScheduleInterval.HOURLY,
+            schedule_type=ScheduleType.TIME,
+            status=ScheduleStatus.ACTIVE,
+            start_time=datetime(2023, 10, 10, 13, 13, 20),
+        )
+        pipeline_schedule = PipelineSchedule.create(
+            name='standard trigger',
+            pipeline_uuid='test_pipeline',
+            schedule_interval=ScheduleInterval.HOURLY,
+            schedule_type=ScheduleType.TIME,
+            status=ScheduleStatus.ACTIVE,
+            start_time=datetime(2023, 10, 10, 13, 13, 20),
+        )
+        with patch.object(PipelineScheduler, 'schedule') as _:
+            schedule_all()
+
+        self.assertEqual(1, integration_pipeline_schedule.pipeline_runs_count)
+        self.assertEqual(
+            PipelineRun.PipelineRunStatus.RUNNING,
+            integration_pipeline_schedule.pipeline_runs[0].status,
+        )
+        self.assertEqual(1, pipeline_schedule.pipeline_runs_count)
+        self.assertEqual(
+            PipelineRun.PipelineRunStatus.RUNNING,
+            pipeline_schedule.pipeline_runs[0].status,
+        )
+
+    @freeze_time('2023-10-11 12:13:14')
+    def test_schedule_all_for_pipeline_schedules_with_landing_time(self):
+        def new_schedule(self):
+            print(f'Mock PipelineScheduler().schedule() for pipeline run {self.pipeline_run.id}.')
+
+        shared_attrs = dict(
+            name='trigger',
+            pipeline_uuid='test_pipeline',
+            schedule_interval=ScheduleInterval.HOURLY,
+            schedule_type=ScheduleType.TIME,
+            settings=dict(landing_time_enabled=True),
+            status=ScheduleStatus.ACTIVE,
+        )
+
+        pipeline_schedule = PipelineSchedule.create(
+            **merge_dict(
+                shared_attrs,
+                dict(
+                    start_time=datetime(2023, 10, 10, 13, 13, 20),
+                ),
+            )
+        )
+
+        # No previous pipeline runs
+        self.assertEqual(
+            PipelineRun.query.filter(
+                PipelineRun.pipeline_schedule_id == pipeline_schedule.id,
+                PipelineRun.status == PipelineRun.PipelineRunStatus.RUNNING,
+            ).count(),
+            0,
+        )
+
+        with patch.object(PipelineScheduler, 'schedule', new_schedule):
+            schedule_all()
+
+        self.assertEqual(
+            PipelineRun.query.filter(
+                PipelineRun.pipeline_schedule_id == pipeline_schedule.id,
+                PipelineRun.status == PipelineRun.PipelineRunStatus.RUNNING,
+            ).count(),
+            1,
+        )
+
+    @freeze_time('2023-10-11 12:13:14')
+    def test_schedule_all_for_pipeline_schedules_with_landing_time_with_previous_runs(
+        self,
+    ):
+        def new_schedule(self):
+            print(f'Mock PipelineScheduler().schedule() for pipeline run {self.pipeline_run.id}.')
+
+        shared_attrs = dict(
+            name='trigger',
+            pipeline_uuid='test_pipeline',
+            schedule_interval=ScheduleInterval.HOURLY,
+            schedule_type=ScheduleType.TIME,
+            settings=dict(landing_time_enabled=True),
+            status=ScheduleStatus.ACTIVE,
+        )
+
+        pipeline_schedule = PipelineSchedule.create(
+            **merge_dict(
+                shared_attrs,
+                dict(
+                    start_time=datetime(2023, 10, 10, 13, 13, 20),
+                ),
+            )
+        )
+
+        # No previous pipeline runs
+        self.assertEqual(
+            PipelineRun.query.filter(
+                PipelineRun.pipeline_schedule_id == pipeline_schedule.id,
+                PipelineRun.status == PipelineRun.PipelineRunStatus.RUNNING,
+            ).count(),
+            0,
+        )
+
+        # With previous pipeline runs
+        PipelineRun.create(
+            execution_date=datetime(2023, 10, 30, 0, 0, 0),
+            metrics=dict(previous_runtimes=[100, 200, 300, 400, 500, 600, 700]),
+            pipeline_schedule_id=pipeline_schedule.id,
+            pipeline_uuid=pipeline_schedule.pipeline_uuid,
+            status=PipelineRun.PipelineRunStatus.FAILED,
+            variables=pipeline_schedule.variables,
+        )
+        pipeline_run = PipelineRun.create(
+            completed_at=datetime(2023, 10, 11, 12, 13, 15),
+            execution_date=datetime(2023, 10, 20, 0, 0, 0),
+            metrics=dict(previous_runtimes=[2, 3, 4, 5, 6, 7, 8]),
+            pipeline_schedule_id=pipeline_schedule.id,
+            pipeline_uuid=pipeline_schedule.pipeline_uuid,
+            status=PipelineRun.PipelineRunStatus.COMPLETED,
+            variables=pipeline_schedule.variables,
+        )
+        pipeline_run.update(created_at=datetime(2023, 10, 11, 12, 13, 14))
+        PipelineRun.create(
+            execution_date=datetime(2023, 10, 10, 0, 0, 0),
+            metrics=dict(previous_runtimes=[10, 20, 30, 40, 50, 60, 70]),
+            pipeline_schedule_id=pipeline_schedule.id,
+            pipeline_uuid=pipeline_schedule.pipeline_uuid,
+            status=PipelineRun.PipelineRunStatus.COMPLETED,
+            variables=pipeline_schedule.variables,
+        )
+
+        with patch.object(PipelineScheduler, 'schedule', new_schedule):
+            schedule_all()
+
+        self.assertEqual(
+            PipelineRun.query.filter(
+                PipelineRun.pipeline_schedule_id == pipeline_schedule.id,
+                PipelineRun.status == PipelineRun.PipelineRunStatus.RUNNING,
+            ).count(),
+            1,
+        )
+
+    def test_schedule_all_blocks_completed_with_failures(self):
+        pipeline_run = create_pipeline_run_with_schedule(
+            pipeline_uuid='test_pipeline',
+            pipeline_schedule_settings=dict(allow_blocks_to_fail=True),
+        )
+        pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+        ct = 0
+        block_runs = pipeline_run.block_runs
+        for b in block_runs:
+            if ct == 0:
+                b.update(status=BlockRun.BlockRunStatus.FAILED)
+            else:
+                b.update(status=BlockRun.BlockRunStatus.UPSTREAM_FAILED)
+            ct += 1
+        scheduler = PipelineScheduler(pipeline_run=pipeline_run)
+        with patch.object(
+            scheduler.notification_sender, 'send_pipeline_run_failure_message'
+        ) as mock_send_message:
+            scheduler.schedule()
+            self.assertEqual(pipeline_run.status, PipelineRun.PipelineRunStatus.FAILED)
+            mock_send_message.assert_called_once_with(
+                error=f'Failed blocks: {block_runs[0].block_uuid}.',
+                pipeline=scheduler.pipeline,
+                pipeline_run=pipeline_run,
+                stacktrace=None,
+            )
+
+    def test_schedule_with_block_failures(self):
+        pipeline_run = create_pipeline_run_with_schedule(
+            pipeline_uuid='test_pipeline',
+        )
+        pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+        ct = 0
+        block_runs = pipeline_run.block_runs
+        for b in block_runs:
+            if ct == 0:
+                b.update(status=BlockRun.BlockRunStatus.FAILED)
+            ct += 1
+        scheduler = PipelineScheduler(pipeline_run=pipeline_run)
+        with patch.object(
+            scheduler.notification_sender, 'send_pipeline_run_failure_message'
+        ) as mock_send_message:
+            scheduler.schedule()
+            self.assertEqual(pipeline_run.status, PipelineRun.PipelineRunStatus.FAILED)
+            mock_send_message.assert_called_once_with(
+                error=f'Failed blocks: {block_runs[0].block_uuid}.',
+                pipeline=scheduler.pipeline,
+                pipeline_run=pipeline_run,
+                stacktrace=None,
+            )
+
+    @patch('mage_ai.orchestration.pipeline_scheduler_original.run_pipeline')
+    @patch('mage_ai.orchestration.pipeline_scheduler_original.get_job_manager')
+    def test_schedule_streaming(self, mock_get_job_manager, mock_run_pipeline):
+        mock_job_manager = mock_get_job_manager()
         pipeline = create_pipeline_with_blocks(
             'test pipeline 2',
             self.repo_path,
@@ -86,28 +444,296 @@ class PipelineSchedulerTests(DBTestCase):
         pipeline_run = create_pipeline_run_with_schedule(pipeline_uuid='test_pipeline_2')
         pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
         scheduler = PipelineScheduler(pipeline_run=pipeline_run)
-        mock_proc = MagicMock()
-        mock_proc_start = MagicMock()
-        mock_proc.start = mock_proc_start
-        mock_create_process.return_value = mock_proc
+        mock_has_pipeline_run_job = MagicMock()
+        mock_job_manager.has_pipeline_run_job = mock_has_pipeline_run_job
+        mock_has_pipeline_run_job.return_value = False
+        mock_job_manager.add_job = MagicMock()
         scheduler.schedule()
-        mock_create_process.assert_called_once_with(
+
+        call_args = [
+            JobType.PIPELINE_RUN,
+            pipeline_run.id,
             mock_run_pipeline,
-            (
-                pipeline_run.id,
-                dict(
-                    env='prod',
-                    execution_date=None,
-                    execution_partition=f'{pipeline_run.pipeline_schedule_id}',
-                ),
-                dict(
-                    pipeline_run_id=pipeline_run.id,
-                    pipeline_schedule_id=pipeline_run.pipeline_schedule_id,
-                    pipeline_uuid='test_pipeline_2',
-                ),
+            pipeline_run.id,
+            dict(
+                env='prod',
+                execution_date=None,
+                execution_partition=f'{pipeline_run.pipeline_schedule_id}',
+                event={},
+                pipeline_run_id=pipeline_run.id,
+                trigger_name='test_pipeline_2_trigger'
+            ),
+            dict(
+                pipeline_run_id=pipeline_run.id,
+                pipeline_schedule_id=pipeline_run.pipeline_schedule_id,
+                pipeline_uuid='test_pipeline_2',
+            ),
+        ]
+
+        self.assertTrue(len(mock_job_manager.add_job.mock_calls) == 1)
+
+        mock_call = mock_job_manager.add_job.mock_calls[0]
+
+        for i in range(5):
+            self.assertEqual(call_args[i], mock_call[1][i])
+
+        self.assertEqual(call_args[5], ignore_keys(mock_call[1][5], ['hostname']))
+
+    @freeze_time('2023-10-11 12:13:14')
+    @patch('mage_ai.orchestration.pipeline_scheduler_original.PipelineScheduler.schedule')
+    @patch('mage_ai.orchestration.pipeline_scheduler_original.get_job_manager')
+    def test_schedule_all_restarts_streaming_pipeline_when_requirements_change(
+        self,
+        mock_get_job_manager,
+        _mock_schedule,
+    ):
+        mock_job_manager = mock_get_job_manager()
+        mock_job_manager.clean_up_jobs = MagicMock()
+        mock_job_manager.kill_pipeline_run_job = MagicMock()
+
+        pipeline = create_pipeline_with_blocks(
+            'test streaming requirements pipeline',
+            self.repo_path,
+        )
+        pipeline.type = PipelineType.STREAMING
+        pipeline.save()
+
+        requirements_path = os.path.join(self.repo_path, 'requirements.txt')
+        self.addCleanup(
+            lambda: os.remove(requirements_path)
+            if os.path.exists(requirements_path)
+            else None
+        )
+        with open(requirements_path, 'w') as f:
+            f.write('requests==2.31.0\n')
+
+        pipeline_schedule = PipelineSchedule.create(
+            name='test_streaming_requirements_pipeline_trigger',
+            pipeline_uuid=pipeline.uuid,
+            schedule_interval=ScheduleInterval.ALWAYS_ON,
+            schedule_type=ScheduleType.TIME,
+            status=ScheduleStatus.ACTIVE,
+        )
+        self.add_pipeline_schedule_cleanup(pipeline_schedule)
+        pipeline_run = PipelineRun.create(
+            pipeline_schedule_id=pipeline_schedule.id,
+            pipeline_uuid=pipeline.uuid,
+        )
+        pipeline_run.update(
+            started_at=datetime(2023, 10, 11, 12, 0, 0, tzinfo=pytz.UTC),
+            status=PipelineRun.PipelineRunStatus.RUNNING,
+        )
+
+        with patch.dict(
+            schedule_all.__globals__,
+            {'RESTART_STREAMING_PIPELINES_ON_REQUIREMENTS_CHANGE': True},
+        ):
+            schedule_all()
+
+        pipeline_run.refresh()
+        self.assertEqual(PipelineRun.PipelineRunStatus.CANCELLED, pipeline_run.status)
+        self.assertEqual(2, pipeline_schedule.pipeline_runs_count)
+        self.assertEqual(1, pipeline_schedule.running_pipeline_run_count)
+        mock_job_manager.kill_pipeline_run_job.assert_any_call(pipeline_run.id)
+        pipeline_schedule.update(status=ScheduleStatus.INACTIVE)
+
+    @freeze_time('2023-10-11 12:13:14')
+    @patch('mage_ai.orchestration.pipeline_scheduler_original.PipelineScheduler.schedule')
+    @patch('mage_ai.orchestration.pipeline_scheduler_original.get_job_manager')
+    def test_schedule_all_restarts_once_streaming_pipeline_when_requirements_change(
+        self,
+        mock_get_job_manager,
+        _mock_schedule,
+    ):
+        mock_job_manager = mock_get_job_manager()
+        mock_job_manager.clean_up_jobs = MagicMock()
+        mock_job_manager.kill_pipeline_run_job = MagicMock()
+
+        pipeline = create_pipeline_with_blocks(
+            'test once streaming requirements pipeline',
+            self.repo_path,
+        )
+        pipeline.type = PipelineType.STREAMING
+        pipeline.save()
+
+        requirements_path = os.path.join(self.repo_path, 'requirements.txt')
+        self.addCleanup(
+            lambda: os.remove(requirements_path)
+            if os.path.exists(requirements_path)
+            else None
+        )
+        with open(requirements_path, 'w') as f:
+            f.write('requests==2.31.0\n')
+
+        execution_date = datetime(2023, 10, 11, 12, 13, 14, tzinfo=pytz.UTC)
+        pipeline_schedule = PipelineSchedule.create(
+            name='test_once_streaming_requirements_pipeline_trigger',
+            pipeline_uuid=pipeline.uuid,
+            schedule_interval=ScheduleInterval.ONCE,
+            schedule_type=ScheduleType.TIME,
+            status=ScheduleStatus.ACTIVE,
+        )
+        self.add_pipeline_schedule_cleanup(pipeline_schedule)
+        pipeline_run = PipelineRun.create(
+            execution_date=execution_date,
+            pipeline_schedule_id=pipeline_schedule.id,
+            pipeline_uuid=pipeline.uuid,
+        )
+        pipeline_run.update(
+            started_at=datetime(2023, 10, 11, 12, 0, 0, tzinfo=pytz.UTC),
+            status=PipelineRun.PipelineRunStatus.RUNNING,
+        )
+
+        with patch.dict(
+            schedule_all.__globals__,
+            {'RESTART_STREAMING_PIPELINES_ON_REQUIREMENTS_CHANGE': True},
+        ):
+            schedule_all()
+
+        pipeline_run.refresh()
+        self.assertEqual(PipelineRun.PipelineRunStatus.CANCELLED, pipeline_run.status)
+        self.assertEqual(2, pipeline_schedule.pipeline_runs_count)
+        self.assertEqual(1, pipeline_schedule.running_pipeline_run_count)
+        mock_job_manager.kill_pipeline_run_job.assert_any_call(pipeline_run.id)
+        pipeline_schedule.update(status=ScheduleStatus.INACTIVE)
+
+    @freeze_time('2023-10-11 12:13:14')
+    @patch('mage_ai.orchestration.pipeline_scheduler_original.PipelineScheduler.schedule')
+    @patch('mage_ai.orchestration.pipeline_scheduler_original.get_job_manager')
+    def test_schedule_all_restarts_api_streaming_pipeline_when_requirements_change(
+        self,
+        mock_get_job_manager,
+        _mock_schedule,
+    ):
+        mock_job_manager = mock_get_job_manager()
+        mock_job_manager.clean_up_jobs = MagicMock()
+        mock_job_manager.kill_pipeline_run_job = MagicMock()
+
+        pipeline = create_pipeline_with_blocks(
+            'test api streaming requirements pipeline',
+            self.repo_path,
+        )
+        pipeline.type = PipelineType.STREAMING
+        pipeline.save()
+
+        requirements_path = os.path.join(self.repo_path, 'requirements.txt')
+        self.addCleanup(
+            lambda: os.remove(requirements_path)
+            if os.path.exists(requirements_path)
+            else None
+        )
+        with open(requirements_path, 'w') as f:
+            f.write('requests==2.31.0\n')
+
+        pipeline_schedule = PipelineSchedule.create(
+            name='test_api_streaming_requirements_pipeline_trigger',
+            pipeline_uuid=pipeline.uuid,
+            schedule_type=ScheduleType.API,
+            status=ScheduleStatus.ACTIVE,
+            variables=dict(
+                schedule_only=True,
+                source='schedule',
             ),
         )
-        mock_proc_start.assert_called_once()
+        self.add_pipeline_schedule_cleanup(pipeline_schedule)
+        pipeline_run = PipelineRun.create(
+            execution_date=datetime(2023, 10, 11, 12, 0, 0, tzinfo=pytz.UTC),
+            pipeline_schedule_id=pipeline_schedule.id,
+            pipeline_uuid=pipeline.uuid,
+            variables=dict(
+                execution_partition='old_partition',
+                source='api',
+            ),
+        )
+        pipeline_run.update(
+            started_at=datetime(2023, 10, 11, 12, 0, 0, tzinfo=pytz.UTC),
+            status=PipelineRun.PipelineRunStatus.RUNNING,
+        )
+
+        with patch.dict(
+            schedule_all.__globals__,
+            {'RESTART_STREAMING_PIPELINES_ON_REQUIREMENTS_CHANGE': True},
+        ):
+            schedule_all()
+
+        pipeline_run.refresh()
+        replacement_run = PipelineRun.query.filter(
+            PipelineRun.pipeline_schedule_id == pipeline_schedule.id,
+            PipelineRun.status == PipelineRun.PipelineRunStatus.RUNNING,
+        ).first()
+        self.assertEqual(PipelineRun.PipelineRunStatus.CANCELLED, pipeline_run.status)
+        self.assertEqual(2, pipeline_schedule.pipeline_runs_count)
+        self.assertIsNotNone(replacement_run)
+        self.assertEqual(
+            dict(
+                schedule_only=True,
+                source='api',
+            ),
+            replacement_run.variables,
+        )
+        mock_job_manager.kill_pipeline_run_job.assert_any_call(pipeline_run.id)
+        pipeline_schedule.update(status=ScheduleStatus.INACTIVE)
+
+    @freeze_time('2023-10-11 12:13:14')
+    @patch('mage_ai.orchestration.pipeline_scheduler_original.PipelineScheduler.schedule')
+    @patch('mage_ai.orchestration.pipeline_scheduler_original.get_job_manager')
+    def test_schedule_all_does_not_restart_streaming_pipeline_when_env_var_disabled(
+        self,
+        mock_get_job_manager,
+        _mock_schedule,
+    ):
+        mock_job_manager = mock_get_job_manager()
+        mock_job_manager.clean_up_jobs = MagicMock()
+        mock_job_manager.kill_pipeline_run_job = MagicMock()
+
+        pipeline = create_pipeline_with_blocks(
+            'test disabled streaming requirements pipeline',
+            self.repo_path,
+        )
+        pipeline.type = PipelineType.STREAMING
+        pipeline.save()
+
+        requirements_path = os.path.join(self.repo_path, 'requirements.txt')
+        self.addCleanup(
+            lambda: os.remove(requirements_path)
+            if os.path.exists(requirements_path)
+            else None
+        )
+        with open(requirements_path, 'w') as f:
+            f.write('requests==2.31.0\n')
+
+        pipeline_schedule = PipelineSchedule.create(
+            name='test_disabled_streaming_requirements_pipeline_trigger',
+            pipeline_uuid=pipeline.uuid,
+            schedule_interval=ScheduleInterval.ALWAYS_ON,
+            schedule_type=ScheduleType.TIME,
+            status=ScheduleStatus.ACTIVE,
+        )
+        self.add_pipeline_schedule_cleanup(pipeline_schedule)
+        pipeline_run = PipelineRun.create(
+            pipeline_schedule_id=pipeline_schedule.id,
+            pipeline_uuid=pipeline.uuid,
+        )
+        pipeline_run.update(
+            started_at=datetime(2023, 10, 11, 12, 0, 0, tzinfo=pytz.UTC),
+            status=PipelineRun.PipelineRunStatus.RUNNING,
+        )
+
+        with patch.dict(
+            schedule_all.__globals__,
+            {'RESTART_STREAMING_PIPELINES_ON_REQUIREMENTS_CHANGE': False},
+        ):
+            schedule_all()
+
+        pipeline_run.refresh()
+        self.assertEqual(PipelineRun.PipelineRunStatus.RUNNING, pipeline_run.status)
+        self.assertEqual(1, pipeline_schedule.pipeline_runs_count)
+        killed_pipeline_run_ids = [
+            mock_call.args[0]
+            for mock_call in mock_job_manager.kill_pipeline_run_job.call_args_list
+        ]
+        self.assertNotIn(pipeline_run.id, killed_pipeline_run_ids)
+        pipeline_schedule.update(status=ScheduleStatus.INACTIVE)
 
     def test_on_block_complete(self):
         pipeline_run = create_pipeline_run_with_schedule(pipeline_uuid='test_pipeline')
@@ -119,15 +745,662 @@ class PipelineSchedulerTests(DBTestCase):
             block_run = BlockRun.get(pipeline_run_id=pipeline_run.id, block_uuid='block1')
             self.assertEqual(block_run.status, BlockRun.BlockRunStatus.COMPLETED)
 
+    def test_on_block_complete_with_metrics(self):
+        pipeline_run = create_pipeline_run_with_schedule(pipeline_uuid='test_pipeline')
+        pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+        scheduler = PipelineScheduler(pipeline_run=pipeline_run)
+        with patch.object(scheduler, 'schedule') as mock_schedule:
+            scheduler.on_block_complete('block1', metrics=dict(mage=1))
+            mock_schedule.assert_called_once()
+            block_run = BlockRun.get(pipeline_run_id=pipeline_run.id, block_uuid='block1')
+            self.assertEqual(block_run.status, BlockRun.BlockRunStatus.COMPLETED)
+            self.assertEqual(block_run.metrics, dict(mage=1))
+
+    def test_on_block_complete_without_schedule(self):
+        pipeline_run = create_pipeline_run_with_schedule(pipeline_uuid='test_pipeline')
+        pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+        scheduler = PipelineScheduler(pipeline_run=pipeline_run)
+        with patch.object(scheduler, 'schedule') as mock_schedule:
+            scheduler.on_block_complete_without_schedule('block1')
+            mock_schedule.assert_not_called()
+            block_run = BlockRun.get(pipeline_run_id=pipeline_run.id, block_uuid='block1')
+            self.assertEqual(block_run.status, BlockRun.BlockRunStatus.COMPLETED)
+
+    def test_on_block_complete_without_schedule_with_metrics(self):
+        pipeline_run = create_pipeline_run_with_schedule(pipeline_uuid='test_pipeline')
+        pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+        scheduler = PipelineScheduler(pipeline_run=pipeline_run)
+        with patch.object(scheduler, 'schedule') as mock_schedule:
+            scheduler.on_block_complete_without_schedule('block1', metrics=dict(mage=1))
+            mock_schedule.assert_not_called()
+            block_run = BlockRun.get(pipeline_run_id=pipeline_run.id, block_uuid='block1')
+            self.assertEqual(block_run.status, BlockRun.BlockRunStatus.COMPLETED)
+            self.assertEqual(block_run.metrics, dict(mage=1))
+
     def test_on_block_failure(self):
         pipeline_run = create_pipeline_run_with_schedule(pipeline_uuid='test_pipeline')
         scheduler = PipelineScheduler(pipeline_run=pipeline_run)
+        scheduler.on_block_failure('block1')
+        block_run = BlockRun.get(pipeline_run_id=pipeline_run.id, block_uuid='block1')
+        self.assertEqual(block_run.status, BlockRun.BlockRunStatus.FAILED)
+
+    def test_on_block_failure_allow_blocks_to_fail(self):
+        pipeline_run = create_pipeline_run_with_schedule(
+            pipeline_uuid='test_pipeline',
+            pipeline_schedule_settings=dict(allow_blocks_to_fail=True),
+        )
+        pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+        scheduler = PipelineScheduler(pipeline_run=pipeline_run)
+        scheduler.on_block_failure('block1')
+        block_run = BlockRun.get(pipeline_run_id=pipeline_run.id, block_uuid='block1')
+        self.assertEqual(block_run.status, BlockRun.BlockRunStatus.FAILED)
+        self.assertEqual(pipeline_run.status, PipelineRun.PipelineRunStatus.RUNNING)
+
+    @freeze_time('2023-05-01 01:20:33')
+    def test_send_sla_message(self):
+        pipeline = create_pipeline_with_blocks(
+            'test sla pipeline',
+            self.repo_path,
+        )
+        pipeline_uuid = pipeline.uuid
+        pipeline_schedule = PipelineSchedule.create(
+            name='test_sla_pipeline_trigger',
+            pipeline_uuid=pipeline_uuid,
+            schedule_type=ScheduleType.TIME,
+            sla=600,
+        )
+        pipeline_schedule.update(
+            status=ScheduleStatus.ACTIVE,
+        )
+        now_time = datetime(2023, 5, 1, 1, 20, 33, tzinfo=pytz.utc).astimezone()
+        pipeline_run = create_pipeline_run_with_schedule(
+            execution_date=now_time - timedelta(seconds=601),
+            pipeline_uuid=pipeline_uuid,
+            pipeline_schedule_id=pipeline_schedule.id,
+        )
+        pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+        pipeline_run2 = create_pipeline_run_with_schedule(
+            execution_date=now_time - timedelta(seconds=599),
+            pipeline_uuid=pipeline_uuid,
+            pipeline_schedule_id=pipeline_schedule.id,
+        )
+        pipeline_run2.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+        pipeline_run3 = create_pipeline_run_with_schedule(
+            execution_date=now_time - timedelta(seconds=1),
+            pipeline_uuid=pipeline_uuid,
+            pipeline_schedule_id=pipeline_schedule.id,
+        )
+        pipeline_run3.update(status=PipelineRun.PipelineRunStatus.RUNNING)
         with patch.object(
-            scheduler.notification_sender,
-            'send_pipeline_run_failure_message'
+            NotificationSender, 'send_pipeline_run_sla_passed_message'
         ) as mock_send_message:
-            scheduler.on_block_failure('block1')
+            check_sla()
             mock_send_message.assert_called_once()
-            block_run = BlockRun.get(pipeline_run_id=pipeline_run.id, block_uuid='block1')
-            self.assertEqual(block_run.status, BlockRun.BlockRunStatus.FAILED)
-            self.assertEqual(pipeline_run.status, PipelineRun.PipelineRunStatus.FAILED)
+
+    @freeze_time('2023-05-01 01:20:33')
+    @patch('mage_ai.orchestration.utils.git.GitSync')
+    def test_sync_data_on_schedule_all(self, mock_git_sync):
+        git_sync_instance = MagicMock()
+        mock_git_sync.return_value = git_sync_instance
+        pipeline = create_pipeline_with_blocks(
+            'test git sync pipeline',
+            self.repo_path,
+        )
+        PipelineSchedule.create(
+            name='test_sla_pipeline_trigger_1',
+            pipeline_uuid=pipeline.uuid,
+            schedule_type=ScheduleType.TIME,
+            status=ScheduleStatus.ACTIVE,
+            start_time=datetime(2023, 4, 1, 1, 20, 33),
+            schedule_interval='@hourly',
+        )
+        PipelineSchedule.create(
+            name='test_sla_pipeline_trigger_2',
+            pipeline_uuid=pipeline.uuid,
+            schedule_type=ScheduleType.TIME,
+            status=ScheduleStatus.ACTIVE,
+            start_time=datetime(2023, 4, 5, 1, 20, 33),
+            schedule_interval='@hourly',
+        )
+        preferences = get_preferences(repo_path=self.repo_path)
+        preferences.update_preferences(
+            dict(
+                sync_config=dict(
+                    remote_repo_link='test_git_repo',
+                    repo_path=self.repo_path,
+                    branch='main',
+                    sync_on_pipeline_run=True,
+                )
+            )
+        )
+        with patch.object(PipelineScheduler, 'schedule') as _:
+            schedule_all()
+            git_sync_instance.sync_data.assert_called_once()
+
+    @freeze_time('2023-05-01 01:20:33')
+    def test_schedule_all_pipeline_run_limit_all_triggers_set1(self):
+        # With create_initial_pipeline_run setting enabled
+        pipeline = create_pipeline_with_blocks(
+            'test pipeline_run_limit_all_triggers',
+            self.repo_path,
+        )
+        self.deactivate_pipeline_schedules(pipeline.uuid)
+        ps1 = PipelineSchedule.create(
+            last_enabled_at=datetime(2023, 5, 2, 0, 0, 0),
+            name='test_limit_pipeline_trigger_1',
+            pipeline_uuid=pipeline.uuid,
+            schedule_type=ScheduleType.TIME,
+            settings=dict(create_initial_pipeline_run=True),
+            status=ScheduleStatus.ACTIVE,
+            start_time=datetime(2023, 4, 5, 1, 20, 33),
+            schedule_interval='@hourly',
+        )
+        ps2 = PipelineSchedule.create(
+            last_enabled_at=datetime(2023, 5, 2, 0, 0, 0),
+            name='test_limit_pipeline_trigger_2',
+            pipeline_uuid=pipeline.uuid,
+            schedule_type=ScheduleType.TIME,
+            settings=dict(create_initial_pipeline_run=True),
+            status=ScheduleStatus.ACTIVE,
+            start_time=datetime(2023, 4, 5, 1, 20, 33),
+            schedule_interval='@daily',
+        )
+        ps3 = PipelineSchedule.create(
+            last_enabled_at=datetime(2023, 5, 2, 0, 0, 0),
+            name='test_limit_pipeline_trigger_3',
+            pipeline_uuid=pipeline.uuid,
+            settings=dict(create_initial_pipeline_run=True),
+            schedule_type=ScheduleType.TIME,
+            status=ScheduleStatus.ACTIVE,
+            start_time=datetime(2023, 4, 5, 1, 20, 33),
+            schedule_interval='@weekly',
+        )
+
+        test_concurrency_config = dict(
+            pipeline_run_limit_all_triggers=2,
+        )
+        with open(pipeline.config_path, 'w') as f:
+            yaml.dump(
+                merge_dict(pipeline.to_dict(), dict(concurrency_config=test_concurrency_config)),
+                f,
+            )
+
+        with patch.object(PipelineScheduler, 'schedule') as _:
+            schedule_all()
+        """
+        The pipeline runs are still scheduled even though the last_enabled_at
+        date occurs after the current execution date due to the
+        create_initial_pipeline_run setting being enabled.
+        """
+        self.assertEqual(1, len(ps1.pipeline_runs))
+        self.assertEqual(PipelineRun.PipelineRunStatus.INITIAL, ps1.pipeline_runs[0].status)
+        self.assertEqual(1, len(ps2.pipeline_runs))
+        self.assertEqual(PipelineRun.PipelineRunStatus.RUNNING, ps2.pipeline_runs[0].status)
+        self.assertEqual(1, len(ps3.pipeline_runs))
+        self.assertEqual(PipelineRun.PipelineRunStatus.RUNNING, ps3.pipeline_runs[0].status)
+
+    @freeze_time('2023-05-01 00:20:33')
+    def test_schedule_all_pipeline_run_limit_all_triggers_set2(self):
+        # With create_initial_pipeline_run setting NOT enabled
+        pipeline = create_pipeline_with_blocks(
+            'test pipeline_run_limit_all_triggers',
+            self.repo_path,
+        )
+        self.deactivate_pipeline_schedules(pipeline.uuid)
+        ps1 = PipelineSchedule.create(
+            last_enabled_at=datetime(2023, 4, 30, 0, 0, 0),
+            name='test_limit_pipeline_trigger_1',
+            pipeline_uuid=pipeline.uuid,
+            schedule_type=ScheduleType.TIME,
+            status=ScheduleStatus.ACTIVE,
+            start_time=datetime(2023, 4, 5, 1, 20, 33),
+            schedule_interval='@hourly',
+        )
+        ps2 = PipelineSchedule.create(
+            last_enabled_at=datetime(2023, 4, 30, 0, 0, 0),
+            name='test_limit_pipeline_trigger_2',
+            pipeline_uuid=pipeline.uuid,
+            schedule_type=ScheduleType.TIME,
+            status=ScheduleStatus.ACTIVE,
+            start_time=datetime(2023, 4, 5, 1, 20, 33),
+            schedule_interval='@daily',
+        )
+        ps3 = PipelineSchedule.create(
+            last_enabled_at=datetime(2023, 4, 30, 0, 0, 0),
+            name='test_limit_pipeline_trigger_3',
+            pipeline_uuid=pipeline.uuid,
+            schedule_type=ScheduleType.TIME,
+            status=ScheduleStatus.ACTIVE,
+            start_time=datetime(2023, 4, 5, 1, 20, 33),
+            schedule_interval='@weekly',
+        )
+        ps4 = PipelineSchedule.create(
+            last_enabled_at=datetime(2023, 5, 2, 0, 0, 0),
+            name='test_limit_pipeline_trigger_4',
+            pipeline_uuid=pipeline.uuid,
+            schedule_type=ScheduleType.TIME,
+            status=ScheduleStatus.ACTIVE,
+            start_time=datetime(2023, 4, 5, 1, 20, 33),
+            schedule_interval='@daily',
+        )
+
+        test_concurrency_config = dict(
+            pipeline_run_limit_all_triggers=2,
+        )
+        with open(pipeline.config_path, 'w') as f:
+            yaml.dump(
+                merge_dict(pipeline.to_dict(), dict(concurrency_config=test_concurrency_config)),
+                f,
+            )
+
+        with patch.object(PipelineScheduler, 'schedule') as _:
+            schedule_all()
+        self.assertEqual(1, len(ps1.pipeline_runs))
+        self.assertEqual(PipelineRun.PipelineRunStatus.RUNNING, ps1.pipeline_runs[0].status)
+        self.assertEqual(1, len(ps2.pipeline_runs))
+        self.assertEqual(PipelineRun.PipelineRunStatus.RUNNING, ps2.pipeline_runs[0].status)
+        # The pipeline run for ps3 is not running due to the sorting of
+        # the runs' execution dates (all 3 have the same execution date).
+        self.assertEqual(1, len(ps3.pipeline_runs))
+        self.assertEqual(PipelineRun.PipelineRunStatus.INITIAL, ps3.pipeline_runs[0].status)
+        # No pipeline run is scheduled for ps4 due to the last_enabled_at date
+        # occurring after the current execution date.
+        self.assertEqual(0, len(ps4.pipeline_runs))
+
+    @freeze_time('2023-05-03 01:20:33')
+    def test_schedule_all_pipeline_run_limit_set(self):
+        pipeline = create_pipeline_with_blocks(
+            'test pipeline_run_limit',
+            self.repo_path,
+        )
+        self.deactivate_pipeline_schedules(pipeline.uuid)
+        ps1 = PipelineSchedule.create(
+            name='test_both_limit_pipeline_trigger_1',
+            pipeline_uuid=pipeline.uuid,
+            schedule_type=ScheduleType.TIME,
+            status=ScheduleStatus.ACTIVE,
+            start_time=datetime(2023, 4, 4, 1, 20, 33),
+            schedule_interval='@daily',
+        )
+        PipelineRun.create(
+            execution_date=datetime(2023, 3, 1, 0, 0, 0),
+            pipeline_schedule_id=ps1.id,
+            pipeline_uuid=pipeline.uuid,
+            status=PipelineRun.PipelineRunStatus.RUNNING,
+        )
+        ps2 = PipelineSchedule.create(
+            name='test_both_limit_pipeline_trigger_2',
+            pipeline_uuid=pipeline.uuid,
+            schedule_type=ScheduleType.TIME,
+            status=ScheduleStatus.ACTIVE,
+            start_time=datetime(2023, 4, 5, 1, 20, 33),
+            schedule_interval='@weekly',
+        )
+        ps3 = PipelineSchedule.create(
+            name='test_both_limit_pipeline_trigger_3',
+            pipeline_uuid=pipeline.uuid,
+            schedule_type=ScheduleType.TIME,
+            status=ScheduleStatus.ACTIVE,
+            start_time=datetime(2023, 4, 6, 1, 20, 33),
+            schedule_interval='@hourly',
+        )
+
+        test_concurrency_config = dict(
+            pipeline_run_limit=1,
+            pipeline_run_limit_all_triggers=2,
+        )
+        with open(pipeline.config_path, 'w') as f:
+            yaml.dump(
+                merge_dict(pipeline.to_dict(), dict(concurrency_config=test_concurrency_config)),
+                f,
+            )
+
+        with patch.object(PipelineScheduler, 'schedule') as _:
+            schedule_all()
+        self.assertEqual(2, len(ps1.pipeline_runs))
+        self.assertEqual(1, len(ps2.pipeline_runs))
+        self.assertEqual(PipelineRun.PipelineRunStatus.RUNNING, ps2.pipeline_runs[0].status)
+        self.assertEqual(1, len(ps3.pipeline_runs))
+        self.assertEqual(PipelineRun.PipelineRunStatus.INITIAL, ps3.pipeline_runs[0].status)
+
+    @freeze_time('2023-05-03 01:20:33')
+    def test_schedule_all_pipeline_run_limit_skip_runs(self):
+        pipeline = create_pipeline_with_blocks(
+            'test pipeline_run_limit_skip',
+            self.repo_path,
+        )
+        self.deactivate_pipeline_schedules(pipeline.uuid)
+        ps1 = PipelineSchedule.create(
+            name='test_limit_skip_pipeline_trigger_1',
+            pipeline_uuid=pipeline.uuid,
+            schedule_type=ScheduleType.TIME,
+            status=ScheduleStatus.ACTIVE,
+            start_time=datetime(2023, 4, 4, 1, 20, 33),
+            schedule_interval='@daily',
+        )
+        PipelineRun.create(
+            execution_date=datetime(2023, 3, 1, 0, 0, 0),
+            pipeline_schedule_id=ps1.id,
+            pipeline_uuid=pipeline.uuid,
+            status=PipelineRun.PipelineRunStatus.RUNNING,
+        )
+        ps2 = PipelineSchedule.create(
+            name='test_limit_skip_pipeline_trigger_2',
+            pipeline_uuid=pipeline.uuid,
+            schedule_type=ScheduleType.TIME,
+            status=ScheduleStatus.ACTIVE,
+            start_time=datetime(2023, 4, 5, 1, 20, 33),
+            schedule_interval='@daily',
+        )
+        ps3 = PipelineSchedule.create(
+            name='test_limit_skip_pipeline_trigger_3',
+            pipeline_uuid=pipeline.uuid,
+            schedule_type=ScheduleType.TIME,
+            status=ScheduleStatus.ACTIVE,
+            start_time=datetime(2023, 4, 6, 1, 20, 33),
+            schedule_interval='@hourly',
+        )
+
+        test_concurrency_config = dict(
+            pipeline_run_limit=1,
+            pipeline_run_limit_all_triggers=2,
+            on_pipeline_run_limit_reached='skip',
+        )
+        with open(pipeline.config_path, 'w') as f:
+            yaml.dump(
+                merge_dict(pipeline.to_dict(), dict(concurrency_config=test_concurrency_config)),
+                f,
+            )
+
+        with patch.object(PipelineScheduler, 'schedule') as _:
+            schedule_all()
+        self.assertEqual(2, len(ps1.pipeline_runs))
+        self.assertEqual(1, len(ps2.pipeline_runs))
+        self.assertEqual(PipelineRun.PipelineRunStatus.RUNNING, ps2.pipeline_runs[0].status)
+        self.assertEqual(1, len(ps3.pipeline_runs))
+        self.assertEqual(PipelineRun.PipelineRunStatus.CANCELLED, ps3.pipeline_runs[0].status)
+
+    @freeze_time('2023-05-03 01:20:33')
+    def test_schedule_all_pipeline_run_limit_set_negative_quota(self):
+        pipeline = create_pipeline_with_blocks(
+            'test pipeline_run_limit_negative_quota',
+            self.repo_path,
+        )
+        self.deactivate_pipeline_schedules(pipeline.uuid)
+        ps1 = PipelineSchedule.create(
+            name='test_negative_quota_pipeline_trigger_1',
+            pipeline_uuid=pipeline.uuid,
+            schedule_type=ScheduleType.TIME,
+            status=ScheduleStatus.ACTIVE,
+            start_time=datetime(2023, 2, 28, 1, 20, 33),
+            schedule_interval='@daily',
+        )
+        PipelineRun.create(
+            execution_date=datetime(2023, 3, 1, 0, 0, 0),
+            pipeline_schedule_id=ps1.id,
+            pipeline_uuid=pipeline.uuid,
+            status=PipelineRun.PipelineRunStatus.RUNNING,
+        )
+        PipelineRun.create(
+            execution_date=datetime(2023, 3, 2, 0, 0, 0),
+            pipeline_schedule_id=ps1.id,
+            pipeline_uuid=pipeline.uuid,
+            status=PipelineRun.PipelineRunStatus.RUNNING,
+        )
+        ps2 = PipelineSchedule.create(
+            name='test_negative_quota_pipeline_trigger_2',
+            pipeline_uuid=pipeline.uuid,
+            schedule_type=ScheduleType.TIME,
+            status=ScheduleStatus.ACTIVE,
+            start_time=datetime(2023, 4, 5, 1, 20, 33),
+            schedule_interval='@weekly',
+        )
+        ps3 = PipelineSchedule.create(
+            name='test_negative_quota_pipeline_trigger_3',
+            pipeline_uuid=pipeline.uuid,
+            schedule_type=ScheduleType.TIME,
+            status=ScheduleStatus.ACTIVE,
+            start_time=datetime(2023, 4, 6, 1, 20, 33),
+            schedule_interval='@hourly',
+        )
+
+        test_concurrency_config = dict(
+            pipeline_run_limit_all_triggers=1,
+        )
+        with open(pipeline.config_path, 'w') as f:
+            yaml.dump(
+                merge_dict(pipeline.to_dict(), dict(concurrency_config=test_concurrency_config)),
+                f,
+            )
+
+        self.assertEqual(2, len(ps1.pipeline_runs))
+
+        with patch.object(PipelineScheduler, 'schedule') as _:
+            schedule_all()
+        self.assertEqual(
+            2,
+            len(
+                list(
+                    filter(
+                        lambda r: r.status == PipelineRun.PipelineRunStatus.RUNNING,
+                        ps1.pipeline_runs,
+                    )
+                )
+            ),
+        )
+        self.assertEqual(1, len(ps2.pipeline_runs))
+        self.assertEqual(PipelineRun.PipelineRunStatus.INITIAL, ps2.pipeline_runs[0].status)
+        self.assertEqual(1, len(ps3.pipeline_runs))
+        self.assertEqual(PipelineRun.PipelineRunStatus.INITIAL, ps3.pipeline_runs[0].status)
+
+    @freeze_time('2023-05-03 01:20:33')
+    def test_schedule_all_pipeline_run_limit_include_all(self):
+        pipeline = create_pipeline_with_blocks(
+            'test pipeline_run_limit_include_all',
+            self.repo_path,
+        )
+        self.deactivate_pipeline_schedules(pipeline.uuid)
+        ps1 = PipelineSchedule.create(
+            name='test_limit_include_all_pipeline_trigger_1',
+            pipeline_uuid=pipeline.uuid,
+            schedule_type=ScheduleType.TIME,
+            status=ScheduleStatus.ACTIVE,
+            start_time=datetime(2023, 4, 4, 1, 20, 33),
+            schedule_interval='@daily',
+        )
+        PipelineRun.create(
+            execution_date=datetime(2023, 3, 1, 0, 0, 0),
+            pipeline_schedule_id=ps1.id,
+            pipeline_uuid=pipeline.uuid,
+            status=PipelineRun.PipelineRunStatus.RUNNING,
+        )
+        ps2 = PipelineSchedule.create(
+            name='test_limit_include_all_pipeline_trigger_2',
+            pipeline_uuid=pipeline.uuid,
+            schedule_type=ScheduleType.TIME,
+            status=ScheduleStatus.ACTIVE,
+            start_time=datetime(2023, 4, 5, 1, 20, 33),
+            schedule_interval='@weekly',
+        )
+        ps3 = PipelineSchedule.create(
+            name='test_limit_include_all_pipeline_trigger_3',
+            pipeline_uuid=pipeline.uuid,
+            schedule_type=ScheduleType.TIME,
+            status=ScheduleStatus.ACTIVE,
+            start_time=datetime(2023, 4, 6, 1, 20, 33),
+            schedule_interval='@hourly',
+        )
+
+        test_concurrency_config = dict(
+            pipeline_run_limit=2,
+            pipeline_run_limit_all_triggers=100,
+            on_pipeline_run_limit_reached='skip',
+        )
+        with open(pipeline.config_path, 'w') as f:
+            yaml.dump(
+                merge_dict(pipeline.to_dict(), dict(concurrency_config=test_concurrency_config)),
+                f,
+            )
+
+        with patch.object(PipelineScheduler, 'schedule') as _:
+            schedule_all()
+        self.assertEqual(2, len(ps1.pipeline_runs))
+        self.assertEqual(1, len(ps2.pipeline_runs))
+        self.assertEqual(PipelineRun.PipelineRunStatus.RUNNING, ps2.pipeline_runs[0].status)
+        self.assertEqual(1, len(ps3.pipeline_runs))
+        self.assertEqual(PipelineRun.PipelineRunStatus.RUNNING, ps3.pipeline_runs[0].status)
+
+    @freeze_time('2023-05-01 01:20:33')
+    @patch('mage_ai.orchestration.pipeline_scheduler_original.get_job_manager')
+    def test_pipeline_run_timeout(self, mock_get_job_manager):
+        mock_job_manager = mock_get_job_manager()
+        mock_job_manager.add_job = MagicMock()
+        pipeline = create_pipeline_with_blocks(
+            'test pipeline run timeout pipeline',
+            self.repo_path,
+        )
+        pipeline_uuid = pipeline.uuid
+        pipeline_schedule = PipelineSchedule.create(
+            name='test_timeout_pipeline_trigger',
+            pipeline_uuid=pipeline_uuid,
+            schedule_type=ScheduleType.TIME,
+            settings=dict(timeout=600),
+        )
+        self.add_pipeline_schedule_cleanup(pipeline_schedule)
+        pipeline_schedule.update(
+            status=ScheduleStatus.ACTIVE,
+        )
+        now_time = datetime.now(tz=pytz.UTC)
+        pipeline_run = create_pipeline_run_with_schedule(
+            execution_date=now_time - timedelta(seconds=601),
+            started_at=now_time - timedelta(seconds=601),
+            pipeline_uuid=pipeline_uuid,
+            pipeline_schedule_id=pipeline_schedule.id,
+        )
+        pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+        pipeline_run2 = create_pipeline_run_with_schedule(
+            execution_date=now_time - timedelta(seconds=599),
+            started_at=now_time - timedelta(seconds=599),
+            pipeline_uuid=pipeline_uuid,
+            pipeline_schedule_id=pipeline_schedule.id,
+        )
+        pipeline_run2.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+        pipeline_run3 = create_pipeline_run_with_schedule(
+            execution_date=now_time - timedelta(seconds=1),
+            started_at=now_time - timedelta(seconds=1),
+            pipeline_uuid=pipeline_uuid,
+            pipeline_schedule_id=pipeline_schedule.id,
+        )
+        pipeline_run3.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+
+        PipelineScheduler(pipeline_run=pipeline_run).schedule()
+        PipelineScheduler(pipeline_run=pipeline_run2).schedule()
+        PipelineScheduler(pipeline_run=pipeline_run3).schedule()
+        self.assertEqual(pipeline_run.status, PipelineRun.PipelineRunStatus.FAILED)
+        self.assertEqual(pipeline_run2.status, PipelineRun.PipelineRunStatus.RUNNING)
+        self.assertEqual(pipeline_run3.status, PipelineRun.PipelineRunStatus.RUNNING)
+
+    @freeze_time('2023-05-01 01:20:33')
+    @patch('mage_ai.orchestration.pipeline_scheduler_original.get_job_manager')
+    def test_pipeline_run_timeout_cancel(self, mock_get_job_manager):
+        mock_job_manager = mock_get_job_manager()
+        mock_job_manager.add_job = MagicMock()
+        pipeline = create_pipeline_with_blocks(
+            'test pipeline run timeout pipeline',
+            self.repo_path,
+        )
+        pipeline_uuid = pipeline.uuid
+        pipeline_schedule = PipelineSchedule.create(
+            name='test_timeout_pipeline_trigger',
+            pipeline_uuid=pipeline_uuid,
+            schedule_type=ScheduleType.TIME,
+            settings=dict(
+                timeout=600,
+                timeout_status=PipelineRun.PipelineRunStatus.CANCELLED,
+            ),
+        )
+        self.add_pipeline_schedule_cleanup(pipeline_schedule)
+        pipeline_schedule.update(
+            status=ScheduleStatus.ACTIVE,
+        )
+        now_time = datetime.now(tz=pytz.UTC)
+        pipeline_run = create_pipeline_run_with_schedule(
+            execution_date=now_time - timedelta(seconds=601),
+            started_at=now_time - timedelta(seconds=601),
+            pipeline_uuid=pipeline_uuid,
+            pipeline_schedule_id=pipeline_schedule.id,
+        )
+        pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+        pipeline_run2 = create_pipeline_run_with_schedule(
+            execution_date=now_time - timedelta(seconds=599),
+            started_at=now_time - timedelta(seconds=599),
+            pipeline_uuid=pipeline_uuid,
+            pipeline_schedule_id=pipeline_schedule.id,
+        )
+        pipeline_run2.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+        pipeline_run3 = create_pipeline_run_with_schedule(
+            execution_date=now_time - timedelta(seconds=1),
+            started_at=now_time - timedelta(seconds=1),
+            pipeline_uuid=pipeline_uuid,
+            pipeline_schedule_id=pipeline_schedule.id,
+        )
+        pipeline_run3.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+
+        PipelineScheduler(pipeline_run=pipeline_run).schedule()
+        PipelineScheduler(pipeline_run=pipeline_run2).schedule()
+        PipelineScheduler(pipeline_run=pipeline_run3).schedule()
+        self.assertEqual(pipeline_run.status, PipelineRun.PipelineRunStatus.CANCELLED)
+        self.assertEqual(pipeline_run2.status, PipelineRun.PipelineRunStatus.RUNNING)
+        self.assertEqual(pipeline_run3.status, PipelineRun.PipelineRunStatus.RUNNING)
+
+    @freeze_time('2023-05-01 01:20:33')
+    @patch('mage_ai.orchestration.pipeline_scheduler_original.get_job_manager')
+    def test_block_run_timeout(self, mock_get_job_manager):
+        mock_job_manager = mock_get_job_manager()
+        mock_job_manager.add_job = MagicMock()
+        pipeline = create_pipeline_with_blocks(
+            'test block run timeout pipeline',
+            self.repo_path,
+        )
+        pipeline_uuid = pipeline.uuid
+        pipeline_schedule = PipelineSchedule.create(
+            name='test_block_timeout_pipeline_trigger',
+            pipeline_uuid=pipeline_uuid,
+            schedule_type=ScheduleType.TIME,
+        )
+        self.add_pipeline_schedule_cleanup(pipeline_schedule)
+
+        block = pipeline.get_block('block1')
+        block.update(data=dict(timeout=600))
+
+        pipeline_schedule.update(
+            status=ScheduleStatus.ACTIVE,
+        )
+        now_time = datetime.now(tz=pytz.UTC)
+        pipeline_run = create_pipeline_run_with_schedule(
+            execution_date=now_time - timedelta(seconds=601),
+            pipeline_uuid=pipeline_uuid,
+            pipeline_schedule_id=pipeline_schedule.id,
+        )
+        block_run = find(lambda br: br.block_uuid == 'block1', pipeline_run.block_runs)
+        block_run.update(
+            status=BlockRun.BlockRunStatus.RUNNING,
+            started_at=now_time - timedelta(seconds=601),
+        )
+        pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+        pipeline_run2 = create_pipeline_run_with_schedule(
+            execution_date=now_time - timedelta(seconds=599),
+            pipeline_uuid=pipeline_uuid,
+            pipeline_schedule_id=pipeline_schedule.id,
+        )
+        block_run2 = find(lambda br: br.block_uuid == 'block1', pipeline_run2.block_runs)
+        block_run2.update(
+            status=BlockRun.BlockRunStatus.RUNNING,
+            started_at=now_time - timedelta(seconds=599),
+        )
+        pipeline_run2.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+
+        PipelineScheduler(pipeline_run=pipeline_run).schedule()
+        PipelineScheduler(pipeline_run=pipeline_run2).schedule()
+        self.assertEqual(block_run.status, BlockRun.BlockRunStatus.FAILED)
+        self.assertEqual(block_run2.status, BlockRun.BlockRunStatus.RUNNING)

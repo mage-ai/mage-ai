@@ -1,0 +1,69 @@
+---
+title: DuckDB
+description: How to configure DuckDB as a destination in Mage to write pipeline data to local DuckDB files for fast, embedded analytics.
+---
+
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="data-integration" />
+
+![DuckDB Logo](https://miro.medium.com/v2/resize:fit:1400/format:webp/0*Qcgc4cmJk5lFGBwi.png)
+
+---
+
+## Overview
+
+Use **DuckDB** as a destination in Mage to write structured data to local DuckDB database files. DuckDB is an embedded analytical database that runs in-process, making it ideal for fast local analytics, data staging, or lightweight data processing workflows.
+
+This destination is perfect for scenarios where you need to quickly analyze data locally before pushing to a larger data warehouse, or for building lightweight analytics pipelines.
+
+---
+
+## Required Configuration
+
+You must enter the following configuration when writing to a DuckDB destination:
+
+| Key              | Description                                                                                  | Example Value                                           | Required |
+|------------------|----------------------------------------------------------------------------------------------|--------------------------------------------------------|----------|
+| `file_path`       | Absolute file path to the `.duckdb` file where data will be saved.                          | `/home/src/default_repo/mage_output.duckdb`           | ✅        |
+| `if_exists`       | What to do if the table already exists: `replace`, `append`, or `fail`.                     | `replace`                                              | ✅        |
+
+---
+
+## Configuration Options
+
+### `if_exists` Values
+
+| Value    | Description                                                                                  |
+|----------|----------------------------------------------------------------------------------------------|
+| `replace`| Overwrites the existing table with new data. The table will be recreated on each pipeline run. |
+| `append` | Adds new data to the existing table. Existing rows remain unchanged.                        |
+| `fail`   | Raises an error if the table already exists. Useful for preventing accidental overwrites.   |
+
+---
+
+## Notes
+
+- **Embedded Database**: DuckDB is an embedded database. The file is local to the machine or container where Mage is running.
+- **Pandas Integration**: Supports writing pandas DataFrames directly to tables in a `.duckdb` file.
+- **File Path**: Use absolute paths to ensure the file is created in the correct location.
+- **Performance**: DuckDB is optimized for analytical queries and can handle large datasets efficiently.
+- **Use Cases**: Ideal for fast, local analytics or staging data before pushing to a warehouse.
+
+---
+
+## Sample Configuration
+
+```yaml
+file_path: /home/src/default_repo/mage_output.duckdb
+if_exists: replace
+```
+
+---
+
+## Related Resources
+
+- [DuckDB Documentation](https://duckdb.org/docs/)
+- [DuckDB Python API](https://duckdb.org/docs/api/python/overview)
+- [DuckDB GitHub Repository](https://github.com/duckdb/duckdb)

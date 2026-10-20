@@ -1,0 +1,31 @@
+bert_embedding:
+  name: 'BERT Embedding'
+  description: 'Generate BERT embeddings for the provided text.'
+  inputs:
+    text:
+      style:
+        multiline: true
+      type: text_field
+  variables:
+    bert_embeddings:
+      description: 'The variable to store BERT embeddings.'
+      name: 'BERT Embeddings'
+      required: true
+      types:
+        - date
+
+word2vec_embedding:
+  name: 'Word2Vec Embedding'
+  description: 'Generate Word2Vec embeddings for the provided text.'
+  inputs:
+    text:
+      style:
+        multiline: true
+      type: text_field
+  variables:
+    word2vec_embeddings:
+      description: 'The variable to store Word2Vec embeddings.'
+      name: 'Word2Vec Embeddings'
+      required: true
+      types:
+        - date

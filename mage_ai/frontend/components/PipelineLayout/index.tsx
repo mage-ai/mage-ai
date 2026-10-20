@@ -1,16 +1,15 @@
 import React, {
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react';
 
+import ClickOutside from '@oracle/components/ClickOutside';
 import ErrorPopup from '@components/ErrorPopup';
 import Head from '@oracle/elements/Head';
 import Header, { BreadcrumbType } from '@components/shared/Header';
 import PipelineType from '@interfaces/PipelineType';
 import TripleLayout from '@components/TripleLayout';
-import api from '@api';
 import {
   AFTER_DEFAULT_WIDTH,
   BEFORE_DEFAULT_WIDTH,
@@ -23,48 +22,71 @@ import {
   get,
   set,
 } from '@storage/localStorage';
+import { NavigationItem } from '@components/Dashboard/VerticalNavigation';
 import { PAGE_NAME_EDIT } from '@components/PipelineDetail/constants';
 import { capitalize } from '@utils/string';
 import { useWindowSize } from '@utils/sizes';
 
 type PipelineLayoutProps = {
   after?: any;
+  afterFooter?: any;
   afterHeader?: any;
+  afterHeightOffset?: number;
   afterHidden?: boolean;
+  afterInnerHeightMinus?: number;
+  afterNavigationItems?: NavigationItem[];
+  afterOverflow?: 'hidden';
   afterSubheader?: any;
   before?: any;
+  beforeDraggableTopOffset?: number;
   beforeHeader?: any;
+  beforeHeightOffset?: number;
+  beforeHidden?: boolean;
+  beforeNavigationItems?: NavigationItem[];
   children: any;
   errors: any;
+  footerOffset?: number;
   headerOffset?: number;
+  mainContainerFooter?: any;
   mainContainerHeader?: any;
   mainContainerRef?: any;
   page: string;
   pipeline: PipelineType;
-  projectName: string;
   setAfterHidden?: (value: boolean) => void;
   setAfterWidthForChildren?: (width: number) => void;
-  setErrors: (errors: any) => void;
+  setBeforeHidden?: (value: boolean) => void;
+  setErrors?: (errors: any) => void;
   setMainContainerWidth?: (width: number) => void;
 };
 
 function PipelineLayout({
   after,
+  afterFooter,
   afterHeader,
+  afterHeightOffset,
   afterHidden: afterHiddenProp,
+  afterInnerHeightMinus,
+  afterNavigationItems,
+  afterOverflow,
   afterSubheader,
   before,
+  beforeDraggableTopOffset,
   beforeHeader,
+  beforeHeightOffset,
+  beforeHidden: beforeHiddenProp,
+  beforeNavigationItems,
   children,
   errors,
+  footerOffset,
   headerOffset,
+  mainContainerFooter,
   mainContainerHeader,
   mainContainerRef,
   page,
   pipeline,
-  projectName,
   setAfterHidden: setAfterHiddenProp,
   setAfterWidthForChildren,
+  setBeforeHidden: setBeforeHiddenProp,
   setErrors,
   setMainContainerWidth,
 }: PipelineLayoutProps) {
@@ -75,8 +97,7 @@ function PipelineLayout({
     get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_WIDTH, AFTER_DEFAULT_WIDTH));
   const [beforeWidth, setBeforeWidth] = useState(
     get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_WIDTH, BEFORE_DEFAULT_WIDTH));
-  const [beforeHidden, setBeforeHidden] =
-    useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN));
+
   const [afterMousedownActive, setAfterMousedownActive] = useState(false);
   const [beforeMousedownActive, setBeforeMousedownActive] = useState(false);
 
@@ -86,6 +107,14 @@ function PipelineLayout({
   if (!setAfterHidden) {
     [afterHidden, setAfterHidden] =
       useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_AFTER_HIDDEN));
+  }
+
+  let beforeHidden = beforeHiddenProp;
+  let setBeforeHidden = setBeforeHiddenProp;
+
+  if (!setBeforeHidden) {
+    [beforeHidden, setBeforeHidden] =
+      useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EDITOR_BEFORE_HIDDEN));
   }
 
   useEffect(() => {
@@ -99,7 +128,7 @@ function PipelineLayout({
     afterWidth,
     beforeHidden,
     beforeWidth,
-    mainContainerRef?.current,
+    mainContainerRef,
     setMainContainerWidth,
     widthWindow,
   ]);
@@ -123,15 +152,13 @@ function PipelineLayout({
     beforeWidth,
   ]);
 
-  const { data: dataProjects } = api.projects.list();
-  const projects = dataProjects?.projects;
   const headerMemo = useMemo(() => {
     const breadcrumbs: BreadcrumbType[] = [
       {
         label: () => 'Pipelines',
         linkProps: {
-          href: '/pipelines',
           as: '/pipelines',
+          href: '/pipelines',
         },
       },
     ];
@@ -139,12 +166,11 @@ function PipelineLayout({
     if (pipeline) {
       breadcrumbs.push(...[
         {
-          // gradientColor: PAGE_NAME_EDIT === page ? null : PURPLE_BLUE,
           bold: PAGE_NAME_EDIT !== page,
-          label: () => pipeline?.name,
+          label: () => pipeline?.uuid,
           linkProps: {
-            href: '/pipelines/[pipeline]',
             as: `/pipelines/${pipeline?.uuid}`,
+            href: '/pipelines/[pipeline]',
           },
         },
       ]);
@@ -152,7 +178,6 @@ function PipelineLayout({
       if (PAGE_NAME_EDIT === page) {
         breadcrumbs.push(...[
           {
-            // gradientColor: PURPLE_BLUE,
             bold: true,
             label: () => capitalize(page),
           },
@@ -163,14 +188,11 @@ function PipelineLayout({
     return (
       <Header
         breadcrumbs={breadcrumbs}
-        version={projects?.[0]?.version}
       />
     );
   }, [
     page,
     pipeline,
-    projectName,
-    projects,
   ]);
 
   return (
@@ -179,35 +201,53 @@ function PipelineLayout({
 
       <TripleLayout
         after={after}
+        afterFooter={afterFooter}
         afterHeader={afterHeader}
+        afterHeightOffset={afterHeightOffset}
         afterHidden={afterHidden}
+        afterInnerHeightMinus={afterInnerHeightMinus}
         afterMousedownActive={afterMousedownActive}
+        afterNavigationItems={afterNavigationItems}
+        afterOverflow={afterOverflow}
         afterSubheader={afterSubheader}
         afterWidth={afterWidth}
         before={before}
+        beforeDraggableTopOffset={beforeDraggableTopOffset}
         beforeHeader={beforeHeader}
+        beforeHeightOffset={beforeHeightOffset}
         beforeHidden={beforeHidden}
         beforeMousedownActive={beforeMousedownActive}
+        beforeNavigationItems={beforeNavigationItems}
         beforeWidth={beforeWidth}
+        footerOffset={footerOffset}
         header={headerMemo}
         headerOffset={headerOffset}
+        mainContainerFooter={mainContainerFooter}
         mainContainerHeader={mainContainerHeader}
         mainContainerRef={mainContainerRef}
+        navigationShowMore
         setAfterHidden={setAfterHidden}
         setAfterMousedownActive={setAfterMousedownActive}
         setAfterWidth={setAfterWidth}
         setBeforeHidden={setBeforeHidden}
         setBeforeMousedownActive={setBeforeMousedownActive}
         setBeforeWidth={setBeforeWidth}
+        subtractTopFromBeforeDraggableHeight
       >
         {children}
       </TripleLayout>
 
       {errors && (
-        <ErrorPopup
-          {...errors}
-          onClose={() => setErrors(null)}
-        />
+        <ClickOutside
+          disableClickOutside
+          isOpen
+          onClickOutside={() => setErrors(null)}
+        >
+          <ErrorPopup
+            {...errors}
+            onClose={() => setErrors(null)}
+          />
+        </ClickOutside>
       )}
     </>
   );

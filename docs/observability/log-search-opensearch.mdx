@@ -1,0 +1,332 @@
+---
+title: "OpenSearch log search"
+sidebarTitle: "OpenSearch"
+---
+
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="log-search-opensearch" />
+
+Use OpenSearch-backed log search when you want Mage to search pipeline, block,
+trigger, and run logs across log files instead of only reading the latest files
+from disk.
+
+For Mage Pro SaaS and Hybrid Cloud deployments, OpenSearch log search is enabled
+automatically. No Helm chart changes or Kubernetes objects are required.
+
+For other deployment options, including private cloud and on-prem deployments,
+use this guide to update Helm chart values and create any required Kubernetes
+Secrets for secured OpenSearch. In Kubernetes deployments, the Mage Helm chart
+can wire the Mage containers, Fluent Bit sidecar, OpenSearch index setup job,
+and shared log volume from the `logSearch.*` values.
+
+## Quick start
+
+For a private cloud or on-prem quick start, enable the bundled OpenSearch
+subchart and log search in the same Helm upgrade. This is the shortest path
+because the chart can create the OpenSearch resources, Fluent Bit config, and
+index setup job for you. Leave `logSearch.opensearch.host` empty; the chart
+derives the in-cluster OpenSearch service name.
+
+### Requirements
+
+- A Mage deployment managed by the
+  [Mage Helm chart](https://github.com/mage-ai/helm-charts/tree/master/charts/mageai).
+- A Kubernetes Secret with a strong `OPENSEARCH_INITIAL_ADMIN_PASSWORD` value
+  for bundled OpenSearch.
+- A `ReadWriteOnce` storage class for the bundled OpenSearch data volume when
+  your cluster does not have a suitable default StorageClass. For example, an
+  EKS cluster that uses EFS for shared Mage project files may still need an
+  EBS-backed class such as `gp2` or `gp3` for OpenSearch.
+- A Kubernetes PVC that contains the Mage project files and log files. The
+  quick start reuses this PVC through `logSearch.persistence.existingClaim`.
+
+If the OpenSearch PVC stays pending, the setup job cannot connect to OpenSearch
+and Helm may wait on the hook.
+
+### Minimum values
+
+Create a Secret for the bundled OpenSearch admin bootstrap password.
+
+```bash
+kubectl -n mage create secret generic opensearch-initial-admin \
+  --from-literal=OPENSEARCH_INITIAL_ADMIN_PASSWORD=<strong-password>
+```
+
+Then reference the Secret from the OpenSearch subchart values.
+
+```yaml
+opensearch:
+  enabled: true
+  extraEnvs:
+    - name: OPENSEARCH_INITIAL_ADMIN_PASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: opensearch-initial-admin
+          key: OPENSEARCH_INITIAL_ADMIN_PASSWORD
+
+logSearch:
+  enabled: true
+  persistence:
+    existingClaim: <mage-project-pvc>
+  setupJob:
+    enabled: true
+```
+
+`logSearch.opensearch.host`, `logSearch.opensearch.port`, and
+`logSearch.opensearch.index` can be omitted in bundled mode. The chart derives
+the bundled OpenSearch host and defaults to port `9200` and index `mage_logs`.
+Add `logSearch.persistence.subPath` only when your project/log PVC requires it.
+`logSearch.setupJob.enabled` defaults to `false`, so keep it set to `true` when
+you want Helm to create the `mage_logs` index during the upgrade.
+Do not commit the real `OPENSEARCH_INITIAL_ADMIN_PASSWORD` value into
+`values.yaml`.
+
+If your cluster does not have a suitable default StorageClass for OpenSearch,
+add one explicitly:
+
+```yaml
+opensearch:
+  persistence:
+    storageClass: <rwo-storage-class>
+```
+
+### Render and upgrade
+
+Render the exact chart source and values you plan to deploy.
+
+```bash
+helm template mageai <path-to-helm-charts>/charts/mageai \
+  --namespace mage \
+  --values values-log-search.yaml
+```
+
+Confirm the rendered manifest includes OpenSearch resources,
+`USE_OPENSEARCH_FOR_LOGS=true`, the Fluent Bit sidecar, the chart-rendered
+Fluent Bit ConfigMap, and the chart-rendered index setup Job. Then upgrade the
+release.
+
+```bash
+helm dependency build <path-to-helm-charts>/charts/mageai
+
+helm upgrade --install mageai <path-to-helm-charts>/charts/mageai \
+  --namespace mage --create-namespace \
+  --values values-log-search.yaml \
+  --reuse-values
+```
+
+The setup job is idempotent. After it creates the index successfully, you can
+set `logSearch.setupJob.enabled=false` in later upgrades if you do not want Helm
+to run it again.
+
+## Customize the quick start
+
+Use the quick start as the base, then customize only the pieces your deployment
+needs.
+
+### External OpenSearch
+
+To use an external or managed OpenSearch cluster, leave `opensearch.enabled`
+unset or `false`, and set `logSearch.opensearch.host`.
+
+```yaml
+logSearch:
+  enabled: true
+  opensearch:
+    host: opensearch-cluster-master.mage-search.svc.cluster.local
+    port: "9200"
+    index: mage_logs
+  persistence:
+    existingClaim: <mage-project-pvc>
+    subPath: <optional-project-subpath>
+  setupJob:
+    enabled: true
+```
+
+When `opensearch.enabled=false`, `logSearch.opensearch.host` is required. The
+chart fails rendering if log search is enabled for an external OpenSearch
+cluster without a host.
+
+### Auth and TLS
+
+For OpenSearch auth, create a Secret with `OPENSEARCH_USERNAME` and
+`OPENSEARCH_PASSWORD`, then reference it from `logSearch.opensearch.auth`.
+
+```bash
+kubectl -n mage create secret generic opensearch-auth \
+  --from-literal=OPENSEARCH_USERNAME=<username> \
+  --from-literal=OPENSEARCH_PASSWORD=<password>
+```
+
+```yaml
+logSearch:
+  opensearch:
+    auth:
+      enabled: true
+      existingSecret: opensearch-auth
+```
+
+For TLS, create a Secret with `ca.crt`, then reference it from
+`logSearch.opensearch.tls`.
+
+```yaml
+logSearch:
+  opensearch:
+    tls:
+      enabled: true
+      existingSecret: opensearch-tls-ca
+      verify: true
+```
+
+When TLS is enabled, the chart sets `OPENSEARCH_HTTP_SCHEME=https` for Mage,
+uses HTTPS in the index setup hook Job, and mounts the CA certificate at
+`/etc/ssl/opensearch/ca.crt`. Fluent Bit receives `OPENSEARCH_TLS=On`.
+
+Securing a bundled OpenSearch cluster also requires OpenSearch security
+configuration, not only Mage-side auth variables. Make sure OpenSearch has valid
+node/admin certificates, `internal_users.yml`, and role mappings, then run the
+OpenSearch security bootstrap for the cluster if your OpenSearch distribution
+requires it. Avoid mounting a custom `roles.yml` unless you intentionally need
+to replace roles; overriding built-in static roles can prevent security
+initialization. If Helm keeps reusing an earlier failed nested security value,
+rerender with your intended values and consider an upgrade with `--reset-values`
+using a complete values file.
+
+### Project mounts and generated PVCs
+
+If an existing Mage release already has important `extraVolumes` or
+`extraVolumeMounts`, check the rendered Deployment carefully. The chart
+preserves existing mounts and avoids injecting a duplicate `/home/src` project
+mount when `extraVolumeMounts` already contains the log-search mount path. If
+your release already mounts the project path, set
+`logSearch.persistence.mountInMageContainer=false` and let Fluent Bit reuse that
+mount read-only.
+
+For generated log-search PVCs, use `logSearch.persistence.accessModes` and
+`storageClassName` that match your topology. When `standaloneScheduler=true` or
+`replicaCount > 1`, generated log-search PVCs must include `ReadWriteMany`; use
+an existing RWX claim or set `logSearch.persistence.accessModes` accordingly.
+
+### Custom Fluent Bit config
+
+The default path uses a chart-rendered Fluent Bit ConfigMap. Use
+`logSearch.fluentBit.existingConfigMap` or
+`logSearch.fluentBit.existingParsersConfigMap` only when you need to provide
+custom Fluent Bit ConfigMaps yourself.
+
+If you override `logSearch.fluentBit.config`, keep the OpenSearch output
+environment variables wired to the chart values:
+
+```text
+Host               ${OPENSEARCH_HOST}
+Port               ${OPENSEARCH_PORT}
+Index              ${OPENSEARCH_LOG_INDEX}
+tls                ${OPENSEARCH_TLS}
+tls.verify         ${OPENSEARCH_VERIFY_CERTS}
+```
+
+## Verify the deployment
+
+Check that the Mage pod has both the Mage container and the Fluent Bit sidecar.
+
+```bash
+kubectl -n mage get pods -l app.kubernetes.io/name=mageai
+```
+
+Confirm Fluent Bit is sending records.
+
+```bash
+kubectl -n mage logs -l app.kubernetes.io/name=mageai -c fluent-bit --tail=50
+```
+
+Confirm the OpenSearch index exists and has documents.
+
+```bash
+kubectl -n mage-search exec -it <opensearch-pod-name> -- \
+  curl -s localhost:9200/_cat/indices/mage_logs?v
+```
+
+If OpenSearch uses auth or TLS, include the matching `curl` flags for your
+cluster, for example `-u '<username>:<password>'`, `https://localhost:9200`, and
+`-k` or `--cacert`.
+
+Finally, open a pipeline's **Logs** page in Mage and search for text that appears
+in a recent pipeline or block run.
+
+## Troubleshooting
+
+If searches return no results, check these items first:
+
+- `USE_OPENSEARCH_FOR_LOGS` is set to `true` in the Mage web and scheduler pods.
+- `OPENSEARCH_HOST`, `OPENSEARCH_PORT`, and `OPENSEARCH_LOG_INDEX` match the
+  OpenSearch service and index.
+- The setup job completed, or the `mage_logs` index already exists.
+- The Fluent Bit sidecar can read the mounted project/log path.
+- The Fluent Bit sidecar logs show successful flushes instead of connection,
+  parser, or path errors.
+- Auth and TLS settings are consistent across Mage, Fluent Bit, the setup job,
+  and the OpenSearch cluster.
+- The `logSearch.persistence.existingClaim` and `subPath` point at the same
+  project files that Mage writes logs into.
+- If `opensearch.enabled=false`, `logSearch.opensearch.host` is set. The chart
+  fails rendering when log search is enabled for an external OpenSearch cluster
+  without a host.
+
+When troubleshooting Helm rendering, compare your values against the examples in
+the Helm chart repository under `examples/aws-eks/values-log-search.yaml` and
+`examples/aws-eks/log-search-deployment.md`.
+
+## Reference
+
+### What the chart creates
+
+The Helm chart owns the non-secret log-search resources. In the default path,
+you do not need to create Fluent Bit ConfigMaps or an `opensearch_setup.py`
+ConfigMap before running `helm upgrade`.
+
+When `logSearch.enabled=true`, the chart can:
+
+- set `USE_OPENSEARCH_FOR_LOGS=true` in the Mage web and scheduler containers;
+- set `OPENSEARCH_HOST`, `OPENSEARCH_PORT`, and `OPENSEARCH_LOG_INDEX`;
+- optionally set OpenSearch auth and TLS environment variables from Kubernetes
+  Secrets;
+- mount the project/log PVC into the Mage container and the Fluent Bit sidecar;
+- render the `mageai-fluent-bit` ConfigMap from `logSearch.fluentBit.config`
+  and `logSearch.fluentBit.parsers`, unless you provide existing ConfigMaps;
+- run Fluent Bit to tail Mage log files and ship them to OpenSearch;
+- render the `mageai-log-search-index` ConfigMap from
+  `logSearch.setupJob.mapping`;
+- create a log-search PVC when `logSearch.persistence.enabled=true` and no
+  `existingClaim` is set;
+- create a Helm hook Job that applies `logSearch.setupJob.mapping` to create
+  the OpenSearch log index.
+
+The default index name is `mage_logs`.
+
+If you use a packaged chart from a Helm repository, render that packaged chart
+too. If the rendered manifest does not include the `logSearch` environment
+variables, OpenSearch subchart resources, Fluent Bit sidecar, chart-rendered
+Fluent Bit ConfigMap, and chart-rendered index setup Job, use a newer chart
+package or deploy from a checked-out chart source that includes the `logSearch`
+templates.
+
+### Helm values
+
+| Helm value | Runtime effect |
+| --- | --- |
+| `logSearch.enabled` | Enables OpenSearch-backed log search and sets `USE_OPENSEARCH_FOR_LOGS=true`. |
+| `logSearch.opensearch.host` | Sets `OPENSEARCH_HOST`. Leave empty only when `opensearch.enabled=true`. |
+| `logSearch.opensearch.port` | Sets `OPENSEARCH_PORT`. |
+| `logSearch.opensearch.index` | Sets `OPENSEARCH_LOG_INDEX`; defaults to `mage_logs`. |
+| `logSearch.opensearch.auth.existingSecret` | Reads `OPENSEARCH_USERNAME` and `OPENSEARCH_PASSWORD` from a Kubernetes Secret. |
+| `logSearch.opensearch.tls.enabled` | Uses HTTPS for Mage and the setup job, and TLS for Fluent Bit. |
+| `logSearch.opensearch.tls.existingSecret` | Mounts `ca.crt` at `/etc/ssl/opensearch/ca.crt`. |
+| `logSearch.persistence.enabled` | Creates a log-search PVC when `existingClaim` is empty. |
+| `logSearch.persistence.existingClaim` | Reuses a shared Mage project/log PVC for Mage and Fluent Bit. |
+| `logSearch.persistence.mountInMageContainer` | Controls whether the chart mounts the log-search PVC into the Mage container. |
+| `logSearch.fluentBit.enabled` | Adds the Fluent Bit sidecar that ships log files to OpenSearch. |
+| `logSearch.fluentBit.config` | Renders the chart-managed Fluent Bit config. |
+| `logSearch.fluentBit.existingConfigMap` | Uses an existing Fluent Bit config ConfigMap instead of rendering one. |
+| `logSearch.setupJob.enabled` | Runs the index creation job after Helm install or upgrade. |
+| `logSearch.setupJob.mapping` | Renders the index mapping used by the setup job. |

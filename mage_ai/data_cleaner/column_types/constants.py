@@ -1,7 +1,7 @@
-from enum import Enum
+from mage_ai.shared.enum import StrEnum
 
 
-class ColumnType(str, Enum):
+class ColumnType(StrEnum):
     CATEGORY = 'category'
     CATEGORY_HIGH_CARDINALITY = 'category_high_cardinality'
     DATETIME = 'datetime'

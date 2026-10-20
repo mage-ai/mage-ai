@@ -1,0 +1,81 @@
+version: '3'
+services:
+  postgres-db:
+    image: postgres:13-alpine3.17
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=mage
+  server:
+    image: mage/data
+    build:
+      context: .
+      dockerfile: ./dev.Dockerfile
+    command: "python mage_ai/server/server.py --host ${HOST} --port ${PORT} --project ${PROJECT} --manage-instance ${MANAGE_INSTANCE}"
+    environment:
+      - AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+      - ECS_CLUSTER_NAME=$ECS_CLUSTER_NAME
+      - ECS_CONTAINER_NAME=$ECS_CONTAINER_NAME
+      - ECS_TASK_DEFINITION=$ECS_TASK_DEFINITION
+      - ENV=dev
+      - GCP_PROJECT_ID=$GCP_PROJECT_ID
+      - GCP_REGION=$GCP_REGION
+      - MAGE_DATABASE_CONNECTION_URL=postgresql+psycopg2://postgres:postgres@postgres-db:5432/mage
+      - MAX_NUMBER_OF_FILE_VERSIONS=$MAX_NUMBER_OF_FILE_VERSIONS
+      - REQUIRE_USER_AUTHENTICATION=$REQUIRE_USER_AUTHENTICATION
+      - path_to_keyfile=$GCP_PATH_TO_CREDENTIALS
+      - AUTHENTICATION_MODE=$AUTHENTICATION_MODE
+      - LDAP_SERVER=$LDAP_SERVER
+      - LDAP_BIND_DN=$LDAP_BIND_DN
+      - LDAP_BIND_PASSWORD=$LDAP_BIND_PASSWORD
+      - LDAP_BASE_DN=$LDAP_BASE_DN
+      - LDAP_AUTHENTICATION_FILTER=$LDAP_AUTHENTICATION_FILTER
+      - LDAP_AUTHORIZATION_FILTER=$LDAP_AUTHORIZATION_FILTER
+      - LDAP_ADMIN_USERNAME=$LDAP_ADMIN_USERNAME
+      - SERVER_VERBOSITY=$SERVER_VERBOSITY
+      - DISABLE_NOTEBOOK_EDIT_ACCESS=$DISABLE_NOTEBOOK_EDIT_ACCESS
+    ports:
+      - 6789:6789
+    volumes:
+      - .:/home/src
+      - ~/.aws:/root/.aws
+      - ~/.mage_data:/root/.mage_data
+    restart: on-failure:5
+    stdin_open: true # used for interactive debugging
+    tty: true # used for interactive debugging
+  app:
+    image: mage/data
+    build:
+      context: .
+      dockerfile: ./dev.Dockerfile
+    depends_on:
+      - server
+    command: ./scripts/install_and_run.sh
+    ports:
+      - 3000:3000
+    volumes:
+      - ./mage_ai/frontend/.babelrc:/home/src/mage_ai/frontend/.babelrc
+      - ./mage_ai/frontend/.eslintrc.js:/home/src/mage_ai/frontend/.eslintrc.js
+      - ./mage_ai/frontend/api:/home/src/mage_ai/frontend/api
+      - ./mage_ai/frontend/components:/home/src/mage_ai/frontend/components
+      - ./mage_ai/frontend/context:/home/src/mage_ai/frontend/context
+      - ./mage_ai/frontend/hocs:/home/src/mage_ai/frontend/hocs
+      - ./mage_ai/frontend/interfaces:/home/src/mage_ai/frontend/interfaces
+      - ./mage_ai/frontend/next-env.d.ts:/home/src/mage_ai/frontend/next-env.d.ts
+      - ./mage_ai/frontend/next.config.js:/home/src/mage_ai/frontend/next.config.js
+      - ./mage_ai/frontend/oracle:/home/src/mage_ai/frontend/oracle
+      - ./mage_ai/frontend/package.json:/home/src/mage_ai/frontend/package.json
+      - ./mage_ai/frontend/pages:/home/src/mage_ai/frontend/pages
+      - ./mage_ai/frontend/public:/home/src/mage_ai/frontend/public
+      - ./mage_ai/frontend/scripts:/home/src/mage_ai/frontend/scripts
+      - ./mage_ai/frontend/storage:/home/src/mage_ai/frontend/storage
+      - ./mage_ai/frontend/stories:/home/src/mage_ai/frontend/stories
+      - ./mage_ai/frontend/styles:/home/src/mage_ai/frontend/styles
+      - ./mage_ai/frontend/tsconfig.json:/home/src/mage_ai/frontend/tsconfig.json
+      - ./mage_ai/frontend/utils:/home/src/mage_ai/frontend/utils
+      - ./mage_ai/frontend/yarn.lock:/home/src/mage_ai/frontend/yarn.lock
+    working_dir: /home/src/mage_ai/frontend

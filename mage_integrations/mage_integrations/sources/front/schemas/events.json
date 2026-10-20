@@ -1,0 +1,27 @@
+{
+  "type": ["null", "object"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": ["null", "string"]
+    },
+    "type": {
+      "type": ["null", "string"]
+    },
+    "emitted_at": {
+      "type": ["null", "number"]
+    },
+    "source": {
+      "type": ["null", "object"],
+      "additionalProperties": true
+    },
+    "target": {
+      "type": ["null", "object"],
+      "additionalProperties": true
+    },
+    "conversation": {
+      "type": ["null", "object"],
+      "additionalProperties": true
+    }
+  }
+}

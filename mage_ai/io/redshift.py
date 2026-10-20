@@ -1,15 +1,23 @@
-from mage_ai.io.base import BaseSQLConnection, ExportWritePolicy, QUERY_ROW_LIMIT
+import json
+import warnings
+from typing import Dict, Union
+
+from pandas import DataFrame
+from redshift_connector import connect
+
+from mage_ai.data_preparation.models.block.sql.utils.shared import split_query_string
+from mage_ai.io.base import QUERY_ROW_LIMIT, ExportWritePolicy
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
+from mage_ai.io.export_utils import clean_df_for_export, infer_dtypes
+from mage_ai.io.sql import BaseSQL
+from mage_ai.io.utils import format_value
 from mage_ai.shared.utils import (
     convert_pandas_dtype_to_python_type,
     convert_python_type_to_redshift_type,
 )
-from pandas import DataFrame
-from redshift_connector import connect
-import json
 
 
-class Redshift(BaseSQLConnection):
+class Redshift(BaseSQL):
     """
     Handles data transfer between a Redshift cluster and the Mage app.
     """
@@ -27,7 +35,25 @@ class Redshift(BaseSQLConnection):
         Opens a connection to the Redshift cluster.
         """
         with self.printer.print_msg('Connecting to Redshift cluster'):
-            self._ctx = connect(**self.settings)
+            connect_options = {}
+            for key in [
+                'access_key_id',
+                'cluster_identifier',
+                'database',
+                'db_user',
+                'host',
+                'iam',
+                'password',
+                'port',
+                'profile',
+                'region',
+                'secret_access_key',
+                'user',
+            ]:
+                if self.settings.get(key):
+                    connect_options[key] = self.settings[key]
+            warnings.filterwarnings('ignore', category=DeprecationWarning)
+            self._ctx = connect(**connect_options)
 
     def execute(self, query_string: str, **kwargs) -> None:
         """
@@ -42,25 +68,38 @@ class Redshift(BaseSQLConnection):
             with self.conn.cursor() as cur:
                 cur.execute(query_string, **kwargs)
 
+    def execute_query_raw(self, query: str, **kwargs) -> None:
+        """
+        Overwrite execute query to process multiple queries in one string.
+        """
+        results = []
+        with self.conn.cursor() as cursor:
+            for query_string in split_query_string(query):
+                result = cursor.execute(query_string)
+                results.append(result)
+        self.conn.commit()
+        return results
+
     def load(
         self,
         query_string: str,
         limit: int = QUERY_ROW_LIMIT,
-        display_query: str = None,
+        display_query: Union[str, None] = None,
         verbose: bool = True,
         *args,
         **kwargs,
-    ) -> DataFrame:
+    ) -> Union[DataFrame, None]:
         """
         Uses query to load data from Redshift cluster into a Pandas data frame.
         This will fail if the query returns no data from the database. When a
-        select query is provided, this function will load at maximum 100,000 rows of data.
+        select query is provided, this function will load at maximum 10,000,000 rows of data.
         To operate on more data, consider performing data transformations in warehouse.
 
 
         Args:
             query_string (str): Query to fetch a table or subset of a table.
-            limit (int, Optional): The number of rows to limit the loaded dataframe to. Defaults to 100000.
+            limit (int, Optional): The number of rows to limit the loaded dataframe to.
+                                    Defaults to 10,000,000.
             *args, **kwargs: Additional parameters to send to query, including parameters
             for use with format strings. See `redshift-connector` docs for more options.
 
@@ -75,7 +114,7 @@ class Redshift(BaseSQLConnection):
                 for line in display_query.split('\n'):
                     print_message += f'\n{line}'
             else:
-                print_message += f'\n{query_string}'
+                print_message += f'\n\n{query_string}\n\n'
 
         query_string = self._clean_query(query_string)
 
@@ -99,11 +138,17 @@ class Redshift(BaseSQLConnection):
     def export(
         self,
         df: DataFrame,
-        table_name: str,
-        if_exists: str = 'append',
-        query_string: str = None,
-        schema: str = None,
+        table_name: str = None,
+        schema: Union[str, None] = None,
+        schema_name: Union[str, None] = None,
+        if_exists: ExportWritePolicy = ExportWritePolicy.APPEND,
+        index: bool = False,
         verbose: bool = True,
+        query_string: Union[str, None] = None,
+        drop_table_on_replace: bool = False,
+        cascade_on_drop: bool = False,
+        create_schema: bool = False,
+        overwrite_types: Dict = None,
     ) -> None:
         """
         Exports a Pandas data frame to a Redshift cluster given table name.
@@ -113,80 +158,108 @@ class Redshift(BaseSQLConnection):
             table_name (str): Name of the table to export the data to.
             Table must already exist.
         """
-        # TODO: Add support for creating new tables if table doesn't exist
-
         # CREATE TABLE predictions_dev.test_v01 AS
         # SELECT *
         # FROM experimentation.assignments_dev
+        if table_name is None:
+            raise Exception('Please provide a table_name argument in the export method.')
 
-        if schema:
-            full_table_name = f'{schema}.{table_name}'
+        if type(df) is dict:
+            df = DataFrame([df])
+        elif type(df) is list:
+            df = DataFrame(df)
+
+        if schema and not schema_name:
+            schema_name = schema
+
+        if schema_name:
+            full_table_name = f'{schema_name}.{table_name}'
         else:
             parts = table_name.split('.')
             if len(parts) == 2:
-                schema = parts[0]
+                schema_name = parts[0]
                 table_name = parts[1]
-                full_table_name = f'{schema}.{table_name}'
+                full_table_name = f'{schema_name}.{table_name}'
             else:
-                schema = 'public'
+                schema_name = 'public'
                 full_table_name = table_name
 
+        if not query_string:
+            if index:
+                df = df.reset_index()
+
+            dtypes = infer_dtypes(df)
+            df = clean_df_for_export(df, self.clean, dtypes)
+
         def __process():
+            table_exists = self.table_exists(schema_name, table_name)
+
             columns_with_type = []
             if not query_string:
+                columns = []
+                if type(df) is DataFrame:
+                    columns = df.columns
+                elif type(df) is dict:
+                    columns = df.keys()
+
                 columns_with_type = [(
                     col,
                     convert_python_type_to_redshift_type(
                         convert_pandas_dtype_to_python_type(df.dtypes[col]),
                     ),
-                ) for col in df.columns]
+                ) for col in columns]
 
             with self.conn.cursor() as cur:
-                if ExportWritePolicy.REPLACE == if_exists:
-                    # TODO: DELETE FROM to support partitions
-                    # https://docs.aws.amazon.com/redshift/latest/dg/r_DELETE.html
-                    cur.execute(f'DROP TABLE IF EXISTS {full_table_name}')
+                if schema_name and create_schema:
+                    cur.execute(f'CREATE SCHEMA IF NOT EXISTS {schema_name};')
 
-                cur.execute("""
-SELECT 1
-FROM information_schema.tables
-WHERE table_schema = '{schema}'
-AND table_name = '{table_name}'
-""")
-                table_doesnt_exist = len(cur.fetchall()) == 0
-                if ExportWritePolicy.FAIL and not table_doesnt_exist:
-                    raise ValueError(
-                        f'Table \'{full_table_name}\' already exists in database.',
-                    )
+                should_create_table = not table_exists
 
-                if table_doesnt_exist and not query_string:
-                    col_with_types = ', '.join(
-                        [f'{col} {col_type}' for col, col_type in columns_with_type],
-                    )
-                    sql = f'CREATE TABLE IF NOT EXISTS {full_table_name} ({col_with_types})'
-                    cur.execute(sql)
+                if table_exists:
+                    if ExportWritePolicy.FAIL == if_exists:
+                        raise ValueError(
+                            f'Table \'{full_table_name}\' already exists in database.',
+                        )
+                    elif ExportWritePolicy.REPLACE == if_exists:
+                        if drop_table_on_replace:
+                            cmd = f'DROP TABLE {full_table_name}'
+                            if cascade_on_drop:
+                                cmd = f'{cmd} CASCADE'
+                            cur.execute(cmd)
+                            should_create_table = True
+                        else:
+                            cur.execute(f'DELETE FROM {full_table_name}')
 
                 if query_string:
-                    if ExportWritePolicy.APPEND == if_exists:
-                        sql = f"""
-INSERT INTO {full_table_name}
-{query_string}
-"""
-                    else:
-                        sql = f"""
-CREATE TABLE {full_table_name} AS
-{query_string}
-"""
-                    cur.execute(sql)
+                    query = f'CREATE TABLE {full_table_name} AS\n{query_string}'
+
+                    if ExportWritePolicy.APPEND == if_exists and table_exists:
+                        query = f'INSERT INTO {full_table_name}\n{query_string}'
+
+                    cur.execute(query)
                 else:
-                    columns = ', '.join([t[0] for t in columns_with_type])
-                    values = [f"""({', '.join(["'{}'".format(x) for x in v])})""" for v in df.values]
-                    values = ', '.join(values)
-                    sql = f"""
-INSERT INTO {full_table_name} ({columns})
-VALUES {values}
-"""
-                    cur.execute(sql)
+                    if should_create_table:
+                        if overwrite_types is not None:
+                            for index, col in enumerate(columns_with_type):
+                                # col is a tuple with (col_name, col_type)
+                                # so we access col_name using col[0]
+                                if col[0] in overwrite_types.keys():
+                                    columns_with_type[index] = (col[0], overwrite_types[col[0]])
+
+                        col_with_types = [f'{col} {col_type}' for col, col_type in
+                                          columns_with_type]
+
+                        col_with_types = ', '.join(col_with_types)
+                        query = f'CREATE TABLE IF NOT EXISTS {full_table_name} ({col_with_types})'
+                        cur.execute(query)
+                    if df.shape[0] > 0:
+                        columns = ', '.join([t[0] for t in columns_with_type])
+                        values = [f"""({', '.join([format_value(x) for x in v])})"""
+                                  for v in df.values]
+                        values = ', '.join(values)
+                        query = f'INSERT INTO {full_table_name} ({columns})\nVALUES {values}'
+
+                        cur.execute(query)
 
                 self.conn.commit()
 
@@ -250,6 +323,10 @@ VALUES {values}
         kwargs['access_key_id'] = config[ConfigKey.AWS_ACCESS_KEY_ID]
         kwargs['secret_access_key'] = config[ConfigKey.AWS_SECRET_ACCESS_KEY]
         kwargs['region'] = config[ConfigKey.AWS_REGION]
+
+        if ConfigKey.REDSHIFT_SCHEMA in config:
+            kwargs['schema'] = config[ConfigKey.REDSHIFT_SCHEMA]
+
         return cls(**kwargs)
 
     @classmethod
@@ -307,3 +384,20 @@ VALUES {values}
             iam=True,
             **kwargs,
         )
+
+    def default_database(self) -> str:
+        return self.settings['database']
+
+    def default_schema(self) -> str:
+        return self.settings.get('schema')
+
+    def table_exists(self, schema_name: str, table_name: str) -> bool:
+        with self.conn.cursor() as cur:
+            cur.execute(f'SET search_path TO {schema_name}')
+            cur.execute(f"""
+SELECT 1
+FROM information_schema.tables
+WHERE table_schema = '{schema_name}'
+AND table_name = '{table_name}'
+""")
+            return len(cur.fetchall()) >= 1

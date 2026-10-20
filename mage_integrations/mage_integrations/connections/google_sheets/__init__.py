@@ -1,9 +1,13 @@
+from typing import Dict
+
+import backoff
+import requests
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
+
 from mage_integrations.connections.base import Connection
 from mage_integrations.connections.utils.google import CredentialsInfoType
 from mage_integrations.utils.dictionary import merge_dict
-from typing import Dict
 
 
 class GoogleSheets(Connection):
@@ -22,11 +26,11 @@ class GoogleSheets(Connection):
 
     def connect(self):
         """Create a connection to the Google Search Console API and return service object.
-        
+
         Returns:
             service (object): Google Search Console service object.
         """
-        
+
         scope = ['https://www.googleapis.com/auth/spreadsheets.readonly']
         if self.credentials_info is None:
             credentials = service_account.Credentials.from_service_account_file(
@@ -41,12 +45,20 @@ class GoogleSheets(Connection):
             credentials=credentials
         )
 
+    @backoff.on_exception(
+        backoff.expo,
+        requests.exceptions.HTTPError,
+        max_tries=5,
+        factor=2,
+    )
     def load(
         self,
         spreadsheet_id: str,
         value_range: str = None,
-        opts: Dict = dict(),
+        opts: Dict = None,
     ):
+        if opts is None:
+            opts = dict()
         service = self.connect()
         kwargs = dict(
             spreadsheetId=spreadsheet_id,
@@ -60,6 +72,12 @@ class GoogleSheets(Connection):
 
         return response.get('values', [])
 
+    @backoff.on_exception(
+        backoff.expo,
+        requests.exceptions.HTTPError,
+        max_tries=5,
+        factor=2,
+    )
     def get_spreadsheet_metadata(
         self,
         spreadsheet_id: str,

@@ -1,0 +1,31 @@
+import { ProButton } from '/snippets/pro/button.mdx';
+
+export const ProBanner = ({
+  button = 'Try Mage Pro for free',
+  description,
+  source = 'documentation',
+  title = 'Our fully managed solution for teams is now available!',
+}) => (
+  <a
+    href={`https://cloud.mage.ai/sign-up?source=${source}`}
+    className="block my-4 px-5 py-4 overflow-hidden rounded-xl flex gap-3 border border-emerald-500/20 bg-emerald-50/50 dark:border-emerald-500/30 dark:bg-emerald-500/10"
+    target="_blank"
+  >
+    <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+      <div
+        className="text-sm prose min-w-0 text-emerald-900 dark:text-emerald-200"
+        style={{ flex: 1 }}
+      >
+        {title}
+        {description && <br />}
+        {description && <p className="normal">{description}</p>}
+      </div>
+
+      <div>&nbsp;</div>
+
+      <div>
+        <ProButton label={button} href={`https://cloud.mage.ai/sign-up?source=${source}`} />
+      </div>
+    </div>
+  </a>
+);

@@ -1,0 +1,47 @@
+---
+title: "Google Analytics"
+---
+
+## Configuration
+
+To set up the Google Analytics source, provide the following configuration parameters:
+
+| Key                          | Description                                                                                               | Sample Value                                  |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| `path_to_credentials_json_file` | Path to your Google service account credentials JSON file.                                               | `/path/to/service_account_credentials.json`  |
+| `property_id`                | Google Analytics GA4 Property ID. [Find your Property ID here](https://developers.google.com/analytics/devguides/reporting/data/v1/property-id). | `12345678`                                   |
+| `start_date`                 | The start date for the Google Analytics query. Format: `YYYY-MM-DD`.                                       | `2022-01-01`                                 |
+| `end_date`                   | The end date for the Google Analytics query. Format: `YYYY-MM-DD`.                                         | `2022-01-01`                                 |
+
+<br/>
+
+### Prerequisites
+
+1. Enable the **Google Analytics API** in your Google Cloud Console:  
+   [Google Cloud API Dashboard](https://console.cloud.google.com/apis/dashboard)
+2. The service account must have access to the Google Analytics property:
+   - Go to the [Google Analytics Admin Dashboard](https://analytics.google.com/analytics)
+   - Click **Admin** in the bottom left corner.
+   - Click **Account Access Management**.
+   - Click **Property Access Management**.
+   - Add the service account email address (from your JSON credentials) with the appropriate permissions.
+
+<br/>
+
+## Schema
+
+Google Analytics data includes two types of columns:
+
+- [Dimensions](https://developers.google.com/analytics/devguides/reporting/data/v1/api-schema#custom_dimensions)
+- [Metrics](https://developers.google.com/analytics/devguides/reporting/data/v1/api-schema#custom_dimensions)
+
+<br/>
+
+### Limitations
+
+- **Maximum number of dimensions:** 9  
+  ([See more on Dimensions](https://developers.google.com/analytics/devguides/reporting/data/v1/rest/v1beta/Dimension))
+- **Maximum number of metrics:** 10  
+  ([See more on Metrics](https://developers.google.com/analytics/devguides/reporting/data/v1/rest/v1beta/Metric))
+
+<br/>

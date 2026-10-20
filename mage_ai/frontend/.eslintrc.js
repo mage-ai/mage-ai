@@ -7,8 +7,16 @@ module.exports = {
     'next/core-web-vitals',
     'plugin:@typescript-eslint/recommended',
     'plugin:react/recommended',
+    'plugin:storybook/recommended',
   ],
-  ignorePatterns: ['.eslintrc.js'],
+  ignorePatterns: [
+    '.eslintrc.js',
+    'mock.ts',
+    'mocks.ts',
+    'next.common.config.js',
+    'next.config.js',
+    'next_base_path.config.js',
+  ],
   parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaFeatures: {
@@ -19,10 +27,10 @@ module.exports = {
     tsconfigRootDir: __dirname,
     sourceType: 'module',
   },
-  plugins: ['@typescript-eslint', 'react'],
+  plugins: ['@typescript-eslint', 'react', 'react-hooks', 'unused-imports'],
   rules: {
     '@typescript-eslint/ban-ts-comment': 'off',
-    '@typescript-eslint/comma-dangle': 'off',
+    '@typescript-eslint/comma-dangle': ['warn', 'always-multiline'],
     '@typescript-eslint/dot-notation': 'off',
     '@typescript-eslint/explicit-module-boundary-types': 'off',
     '@typescript-eslint/naming-convention': 'off',
@@ -48,14 +56,17 @@ module.exports = {
     'jsx-a11y/anchor-is-valid': 'off',
     'jsx-a11y/control-has-associated-label': 'off',
     'jsx-quotes': ['error', 'prefer-double'],
-    'key-spacing': ['error', {
-      mode: 'strict',
-    }],
+    'key-spacing': [
+      'error',
+      {
+        mode: 'strict',
+      },
+    ],
     'max-len': [
       'warn',
       {
-        'code': 120
-      }
+        code: 120,
+      },
     ],
     'no-confusing-arrow': 'off',
     'no-else-return': 'off',
@@ -64,25 +75,29 @@ module.exports = {
     'no-prototype-builtins': 'off',
     'object-curly-spacing': 'off',
     'operator-linebreak': 'off',
-    'quotes': ['error', 'single'],
-    'semi': 'off',
-    'radix': 'off',
+    quotes: ['error', 'single'],
+    semi: 'off',
+    radix: 'off',
     'react/display-name': 'off',
+    'react-hooks/exhaustive-deps': 'error',
     'react-hooks/rules-of-hooks': 'warn',
     'react/jsx-closing-tag-location': 'off',
     'react/jsx-curly-newline': 'off',
     'react/jsx-indent': ['error', 2],
     'react/jsx-one-expression-per-line': 'off',
     'react/jsx-props-no-spreading': 'off',
-    'react/jsx-sort-props': ['warn', {
-      callbacksLast: false,
-      ignoreCase: false,
-    }],
+    'react/jsx-sort-props': [
+      'warn',
+      {
+        callbacksLast: false,
+        ignoreCase: false,
+      },
+    ],
     'react/jsx-wrap-multilines': 'off',
     'react/react-in-jsx-scope': 'off',
     'react/require-default-props': 'off',
     'space-in-parens': ['error', 'never'],
-    'sort-keys': ['warn', 'asc', {'caseSensitive': true, 'natural': false, 'minKeys': 2}],
-    'comma-dangle': ['warn', 'always-multiline']
-  }
-}
+    'sort-keys': ['warn', 'asc', { caseSensitive: true, natural: false, minKeys: 2 }],
+    'comma-dangle': ['warn', 'always-multiline'],
+  },
+};

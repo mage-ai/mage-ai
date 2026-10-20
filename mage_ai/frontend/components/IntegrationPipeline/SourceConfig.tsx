@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { parse, stringify } from 'yaml';
 import { useMutation } from 'react-query';
 
@@ -11,18 +11,18 @@ import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
 import api from '@api';
+import usePrevious from '@utils/usePrevious';
 import { CodeEditorStyle } from './index.style';
 import { onSuccess } from '@api/utils/response';
-
+import { singularize } from '@utils/string';
 
 type SourceConfigProps = {
   api: string;
   block: BlockType;
   blockContent: any;
-  onChangeCodeBlock: any;
+  onChangeCodeBlock: (type: string, uuid: string, value: string) => void;
   pipeline: PipelineType;
 };
-
 
 function SourceConfig({
   api: apiName,
@@ -33,14 +33,16 @@ function SourceConfig({
 }: SourceConfigProps) {
   const [blockConfig, setBlockConfig] = useState(null);
 
+  const blockConfigPrev = usePrevious(blockConfig);
+
   useEffect(() => {
-    if (blockContent && !blockConfig) {
+    if (blockContent && !blockConfig && !blockConfigPrev) {
       setBlockConfig(stringify(blockContent?.config));
     }
-  }, [blockContent])
+  }, [blockConfig, blockConfigPrev, blockContent]);
 
 
-  const [connected, setConnected] = useState<boolean>(null)
+  const [connected, setConnected] = useState<boolean>(null);
   const [error, setError] = useState<string>();
   const [testConnection, { isLoading }] = useMutation(
     api[apiName].useCreate(),
@@ -49,8 +51,9 @@ function SourceConfig({
         response,
         {
           callback: (res) => {
-            setConnected(res['success']);
-            setError(res['error_message']);
+            const key = singularize(apiName);
+            setConnected(res?.[key]?.['success']);
+            setError(res?.[key]?.['error_message']);
           },
           onErrorCallback: ({
             error: {
@@ -77,7 +80,7 @@ function SourceConfig({
           language={BlockLanguageEnum.YAML}
           onChange={(val: string) => {
             setBlockConfig(val);
-            onChangeCodeBlock(block.uuid, stringify({
+            onChangeCodeBlock(block.type, block.uuid, stringify({
               ...blockContent,
               config: parse(val),
             }));
@@ -93,9 +96,11 @@ function SourceConfig({
             onClick={() => {
               // @ts-ignore
               testConnection({
-                action: 'test_connection',
-                pipeline_uuid: pipeline.uuid,
-                config: blockConfig,
+                [singularize(apiName)]: {
+                  action_type: 'test_connection',
+                  config: blockConfig,
+                  pipeline_uuid: pipeline.uuid,
+                },
               });
               setError(null);
             }}

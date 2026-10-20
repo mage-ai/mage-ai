@@ -1,0 +1,9 @@
+@use '../abstracts/helpers' as *;
+
+@mixin background-colors() {
+  @each $value in $colors-names {
+    &.background-color-#{$value} {
+      background-color: var(--colors-#{$value});
+    }
+  }
+}

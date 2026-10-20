@@ -26,8 +26,8 @@ class AzureEventHubSource(BaseSource):
     def read(self, handler: Callable):
         try:
             def on_event(partition_context, event):
-                print(f'Received event from partition: {partition_context.partition_id}.')
-                print(f'Event: {event}')
+                self._print(f'Received event from partition: {partition_context.partition_id}.')
+                self._print(f'Event: {event}')
 
                 handler(dict(data=event.body_as_str()))
 
@@ -40,16 +40,16 @@ class AzureEventHubSource(BaseSource):
                     starting_position='-1',  # '-1' is from the beginning of the partition.
                 )
         except KeyboardInterrupt:
-            print('Stopped receiving.')
+            self._print('Stopped receiving.')
 
     def batch_read(self, handler: Callable):
         try:
             def on_event_batch(partition_context, event_batch: List):
                 if len(event_batch) == 0:
                     return
-                print(f'Partition {partition_context.partition_id},'
-                      f'Received count: {len(event_batch)}')
-                print(f'Sample event: {event_batch[0]}')
+                self._print(f'Partition {partition_context.partition_id},'
+                            f'Received count: {len(event_batch)}')
+                self._print(f'Sample event: {event_batch[0]}')
 
                 # Handle events
                 try:
@@ -70,21 +70,21 @@ class AzureEventHubSource(BaseSource):
                     starting_position='-1',  # '-1' is from the beginning of the partition.
                 )
         except KeyboardInterrupt:
-            print('Stopped receiving.')
+            self._print('Stopped receiving.')
 
     def test_connection(self):
         return True
 
-    def on_partition_initialize(partition_context):
-        print(f'Partition: {partition_context.partition_id} has been initialized.')
+    def on_partition_initialize(self, partition_context):
+        self._print(f'Partition: {partition_context.partition_id} has been initialized.')
 
-    def on_partition_close(partition_context, reason):
-        print(f'Partition: {partition_context.partition_id} has been closed, '
-              f'reason for closing: {reason}.')
+    def on_partition_close(self, partition_context, reason):
+        self._print(f'Partition: {partition_context.partition_id} has been closed, '
+                    f'reason for closing: {reason}.')
 
-    def on_error(partition_context, error):
+    def on_error(self, partition_context, error):
         if partition_context:
-            print(f'An exception: {partition_context.partition_id} occurred during'
-                  f' receiving from Partition: {error}.')
+            self._print(f'An exception: {partition_context.partition_id} occurred during'
+                        f' receiving from Partition: {error}.')
         else:
-            print(f'An exception: {error} occurred during the load balance process.')
+            self._print(f'An exception: {error} occurred during the load balance process.')

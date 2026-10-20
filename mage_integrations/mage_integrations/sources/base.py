@@ -1,4 +1,19 @@
+import inspect
+import json
+import os
+import sys
+import traceback
 from datetime import datetime
+from os.path import isfile
+from typing import Dict, Generator, List
+
+import dateutil.parser
+import pandas as pd
+import simplejson
+import singer
+from singer import utils
+from singer.schema import Schema
+
 from mage_integrations.sources.catalog import Catalog, CatalogEntry
 from mage_integrations.sources.constants import (
     REPLICATION_METHOD_FULL_TABLE,
@@ -6,30 +21,13 @@ from mage_integrations.sources.constants import (
     REPLICATION_METHOD_LOG_BASED,
 )
 from mage_integrations.sources.messages import write_records, write_schema, write_state
-from mage_integrations.sources.utils import (
-    get_standard_metadata,
-    parse_args,
-)
+from mage_integrations.sources.utils import get_standard_metadata, parse_args
 from mage_integrations.utils.array import find_index
 from mage_integrations.utils.dictionary import extract, group_by, merge_dict
 from mage_integrations.utils.files import get_abs_path
 from mage_integrations.utils.logger import Logger
 from mage_integrations.utils.logger.constants import TYPE_SAMPLE_DATA
 from mage_integrations.utils.schema_helpers import extract_selected_columns
-
-from os.path import isfile
-from singer import utils
-from singer.schema import Schema
-from typing import Dict, Generator, List
-import dateutil.parser
-import inspect
-import json
-import os
-import pandas as pd
-import simplejson
-import singer
-import sys
-import traceback
 
 LOGGER = singer.get_logger()
 
@@ -47,14 +45,17 @@ class Source:
         load_sample_data: bool = False,
         log_to_stdout: bool = False,
         logger=LOGGER,
-        query: Dict = {},
+        query: Dict = None,
         schemas_folder: str = 'schemas',
         selected_streams: List[str] = None,
         settings: Dict = None,
+        show_templates: bool = False,
         state: Dict = None,
         test_connection: bool = False,
         verbose: int = 1,
     ):
+        if query is None:
+            query = {}
         args = parse_args([])
         if args:
             if args.catalog:
@@ -73,6 +74,8 @@ class Source:
                 query = args.query
             if args.selected_streams:
                 selected_streams = args.selected_streams
+            if args.show_templates:
+                show_templates = args.show_templates
             if args.state:
                 state = args.state
             if args.test_connection:
@@ -97,6 +100,7 @@ class Source:
         self.schemas_folder = schemas_folder
         self.selected_streams = selected_streams
         self.settings = settings
+        self.show_templates = show_templates
         self.should_test_connection = test_connection
         self.state = state
 
@@ -180,6 +184,9 @@ class Source:
 
         return stream_ids
 
+    def internal_column_schema(self, stream, bookmarks: Dict = None) -> Dict[str, Dict]:
+        return dict()
+
     def process(self) -> None:
         """
         Main method to fetch data from the source with the following steps:
@@ -190,12 +197,16 @@ class Source:
         Raises:
             Exception: Failed to fetch data from the source.
         """
+        self.logger.info('Process started.')
         try:
             if self.should_test_connection:
                 self.test_connection()
             elif self.load_sample_data:
                 catalog = self.catalog or self.discover(streams=self.selected_streams)
-                for stream in catalog.get_selected_streams(self.state):
+                streams = [
+                    catalog.get_stream(tap_stream_id) for tap_stream_id in self.selected_streams
+                ]
+                for stream in streams:
                     gen = self.load_data(stream, sample_data=True)
                     if gen is not None:
                         data = next(gen)
@@ -219,7 +230,9 @@ class Source:
                         json.dump(catalog, sys.stdout)
             elif self.count_records_mode:
                 arr = []
-                streams = [stream for stream in self.catalog.get_selected_streams(self.state) if stream.tap_stream_id in self.selected_streams]
+                selected_streams_arr = self.catalog.get_selected_streams(self.state or {}) or []
+                streams = [stream for stream in selected_streams_arr
+                           if stream.tap_stream_id in self.selected_streams]
                 for stream in streams:
                     tap_stream_id = stream.tap_stream_id
                     count = self.count_records(
@@ -233,6 +246,8 @@ class Source:
                         stream=tap_stream_id,
                     ))
                 json.dump(arr, sys.stdout)
+            elif self.show_templates:
+                json.dump(self.templates(), sys.stdout)
             else:
                 if not self.catalog:
                     catalog = self.discover(streams=self.selected_streams)
@@ -251,6 +266,13 @@ class Source:
                             if stream.tap_stream_id in updated_streams:
                                 stream.update_schema(updated_streams[stream.tap_stream_id][0])
                     catalog = self.catalog
+
+                if self.selected_streams:
+                    catalog.streams = list(filter(
+                        lambda x: x.tap_stream_id in self.selected_streams,
+                        catalog.streams,
+                    ))
+
                 self.sync(catalog)
         except Exception as err:
             message = f'{self.__class__.__name__} process failed with error {str(err)}.'
@@ -322,8 +344,17 @@ class Source:
                 extract_selected_columns(stream.metadata),
             )
 
+        bookmarks = self.__get_bookmarks_for_stream(stream)
+
+        schema_dict['properties'] = merge_dict(
+            schema_dict['properties'],
+            self.internal_column_schema(stream, bookmarks=bookmarks),
+        )
+
         schema_data = dict(
-            bookmark_properties=self._get_bookmark_properties_for_stream(stream),
+            bookmark_properties=self._get_bookmark_properties_for_stream(
+                stream, bookmarks=bookmarks),
+            disable_column_type_check=stream.disable_column_type_check,
             key_properties=stream.key_properties,
             partition_keys=stream.partition_keys,
             replication_method=stream.replication_method,
@@ -377,15 +408,27 @@ class Source:
         self.logger.info(f'Load data for stream {tap_stream_id} started.', tags=tags)
 
         record_count = 0
+        final_record = None
         for rows in self.load_data(
             bookmarks=self.__get_bookmarks_for_stream(stream),
             query=self.query,
             start_date=start_date,
             stream=stream,
         ):
-            max_bookmark_tmp = self.write_records(stream, rows, properties)
+            result = self.write_records(stream, rows, properties)
+            max_bookmark_tmp = result['max_bookmark']
+            final_record = result['final_record']
             max_bookmark = max(max_bookmark, max_bookmark_tmp)
             record_count += len(rows)
+
+        if final_record:
+            self.logger.info(
+                'Final record writing completed.',
+                tags=dict(
+                    record=final_record,
+                    stream=tap_stream_id,
+                ),
+            )
 
         if bookmark_properties and not self.is_sorted:
             if max_bookmark:
@@ -401,9 +444,10 @@ class Source:
 
                 write_state(state)
 
-        self.logger.info(f'Load data for stream {tap_stream_id} completed.', tags=merge_dict(tags, dict(
-            records=record_count,
-        )))
+        self.logger.info(
+            f'Load data for stream {tap_stream_id} completed.',
+            tags=merge_dict(tags, dict(records=record_count)),
+        )
 
         return record_count
 
@@ -417,29 +461,42 @@ class Source:
         Returns:
             List: Bookmark values.
         """
-        bookmark_properties = self._get_bookmark_properties_for_stream(stream)
+        bookmarks = self.__get_bookmarks_for_stream(stream)
+        bookmark_properties = self._get_bookmark_properties_for_stream(
+            stream,
+            bookmarks=bookmarks,
+        )
         max_bookmark = []
 
         columns = extract_selected_columns(stream.metadata)
         if properties is not None:
             columns = list(properties.keys())
+        columns += self.internal_column_schema(stream, bookmarks=bookmarks).keys()
 
+        final_record = None
         for row in rows:
+            tap_stream_id = stream.tap_stream_id
+            record = {col: row.get(col) for col in columns}
             write_records(
-                stream.tap_stream_id,
+                tap_stream_id,
                 [
-                    {col: row.get(col) for col in columns},
+                    record,
                 ],
             )
+            final_record = record
 
-            if REPLICATION_METHOD_INCREMENTAL == stream.replication_method and bookmark_properties:
+            if (stream.replication_method in [
+                    REPLICATION_METHOD_INCREMENTAL,
+                    REPLICATION_METHOD_LOG_BASED,
+                ]
+                    and bookmark_properties):
                 if self.is_sorted:
                     state = {}
 
-                    for idx, col in enumerate(bookmark_properties):
+                    for _, col in enumerate(bookmark_properties):
                         singer.write_bookmark(
                             state,
-                            stream.tap_stream_id,
+                            tap_stream_id,
                             col,
                             row.get(col),
                         )
@@ -451,7 +508,11 @@ class Source:
                         max_bookmark,
                         [row.get(col) for col in bookmark_properties],
                     )
-        return max_bookmark
+
+        return dict(
+            final_record=final_record,
+            max_bookmark=max_bookmark,
+        )
 
     def sync(self, catalog: Catalog, properties: Dict = None) -> None:
         """
@@ -467,7 +528,7 @@ class Source:
         """
         self.logger.info('Sync started.')
 
-        for stream in catalog.get_selected_streams(self.state):
+        for stream in catalog.get_selected_streams(self.state or {}):
             tap_stream_id = stream.tap_stream_id
             tags = dict(stream=tap_stream_id)
             self.logger.info(f'Sync for stream {tap_stream_id} started.', tags=tags)
@@ -475,13 +536,23 @@ class Source:
             self.process_stream(stream, properties)
             record_count = self.sync_stream(stream, properties)
 
-            self.logger.info(f'Sync for stream {tap_stream_id} completed.', tags=merge_dict(tags, dict(
-                records=record_count,
-            )))
+            self.logger.info(
+                f'Sync for stream {tap_stream_id} completed.',
+                tags=merge_dict(tags, dict(records=record_count)),
+            )
 
         self.logger.info('Sync completed.')
 
-    def build_catalog_entry(self, stream_id: str, schema, **kwargs) -> CatalogEntry:
+    def build_catalog_entry(
+        self,
+        stream_id: str,
+        schema,
+        bookmark_properties: List[str] = None,
+        key_properties: List[str] = None,
+        replication_key: str = None,
+        replication_method: str = None,
+        **kwargs,
+    ) -> CatalogEntry:
         """
         Build catalog entry.
 
@@ -494,45 +565,59 @@ class Source:
         """
         # https://github.com/singer-io/getting-started/blob/master/docs/DISCOVERY_MODE.md#metadata
         metadata = get_standard_metadata(
-            key_properties=self.get_table_key_properties(stream_id),
-            replication_method=self.get_forced_replication_method(stream_id),
+            key_properties=key_properties or self.get_table_key_properties(stream_id),
+            replication_method=replication_method or self.get_forced_replication_method(stream_id),
             schema=schema.to_dict(),
             stream_id=stream_id,
-            valid_replication_keys=self.get_valid_replication_keys(stream_id),
+            valid_replication_keys=bookmark_properties or
+            self.get_valid_replication_keys(stream_id),
         )
+
         idx = find_index(lambda x: len(x['breadcrumb']) == 0, metadata)
         if idx >= 0:
             metadata[idx]['metadata']['selected'] = False
 
+        if not replication_key and bookmark_properties and len(bookmark_properties) >= 1:
+            replication_key = bookmark_properties[0]
+
         return CatalogEntry(**merge_dict(
             dict(
+                bookmark_properties=bookmark_properties,
                 database=None,
+                disable_column_type_check=None,
                 is_view=None,
-                key_properties=[],  # User customizes this after creating catalog from discover.
+                # User customizes this after creating catalog from discover.
+                key_properties=key_properties or [],
                 metadata=metadata,
-                replication_key='',     # User customizes this after creating catalog from discover.
-                replication_method=self.get_forced_replication_method(stream_id),
+                partition_keys=None,
+                replication_key=replication_key or '',
+                replication_method=replication_method or
+                self.get_forced_replication_method(stream_id),
                 row_count=None,
                 schema=schema,
                 stream=stream_id,
                 stream_alias=None,
                 table=None,
                 tap_stream_id=stream_id,
+                unique_conflict_method=None,
+                unique_constraints=None,
             ),
             kwargs,
         ))
 
     def test_connection(self) -> None:
         """
-        Test connection with source
+        Test connection with source.
+        Subclasses must implement the test_connection method.
         """
-        raise Exception('Subclasses must implement the test_connection method.')
+        raise Exception('Testing the connection is not currently supported for this source. ' +
+                        'You can request it as a feature by creating a new Github issue.')
 
     def count_records(
         self,
         stream,
         bookmarks: Dict = None,
-        query: Dict = {},
+        query: Dict = None,
         **kwargs,
     ) -> int:
         return 0
@@ -541,7 +626,7 @@ class Source:
         self,
         stream,
         bookmarks: Dict = None,
-        query: Dict = {},
+        query: Dict = None,
         sample_data: bool = False,
         start_date: datetime = None,
         **kwargs,
@@ -553,8 +638,10 @@ class Source:
             bookmarks (Dict): Bookmarks for the stream id.
             query (Dict): query
             start_date (datetime): start_date
+
+        Subclasses must implement the load_data method.
         """
-        raise Exception('Subclasses must implement the load_data method.')
+        raise Exception('Loading sample data is not currently supported for this source.')
 
     def get_forced_replication_method(self, stream_id: str) -> str:
         """
@@ -617,25 +704,29 @@ class Source:
 
         return schemas
 
-    def _get_bookmark_properties_for_stream(self, stream) -> List[str]:
+    def _get_bookmark_properties_for_stream(self, stream, bookmarks: Dict = None) -> List[str]:
         bookmark_properties = []
 
         if REPLICATION_METHOD_INCREMENTAL == stream.replication_method:
-            if stream.replication_key:
-                bookmark_properties = [stream.replication_key]
-            else:
-                bookmark_properties = stream.to_dict().get('bookmark_properties', [])
+            bookmark_properties = self._get_replication_key(stream)
         return bookmark_properties
+
+    def _get_replication_key(self, stream) -> List[str]:
+        if stream.replication_key:
+            return [stream.replication_key]
+        else:
+            return stream.to_dict().get('bookmark_properties', [])
 
     def __get_bookmarks_for_stream(self, stream) -> Dict:
         if stream.replication_method in [
             REPLICATION_METHOD_INCREMENTAL,
             REPLICATION_METHOD_LOG_BASED,
         ]:
-            return self.state.get('bookmarks', {}).get(stream.tap_stream_id, None)
+            data = self.state or {}
+            return data.get('bookmarks', {}).get(stream.tap_stream_id, None)
 
 
 @utils.handle_top_exception(LOGGER)
-def main(source_class):
-    source = source_class()
+def main(source_class, **kwargs):
+    source = source_class(**kwargs)
     source.process()

@@ -1,10 +1,4 @@
-import Document, {
-  DocumentContext,
-  Head,
-  Html,
-  Main,
-  NextScript,
-} from 'next/document';
+import Document, { DocumentContext, Head, Html, Main, NextScript } from 'next/document';
 import { BaseCSS } from 'styled-bootstrap-grid';
 import { ServerStyleSheet } from 'styled-components';
 
@@ -17,7 +11,7 @@ export default class MyDocument extends Document {
     try {
       ctx.renderPage = () =>
         originalRenderPage({
-          enhanceApp: (App) => (props) =>
+          enhanceApp: App => props =>
             sheet.collectStyles(
               <>
                 <BaseCSS />
@@ -46,7 +40,40 @@ export default class MyDocument extends Document {
     return (
       <Html lang="en">
         <Head>
-          <link href="/favicon.ico" rel="icon" />
+          <script
+            dangerouslySetInnerHTML={{
+              __html: `
+// Polyfill for requestIdleCallback and cancelIdleCallback only if not supported and for Safari
+(function() {
+    function isSafari() {
+        var ua = navigator.userAgent;
+        return /Safari/.test(ua) && !/Chrome/.test(ua);
+    }
+
+    // Check if requestIdleCallback is not available or if the browser is Safari
+    if (!('requestIdleCallback' in window) || isSafari()) {
+        window.requestIdleCallback = function (callback, options) {
+            const timeout = options && options.timeout ? options.timeout : 50;
+            const start = Date.now();
+
+            return setTimeout(() => {
+                callback({
+                    didTimeout: false,
+                    timeRemaining: function () {
+                        return Math.max(0, timeout - (Date.now() - start));
+                    }
+                });
+            }, 1);
+        };
+
+        window.cancelIdleCallback = function (id) {
+            clearTimeout(id);
+        };
+    }
+})();
+              `,
+            }}
+          />
         </Head>
         <body>
           <Main />

@@ -1,0 +1,111 @@
+---
+title: Iceberg S3
+description: How to configure Apache Iceberg on S3 as a destination in Mage to write data to ACID-compliant Iceberg tables stored in AWS S3.
+---
+
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="data-integration" />
+
+Use **Apache Iceberg on S3** as a destination in Mage to write data to ACID-compliant Iceberg tables stored in AWS S3.
+
+---
+
+## Overview
+
+This destination writes data to Apache Iceberg tables stored in AWS S3. Iceberg provides:
+
+- **ACID Properties**: Full ACID compliance for data consistency
+- **Schema Evolution**: Add, remove, or modify columns without breaking existing queries
+- **Time Travel**: Query data as it was at any point in time
+- **Partitioning**: Automatic partitioning for better query performance
+- **Compaction**: Automatic file compaction to optimize storage
+
+---
+
+## Required Configuration
+
+| Parameter | Description | Required | Default |
+|-----------|-------------|----------|---------|
+| `aws_access_key_id` | S3 access key ID | ✅ | - |
+| `aws_secret_access_key` | S3 secret access key | ✅ | - |
+| `bucket` | S3 bucket name | ✅ | - |
+| `namespace` | Iceberg namespace | ✅ | - |
+| `table_name` | Iceberg table name | ✅ | - |
+
+---
+
+## Optional Configuration
+
+| Parameter | Description | Required | Default |
+|-----------|-------------|----------|---------|
+| `aws_region` | AWS region | ❌ | `us-west-2` |
+
+---
+
+## Configuration Example
+
+```yaml
+aws_access_key_id: your_access_key
+aws_region: us-west-2
+aws_secret_access_key: your_secret_key
+bucket: your-bucket-name
+namespace: your_namespace
+table_name: your_table_name
+```
+
+---
+
+## Table Structure
+
+Iceberg tables are created with the following structure:
+
+```
+s3://bucket/namespace.db/table_name/
+├── metadata/
+│   ├── v1.metadata.json
+│   ├── v2.metadata.json
+│   └── ...
+├── data/
+│   ├── 00000-0-abc123.parquet
+│   ├── 00001-0-def456.parquet
+│   └── ...
+└── snapshots/
+    ├── 1234567890.avro
+    └── ...
+```
+
+---
+
+## Usage Examples
+
+### Creating a New Table
+The destination automatically creates the table if it doesn't exist, using the schema from the incoming data.
+
+### Appending Data
+New data is automatically appended to the existing Iceberg table.
+
+### Schema Evolution
+If the incoming data has new columns, the table schema is automatically updated.
+
+---
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Access Denied**: Check your S3 credentials and bucket permissions
+2. **Region Mismatch**: Ensure the region matches your S3 bucket configuration
+
+### Debugging
+
+Enable debug logging to see detailed information about table creation and data writing operations.
+
+---
+
+## Related Resources
+
+- [Apache Iceberg Documentation](https://iceberg.apache.org/docs/)
+- [Iceberg S3 Configuration](https://iceberg.apache.org/docs/latest/aws/)
+- [AWS S3 Documentation](https://docs.aws.amazon.com/s3/)

@@ -1,0 +1,1 @@
+"""Target for clickhouse."""

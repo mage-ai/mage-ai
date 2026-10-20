@@ -1,0 +1,42 @@
+---
+title: Teradata
+description: How to configure Teradata as a destination in Mage to write pipeline data to a Teradata database using standard host, port, and user credentials.
+---
+
+## Overview
+
+Use **Teradata** as a destination in Mage to write structured pipeline data into a Teradata database table. This is ideal for analytics, reporting, or operational workloads in enterprise environments using Teradata’s scalable architecture.
+
+Mage connects using direct credentials and supports exporting to tables in any schema the user has access to.
+
+---
+
+## Configuration Parameters
+
+Provide the following credentials when configuring Teradata as a **destination**:
+
+| Key         | Description                                                                                                 | Example Value                          | Required |
+|--------------|-------------------------------------------------------------------------------------------------------------|------------------------------------------|----------|
+| `database`   | Name of the Teradata database where the table will be created or written to.                               | `demo`                                   | ✅        |
+| `host`       | Hostname or IP address of the Teradata server.                                                             | `test.clearscape.teradata.com`           | ✅        |
+| `port`       | Port used by the Teradata database (commonly `1025`, depending on environment).                            | `1025`                                   | ✅        |
+| `username`   | Teradata username with write access to the specified database and schema.                                  | `demo_user`                              | ✅        |
+| `password`   | Password for the Teradata user.                                                                             | `abc123...`                              | ✅        |
+
+---
+
+## Notes
+
+- Mage will automatically create the target table if it doesn't exist, unless configured otherwise.
+- Ensure the user has `CREATE TABLE`, `INSERT`, and `SELECT` privileges in the target schema.
+- Teradata uses ANSI SQL but has some syntax differences (e.g., date handling, identity columns) to be aware of.
+- This integration is well-suited for batch ingestion pipelines and bulk exports into data marts.
+
+---
+
+## Related Resources
+
+- [Teradata Documentation](https://docs.teradata.com/)
+- [Teradata SQL Reference](https://docs.teradata.com/r/Teradata-SQL)
+- [Teradata Vantage Overview](https://www.teradata.com/Products/Vantage)
+- [Clearscape Analytics](https://www.teradata.com/Products/Clearscape-Analytics)

@@ -3,6 +3,7 @@ import moment from 'moment';
 import LogType, { LogDataType } from '@interfaces/LogType';
 import { isJsonString } from '@utils/string';
 
+const DATE_REGEX = /^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}$/;
 const REGEX = /([0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}) (.+)/;
 
 function initializeLog(log: LogType) {
@@ -33,13 +34,14 @@ export function initializeLogs(log: LogType) {
 
   let subparts = [];
   parts.forEach((part: string) => {
-    if (part === '\n') {
+    const partTrimmed = part.trim();
+    if (DATE_REGEX.test(part)) {
       if (subparts.length >= 1) {
         arr.push(subparts.join(' ').trim());
       }
-      subparts = [];
-    } else if (subparts.filter(s => s).length <= 1) {
-      subparts.push(part.trim());
+      subparts = [part];
+    } else if (subparts.filter(s => s).length <= 1 && partTrimmed) {
+      subparts.push(partTrimmed);
     }
   });
   arr.push(subparts.join(' ').trim());
@@ -50,6 +52,17 @@ export function initializeLogs(log: LogType) {
   }));
 }
 
-export function formatTimestamp(timestamp: number) {
-  return timestamp && moment.unix(timestamp).utc().format('YYYY-MM-DD HH:mm:ss.SSS');
+export function formatTimestamp(
+  timestamp: number,
+  opts?: {
+    localTimezone?: boolean;
+  },
+): string {
+  if (!timestamp) {
+    return '';
+  }
+
+  return opts?.localTimezone
+    ? moment.unix(timestamp).local().format()
+    : moment.unix(timestamp).utc().format('YYYY-MM-DD HH:mm:ss.SSS');
 }

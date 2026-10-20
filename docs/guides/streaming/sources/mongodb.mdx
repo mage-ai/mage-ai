@@ -1,0 +1,13 @@
+---
+title: MongoDB
+---
+
+## Basic Config
+
+```yaml
+connector_type: mongodb
+connection_str: "mongodb://localhost:27017/" #Must be replica set and MongoVersion is higher than Mongo5.1
+database: "test"
+collection: "test"
+```
+The following additional configuration options can be included: batch_size, pipeline, starting_after, full_document. Instructions on how to use these options can be found in the [pymongo documentation](https://pymongo.readthedocs.io/en/stable/api/pymongo/collection.html#pymongo.collection.Collection.watch).

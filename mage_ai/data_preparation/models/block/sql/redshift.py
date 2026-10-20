@@ -1,48 +1,57 @@
-from mage_ai.data_preparation.variable_manager import get_variable
 from mage_ai.data_preparation.models.block.sql.utils.shared import (
+    create_upstream_block_tables as create_upstream_block_tables_orig,
     interpolate_input,
-    should_cache_data_from_upstream,
 )
 from mage_ai.io.config import ConfigKey
-from typing import Dict
+from typing import Dict, List
 
 
 def create_upstream_block_tables(
     loader,
     block,
+    cascade_on_drop: bool = False,
     configuration: Dict = None,
     execution_partition: str = None,
+    cache_upstream_dbt_models: bool = False,
+    query: str = None,
+    dynamic_block_index: int = None,
+    dynamic_upstream_block_uuids: List[str] = None,
+    variables: Dict = None,
 ):
-    configuration = configuration if configuration else block.configuration
-    schema_name = configuration.get('data_provider_schema')
-
-    for idx, upstream_block in enumerate(block.upstream_blocks):
-        if should_cache_data_from_upstream(block, upstream_block, [
-            'data_provider',
-        ], [
+    create_upstream_block_tables_orig(
+        loader,
+        block,
+        cascade_on_drop,
+        configuration,
+        execution_partition,
+        cache_upstream_dbt_models,
+        cache_keys=[
+            ConfigKey.REDSHIFT_CLUSTER_ID,
             ConfigKey.REDSHIFT_DBNAME,
             ConfigKey.REDSHIFT_HOST,
             ConfigKey.REDSHIFT_PORT,
-            ConfigKey.REDSHIFT_CLUSTER_ID,
-        ]):
-            df = get_variable(
-                upstream_block.pipeline.uuid,
-                upstream_block.uuid,
-                'output_0',
-                partition=execution_partition,
-            )
-
-            loader.export(
-                df,
-                upstream_block.table_name,
-                if_exists='replace',
-                schema=schema_name,
-                verbose=False,
-            )
+            ConfigKey.REDSHIFT_SCHEMA,
+        ],
+        query=query,
+        schema_name=loader.default_schema(),
+        dynamic_block_index=dynamic_block_index,
+        dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+        variables=variables,
+    )
 
 
-def interpolate_input_data(block, query):
+def interpolate_input_data(
+    block,
+    query: str,
+    loader,
+    dynamic_block_index: int = None,
+    dynamic_upstream_block_uuids: List[str] = None,
+):
     return interpolate_input(
         block,
         query,
+        get_database=lambda opts: loader.default_database(),
+        get_schema=lambda opts: loader.default_schema(),
+        dynamic_block_index=dynamic_block_index,
+        dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
     )

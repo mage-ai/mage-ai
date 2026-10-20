@@ -1,8 +1,32 @@
 import { dig } from '@utils/hash';
+import { isNumeric } from './string';
+
+export function insertAtIndex(item, idx, arr) {
+  const copy1 = arr.slice(0, idx);
+  const copy2 = arr.slice(idx, arr?.length);
+
+  const arrNew = [];
+
+  arrNew.push(...copy1);
+  arrNew.push(item);
+  arrNew.push(...copy2);
+
+  return arrNew;
+}
 
 export function pushAtIndex(item, idx, arr) {
   const copy = arr.slice();
   copy.splice(idx, 0, item);
+
+  return copy;
+}
+
+export function pushUnique(item, arr, func) {
+  const copy = arr.slice();
+
+  if (!find(arr, func)) {
+    copy.push(item);
+  }
 
   return copy;
 }
@@ -19,9 +43,7 @@ export function find(arr, func) {
 }
 
 export function findClosestNum(arr, num) {
-  return arr.reduce((prev, curr) => (
-    Math.abs(curr - num) < Math.abs(prev - num) ? curr : prev
-  ));
+  return arr.reduce((prev, curr) => (Math.abs(curr - num) < Math.abs(prev - num) ? curr : prev));
 }
 
 export function groupBy(arr, func) {
@@ -72,16 +94,14 @@ export function prependArray(value, arrArg) {
 }
 
 export function sortByKey(arr, sort, opts: any = {}) {
-  const {
-    ascending = true,
-    absoluteValue = false,
-  } = opts;
+  const { ascending = true, absoluteValue = false } = opts;
 
-  const sortingFunc = (typeof sort === 'string' || typeof sort === 'number')
-    ? val => absoluteValue ? Math.abs(dig(val, sort)) : dig(val, sort)
-    : val => absoluteValue ? Math.abs(sort(val)) : sort(val);
+  const sortingFunc =
+    typeof sort === 'string' || typeof sort === 'number'
+      ? val => (absoluteValue ? Math.abs(dig(val, sort)) : dig(val, sort))
+      : val => (absoluteValue ? Math.abs(sort(val)) : sort(val));
 
-  return arr.sort((a, b) => {
+  return [...arr].sort((a, b) => {
     let sortingOrder = 0;
 
     if (sortingFunc(a) > sortingFunc(b)) {
@@ -120,7 +140,7 @@ export function splitIntoChunks(arr, numChunks) {
 }
 
 export function uniqueArray(arrArg) {
-  return arrArg.filter((elem, pos, arr) => arr.indexOf(elem) === pos);
+  return [...new Set(arrArg)];
 }
 
 export function unique(arrArg, compare) {
@@ -136,7 +156,8 @@ export function transpose(array) {
 }
 
 export function binarySearch(array, pred) {
-  let lo = -1, hi = array.length;
+  let lo = -1,
+    hi = array.length;
   while (1 + lo < hi) {
     const mi = lo + ((hi - lo) >> 1);
 
@@ -185,7 +206,7 @@ export function arrayIncludesArray(arr1, arr2) {
 
   let result = true;
 
-  arr1.forEach((val) => {
+  arr1.forEach(val => {
     if (!mapping[val]) {
       result = false;
     }
@@ -195,7 +216,10 @@ export function arrayIncludesArray(arr1, arr2) {
 }
 
 export function range(numberOfItems) {
-  return Array(numberOfItems).fill(0);
+  if (isNumeric(numberOfItems) && numberOfItems >= 1) {
+    return Array(numberOfItems).fill(0);
+  }
+  return [];
 }
 
 export function rangeSequential(numberOfItems, startingIndex = 0) {
@@ -220,10 +244,40 @@ export function standardDeviation(arr, usePopulation = false) {
   const mean = arr.reduce((acc, val) => acc + val, 0) / arr.length;
   return Math.sqrt(
     arr.reduce((acc, val) => acc.concat((val - mean) ** 2), []).reduce((acc, val) => acc + val, 0) /
-      (arr.length - (usePopulation ? 0 : 1))
+      (arr.length - (usePopulation ? 0 : 1)),
   );
 }
 
 export function randomSample(items) {
   return items[Math.floor(Math.random() * items.length)];
+}
+
+export function intersection(arr1: any[], arr2: any[], parser?: (item: any) => any): any[] {
+  const arr3 = parser ? arr2.map(parser) : arr2;
+
+  return arr1.filter((item: any) => {
+    const i = parser ? parser(item) : item;
+
+    return arr3.includes(i);
+  });
+}
+export function flattenArray(arr: any[]): any[] {
+  return arr.reduce(
+    (flat, toFlatten) =>
+      flat.concat(Array.isArray(toFlatten) ? flattenArray(toFlatten) : toFlatten),
+    [],
+  );
+}
+
+export function countOccurrences<T>(arr: any[]): Record<any, number> {
+  return arr.reduce(
+    (acc, item) => {
+      if (!acc[item]) {
+        acc[item] = 0;
+      }
+      acc[item]++;
+      return acc;
+    },
+    {} as Record<any, number>,
+  );
 }

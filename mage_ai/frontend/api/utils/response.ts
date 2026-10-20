@@ -1,3 +1,5 @@
+import ErrorsType from '@interfaces/ErrorsType';
+
 export function parseError(res) {
   const { error } = res;
   const {
@@ -35,6 +37,8 @@ export function handle(response) {
   } else if (response.json) {
     return response.json();
   }
+
+  return Promise.resolve(response);
 }
 
 type OptsProps = {
@@ -57,7 +61,7 @@ export function parseErrorFromResponse(res, opts: OptsProps = {}) {
     messages,
   } = parseError(res);
 
-  let msgs = [];
+  const msgs = [];
 
   if (message) {
     msgs.push(...message.split('\n'));
@@ -77,7 +81,7 @@ export function parseErrorFromResponse(res, opts: OptsProps = {}) {
   return {
     code,
     messages: msgs,
-  }
+  };
 }
 
 export function errorOrSuccess(response, opts: OptsProps = {}) {
@@ -138,4 +142,38 @@ export function onSuccess(response: any, opts = {}) {
   }
 
   return errorOrSuccess(response, opts);
+}
+
+export function displayErrorFromReadResponse(
+  data: any,
+  setErrors: (errors: ErrorsType) => void,
+  links?: {
+    href?: string;
+    label: string;
+    onClick?: () => void;
+  }[],
+) {
+  let linksFinal = links || [];
+  if (data?.error?.exception?.includes('Too many open files')) {
+    const tooManyOpenFilesErrLink = [
+      {
+        href: 'https://docs.mage.ai/production/configuring-production-settings/overview#ulimit',
+        label: 'Refer to the docs for troubleshooting this error.',
+      },
+    ];
+    linksFinal = linksFinal.concat(tooManyOpenFilesErrLink);
+  }
+  if (data?.error) {
+    const errors: ErrorsType = {
+      errors: parseErrorFromResponse(data),
+      links: linksFinal,
+      response: data,
+    };
+    if (data?.error?.displayMessage) {
+      errors.displayMessage = data.error.displayMessage;
+    }
+    setErrors?.(errors);
+  } else {
+    setErrors?.(null);
+  }
 }

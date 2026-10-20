@@ -1,0 +1,93 @@
+{
+	"selected": true,
+	"type": [
+		"null",
+		"object"
+	],
+	"additionalProperties": false,
+	"properties": {
+		"date": {
+			"type": "string",
+			"format": "date-time"
+		},
+		"cc": {
+			"type": [
+				"null",
+				"string"
+			]
+		},
+		"from": {
+			"type": "string"
+		},
+		"bcc": {
+			"type": [
+				"null",
+				"string"
+			]
+		},
+		"message_id": {
+			"type": "string"
+		},
+		"message_events": {
+			"type": "string"
+		},
+		"message_events_json": {
+			"type": "string"
+		},
+		"message_stream": {
+			"type": "string"
+		},
+		"received_at": {
+			"type": "string",
+			"format": "date-time"
+		},
+		"recipients": {
+			"type": [
+				"null",
+				"array"
+			],
+			"additionalProperties": false,
+			"items": {
+				"type": "string",
+				"additionalProperties": false
+			}
+		},
+		"status": {
+			"type": "string"
+		},
+		"to": {
+			"type": [
+				"null",
+				"array"
+			],
+			"additionalProperties": false,
+			"items": {
+				"type": "object",
+				"additionalProperties": false,
+				"properties": {
+					"Email": {
+						"type": "string"
+					},
+					"Name": {
+						"type": "string"
+					}
+				}
+			}
+		},
+		"track_links": {
+			"type": [
+				"null",
+				"string"
+			]
+		},
+		"track_opens": {
+			"type": [
+				"null",
+				"boolean"
+			]
+		},
+		"subject": {
+			"type": "string"
+		}
+	}
+}

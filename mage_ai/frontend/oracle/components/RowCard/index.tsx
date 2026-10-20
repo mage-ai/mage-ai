@@ -5,29 +5,29 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import { RowStyle } from '@oracle/components/RowDataTable/index.style';
 
 export type RowCardProps = {
-  border?: boolean;
   children: any;
   columnFlexNumbers?: number[];
   condensed?: boolean;
   flexStart?: boolean;
   last?: boolean;
+  noBorder?: boolean;
   noHorizontalPadding?: boolean;
   secondary?: boolean;
 };
 
 function RowCard({
-  border,
   children,
   columnFlexNumbers,
   condensed,
   flexStart,
   last,
+  noBorder,
   noHorizontalPadding,
   secondary,
 }: RowCardProps) {
   return (
     <RowStyle
-      border={border}
+      noBorder={noBorder}
       condensed={condensed}
       last={last}
       noHorizontalPadding={noHorizontalPadding}

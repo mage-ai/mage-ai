@@ -366,7 +366,168 @@
         "null",
         "array"
       ],
-      "items": {}
+      "items": {
+        "type": [
+          "null",
+          "object"
+        ],
+        "properties": {
+          "id": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "object": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "amount": {
+            "type": [
+              "null",
+              "integer"
+            ]
+          },
+          "balance_transaction": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "charge": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "created": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "currency": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "failure_reason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "instructions_email": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "metadata": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "properties": {}
+          },
+          "next_action": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "properties": {
+              "display_details": {
+                "type": [
+                  "null",
+                  "object"
+                ],
+                "properties": {
+                  "email_sent": {
+                    "type": [
+                      "null",
+                      "object"
+                    ],
+                    "properties": {
+                      "email_sent_at": {
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "format": "date-time"
+                      },
+                      "email_sent_to": {
+                        "type": [
+                          "null",
+                          "string"
+                        ]
+                      }
+                    }
+                  },
+                  "expires_at": {
+                    "type": [
+                      "null",
+                      "string"
+                    ],
+                    "format": "date-time"
+                  }
+                }
+              },
+              "type": {
+                "type": [
+                  "null",
+                  "string"
+                ]
+              }
+            }
+          },
+          "payment_intent": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "receipt_number": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "source_transfer_reversal": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "transfer_reversal": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      }
     },
     "application_fee": {
       "type": [
@@ -1567,12 +1728,6 @@
               ],
               "properties": {}
             },
-            "type": {
-              "type": [
-                "null",
-                "string"
-              ]
-            },
             "wechat": {
               "type": [
                 "null",
@@ -1586,12 +1741,6 @@
                 "object"
               ],
               "properties": {}
-            },
-            "exp_month": {
-              "type": [
-                "null",
-                "integer"
-              ]
             },
             "address_state": {
               "type": [
@@ -1623,12 +1772,6 @@
                 "string"
               ]
             },
-            "exp_year": {
-              "type": [
-                "null",
-                "integer"
-              ]
-            },
             "tokenization_method": {
               "type": [
                 "null",
@@ -1641,19 +1784,7 @@
                 "string"
               ]
             },
-            "fingerprint": {
-              "type": [
-                "null",
-                "string"
-              ]
-            },
             "address_city": {
-              "type": [
-                "null",
-                "string"
-              ]
-            },
-            "last4": {
               "type": [
                 "null",
                 "string"
@@ -1671,18 +1802,6 @@
                 "string"
               ]
             },
-            "brand": {
-              "type": [
-                "null",
-                "string"
-              ]
-            },
-            "country": {
-              "type": [
-                "null",
-                "string"
-              ]
-            },
             "dynamic_last4": {
               "type": [
                 "null",
@@ -1690,12 +1809,6 @@
               ]
             },
             "name": {
-              "type": [
-                "null",
-                "string"
-              ]
-            },
-            "funding": {
               "type": [
                 "null",
                 "string"
@@ -1780,3 +1893,4 @@
     }
   }
 }
+

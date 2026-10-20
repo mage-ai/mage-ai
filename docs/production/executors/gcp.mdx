@@ -1,0 +1,64 @@
+---
+title: "GCP Cloud Run executor"
+sidebarTitle: "GCP"
+icon: "google"
+description: "Execute block runs in separate jobs."
+---
+
+import { ProButton } from '/snippets/pro/button.mdx';
+import { urls } from '/snippets/variables/urls.mdx';
+
+If your Mage app is deployed on GCP Cloud Run, you can choose to launch separate GCP Cloud Run jobs to execute blocks.
+
+How to configure pipeline to use GCP cloud run executor:
+1. Update Project's metadata.yaml
+```yaml
+gcp_cloud_run_config:
+  path_to_credentials_json_file: "/path/to/credentials_json_file"
+  project_id: project_id
+  timeout_seconds: 600
+```
+
+2. Update the `executor_type` of block to `gcp_cloud_run` in pipeline's metadata.yaml:
+
+```yaml
+blocks:
+- uuid: example_data_loader
+  type: data_loader
+  upstream_blocks: []
+  downstream_blocks: []
+  executor_type: gcp_cloud_run
+  ...
+```
+Customizing compute resource for GCP Cloud Run executor is coming soon.
+
+---
+
+## Resource management
+
+<Card
+  title="Get started for free"
+  href={`${urls.pro}?source=gcp-executor`}
+>
+  <img
+    src="https://mage-ai.github.io/assets/pro/banner-light.png"
+    className="hidden dark:block"
+    noZoom
+  />
+  <img
+    src="https://mage-ai.github.io/assets/pro/banner-dark.png"
+    className="block dark:hidden"
+    noZoom
+  />
+
+  <br />
+
+  A fully managed service, where we maintain the infrastructure, guarantee uptime,
+  automatically scale your workloads to handle any volume of pipeline runs,
+  automatically upgrade new versions of Mage Pro only features,
+  monitor your production pipelines, and provide enterprise level support.
+</Card>
+
+<br />
+
+<ProButton source="gcp-executor" />

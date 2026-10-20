@@ -1,0 +1,13 @@
+@use '../base/backgrounds';
+@use '../base/borders';
+@use '../base/grid';
+
+.badge {
+  @include backgrounds.background-colors();
+  @include borders.shared();
+  @include grid.base();
+
+  border-color: var(--colors-graylo);
+  border-radius: var(--borders-radius-sm);
+  padding: 6px;
+}

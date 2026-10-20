@@ -1,9 +1,27 @@
 import useSWR from 'swr';
+import { ResponseType } from 'axios';
 
-import { DELETE, GET, POST, PUT, buildFetch, buildFetchV2, fetcher } from './fetcher';
+import {
+  buildFetch,
+  buildFetchV2,
+  DELETE,
+  fetcher,
+  FetcherOptionsType,
+  GET,
+  POST,
+  PUT,
+} from './fetcher';
 import { buildUrl } from './url';
 
-export function fetchCreate(resource: string, body: object, opts: any = {},) {
+function validateID(value: number | string | boolean): number | string | boolean {
+  if (typeof value !== 'undefined' && value !== null && value !== false) {
+    return value;
+  }
+
+  return null;
+}
+
+export function fetchCreate(resource: string, body: object, opts: any = {}) {
   return buildFetchV2(buildUrl(resource), { ...opts, body, method: POST });
 }
 
@@ -19,6 +37,19 @@ export function fetchCreateWithParent(
   return buildFetchV2(url, { ...opts, body, method: POST });
 }
 
+export function fetchCreateWithParentAndChild(
+  resource: string,
+  parentResource: string,
+  parentId: string,
+  id: string,
+  body: object,
+  opts: any = {},
+) {
+  const url: string = buildUrl(parentResource, parentId, resource, id);
+
+  return buildFetchV2(url, { ...opts, body, method: POST });
+}
+
 export function fetchUpdateWithParent(
   resource: string,
   parentResource: string,
@@ -30,7 +61,7 @@ export function fetchUpdateWithParent(
   const url: string = buildUrl(parentResource, parentId, resource, id);
 
   return buildFetchV2(url, { ...opts, body, method: PUT });
-};
+}
 
 export function fetchDetailAsync(ctx: any, resource: string, id: string, query: object = {}) {
   return buildFetch(buildUrl(resource, id), { ctx, query, method: GET });
@@ -61,14 +92,27 @@ export function useDetail(
   id: string,
   query: any = {},
   swrOptions: any = {},
+  customOptions?: {
+    key?: string;
+    pauseFetch?: boolean;
+  },
 ) {
   const {
+    key: keyInit,
+    pauseFetch,
+  } = customOptions || {};
+
+  const url = validateID(id) ? buildUrl(resource, id) : null;
+  const key = url && keyInit ? keyInit : url;
+
+  const {
     data,
+    isValidating,
     error,
     mutate,
   } = useSWR(
-    id ? buildUrl(resource, id) : null,
-    url => fetcher(url, {
+    pauseFetch ? null : key,
+    () => fetcher(url, {
       method: GET,
       query,
     }),
@@ -78,6 +122,7 @@ export function useDetail(
   return {
     data,
     error,
+    isValidating,
     mutate,
   };
 }
@@ -90,21 +135,31 @@ export function useDetailWithParent(
   query: any = {},
   swrOptions: any = {},
   grandchildResource?: string,
+  customOptions?: {
+    key?: string;
+  },
 ) {
+  const {
+    key: keyInit,
+  } = customOptions || {};
+
+  const url = validateID(id) && (validateID(parentId) ? buildUrl(
+    parentResource,
+    parentId,
+    resource,
+    id,
+    query,
+    grandchildResource,
+  ) : null);
+  const key = url && keyInit ? keyInit : url;
+
   const {
     data,
     error,
     mutate,
   } = useSWR(
-    id && (parentId ? buildUrl(
-      parentResource,
-      parentId,
-      resource,
-      id,
-      query,
-      grandchildResource,
-    ) : null),
-    url => fetcher(url, { method: GET, query }),
+    key,
+    () => fetcher(url, { method: GET, query }),
     swrOptions,
   );
 
@@ -113,6 +168,96 @@ export function useDetailWithParent(
     error,
     mutate,
   };
+}
+
+export function useListAsync(
+  resource: string,
+  query: any = {},
+  options: FetcherOptionsType = {},
+) {
+  return buildFetchV2(
+    buildUrl(
+      resource,
+      null,
+      null,
+      null,
+      query,
+      null,
+    ),
+    {
+      ...options,
+      method: GET,
+      query,
+    },
+  );
+}
+
+export function useListWithParentAsync(
+  resource: string,
+  parentResource: string,
+  parentId: string,
+  query: any = {},
+  options: FetcherOptionsType = {},
+) {
+  return buildFetchV2(
+    buildUrl(
+      parentResource,
+      parentId,
+      resource,
+      null,
+      query,
+      null,
+    ),
+    {
+      ...options,
+      method: GET,
+      query,
+    },
+  );
+}
+
+export function useDetailAsync(
+  resource: string,
+  id: string,
+  query: any = {},
+  options: FetcherOptionsType = {},
+) {
+  return buildFetchV2(
+    buildUrl(
+      resource,
+      id,
+      null,
+      null,
+      query,
+      null,
+    ),
+    {
+      ...options,
+      method: GET,
+      query,
+    },
+  );
+}
+
+export function useDetailWithParentAsync(
+  resource: string,
+  id: string,
+  parentResource: string,
+  parentId: string,
+  query: any = {},
+  options: FetcherOptionsType = {},
+  grandchildResource?: string,
+) {
+  return buildFetchV2(buildUrl(
+      parentResource,
+      parentId,
+      resource,
+      id,
+      query,
+      grandchildResource,
+    ),
+    { ...options, method: GET, query },
+  );
 }
 
 export function useDelete(resource: string, id: string, query: object = {}) {
@@ -138,6 +283,7 @@ export function useList(
   const {
     data,
     error,
+    isValidating,
     mutate,
   } = useSWR(
     pauseFetch ? null : buildUrl(resource, null, null, null, query),
@@ -149,6 +295,7 @@ export function useList(
     data,
     error,
     loading: !data && !error,
+    isValidating,
     mutate,
   };
 }
@@ -179,6 +326,12 @@ export function useListWithParent(
   };
 }
 
-export function useUpdate(ctx: any, resource: string, id: string, body: object) {
-  return buildFetch(buildUrl(resource, id), { ctx, body, method: PUT });
+export function useUpdate(
+  ctx: any,
+  resource: string,
+  id: string,
+  body: object,
+  query: object = {},
+) {
+  return buildFetch(buildUrl(resource, id, null, null, query), { body, ctx, method: PUT });
 }

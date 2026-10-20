@@ -1,5 +1,6 @@
 """
-Useful conversion functions between Pandas DataFrames, numpy NDArrays, and ordered feature dictionaries
+Useful conversion functions between Pandas DataFrames, numpy NDArrays, and ordered feature
+dictionaries
 """
 
 from collections import OrderedDict
@@ -20,7 +21,8 @@ def df_to_fd(x, copy=False, nan_str='null', dtype=None):
     :param copy: Generates a copy of the underlying data
     :param nan_str: String used for nan values in DF
     :param dtype: The dtypes to cast to (if copying). Otherwise we don't cast.
-        Can be a list (one per column) or a single dtype (applies to all features). Implies copy=True
+        Can be a list (one per column) or a single dtype (applies to all features).
+        Implies copy=True
     :return: feature dict representation of pandas DataFrame
     """
     assert isinstance(x, pd.DataFrame), 'input must be a Pandas DataFrame'
@@ -80,7 +82,8 @@ def np_to_fd(x, axes=None, feature_names=None, copy=True, dtype=None):
     If we want to extract 3 batches of 100 images each (one batch for each color) we'd do:
     axes=(1,0,2,3) since this maps to (channels=3, batch_size=100, height=1024, width=768)
 
-    This will yield a transposed tensor of shape (3, 100, 1024, 768). We'll then slice on the leading dimension to yield a feature dict::
+    This will yield a transposed tensor of shape (3, 100, 1024, 768). We'll then slice on the
+    leading dimension to yield a feature dict::
 
         {
             'red': ndarray with shape (100, 1024, 768)

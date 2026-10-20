@@ -3,12 +3,12 @@ if 'data_exporter' not in globals():
 
 
 @data_exporter
-def export_data(df, **kwargs):
+def export_data(*args, **kwargs):
     """
     Exports data to some source
 
     Args:
-        df: Data frame to export to
+        args: The input variables from upstream blocks
 
     Output (optional):
         Optionally return any object and it'll be logged and

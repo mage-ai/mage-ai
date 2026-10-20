@@ -7,6 +7,7 @@ import { UNIT } from '@oracle/styles/units/spacing';
 
 export type PopupMenuContainerProps = {
   bottom?: number
+  centerOnScreen?: boolean;
   left?: number;
   right?: number;
   top?: number;
@@ -45,6 +46,12 @@ const ContainerStyle = styled.div<PopupMenuContainerProps>`
     top: ${HEADER_HEIGHT - (UNIT * 1)}px;
   `}
 
+  ${props => props.centerOnScreen && `
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+  `}
+
   ${props => props.width && `
     width: ${props.width}px;
   `}
@@ -56,6 +63,7 @@ const ContainerStyle = styled.div<PopupMenuContainerProps>`
 
 function PopupMenuContainer({
   bottom,
+  centerOnScreen,
   children,
   left,
   right,
@@ -67,6 +75,7 @@ function PopupMenuContainer({
   return (
     <ContainerStyle
       bottom={bottom}
+      centerOnScreen={centerOnScreen}
       left={left}
       right={right}
       top={top}

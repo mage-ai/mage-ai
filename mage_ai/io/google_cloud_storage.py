@@ -1,33 +1,38 @@
 from io import BytesIO
+from typing import Union
+
+import polars as pl
 from google.cloud import storage
 from google.oauth2 import service_account
-from mage_ai.io.base import BaseFile, FileFormat, QUERY_ROW_LIMIT
-from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from pandas import DataFrame
+
+from mage_ai.io.base import QUERY_ROW_LIMIT, BaseFile, FileFormat
+from mage_ai.io.config import BaseConfigLoader, ConfigKey
 
 
 class GoogleCloudStorage(BaseFile):
     """
-    Handles data transfer between a Google Cloud Storage bucket and the Mage app. Supports loading files
-    of any of the following types:
+    Handles data transfer between a Google Cloud Storage bucket and the Mage app. Supports
+    loading files of any of the following types:
     - ".csv"
     - ".json"
     - ".parquet"
 
-    If GOOGLE_APPLICATION_CREDENTIALS environment is set, no further arguments are needed other than those
-    specified below. Otherwise, use the factory method `with_config` to construct
+    If GOOGLE_APPLICATION_CREDENTIALS environment is set, no further arguments are needed
+    other than those specified below. Otherwise, use the factory method `with_config` to construct
     the data loader using manually specified credentials.
     """
 
     def __init__(
         self,
-        verbose=False,
+        verbose: bool = False,
         **kwargs,
     ) -> None:
         """
         Initializes data loader from a Google Cloud Storage bucket.
 
-        To authenticate (and authorize) access to Google Cloud Storage, credentials must be provided.
+        To authenticate (and authorize) access to Google Cloud Storage, credentials must be
+        provided.
         Below are the different ways to access those credentials:
         - Define the `GOOGLE_APPLICATION_CREDENTIALS` environment variable to point to a
           service account key. In this case no other no other parameters need to be
@@ -39,8 +44,8 @@ class GoogleCloudStorage(BaseFile):
         - Manually define the service key key-value set to use (such as a dictionary containing
         the same parameters as a service key) with the keyword argument `credentials_mapping`
 
-        All keyword arguments except for `path_to_credentials` and `credentials_mapping` will be passed
-        to the Google Cloud Storage client, accepting all other configuration settings there.
+        All keyword arguments except for `path_to_credentials` and `credentials_mapping` will be
+        passed to the Google Cloud Storage client, accepting all other configuration settings there.
         """
 
         super().__init__(verbose=kwargs.get('verbose', True))
@@ -66,18 +71,19 @@ class GoogleCloudStorage(BaseFile):
         self,
         bucket_name: str,
         object_key: str,
-        format: FileFormat = None,
+        format: Union[FileFormat, str, None] = None,
         limit: int = QUERY_ROW_LIMIT,
         **kwargs,
     ) -> DataFrame:
         """
         Loads data from Google Cloud Storage into a Pandas data frame. This function will load at
-        maximum 100,000 rows of data from the specified file.
+        maximum 10,000,000 rows of data from the specified file.
 
         Args:
             import_config (Mapping, optional): Configuration settings for importing file from
             Google Cloud Storage. Defaults to None.
-            limit (int, Optional): The number of rows to limit the loaded dataframe to. Defaults to 100000.
+            limit (int, Optional): The number of rows to limit the loaded dataframe to. Defaults
+                                    to 10,000,000.
             read_config (Mapping, optional): Configuration settings for reading file into data
             frame. Defaults to None.
 
@@ -97,30 +103,41 @@ class GoogleCloudStorage(BaseFile):
             return self._read(buffer, format, limit, **kwargs)
 
     def export(
-        self, df: DataFrame, bucket_name: str, object_key: str, format: FileFormat = None, **kwargs
+        self,
+        data: Union[DataFrame, pl.DataFrame, str],
+        bucket_name: str,
+        object_key: str,
+        format: Union[FileFormat, str, None] = None,
+        **kwargs,
     ) -> None:
         """
         Exports data frame to a Google Cloud Storage bucket.
 
         Args:
-            df (DataFrame): Data frame to export
-            write_config (Mapping, optional): Configuration settings for writing data frame to
-            specified format. Defaults to None.
-            export_config (Mapping, optional): Configuration settings for exporting data frame
-            to Google Cloud Storage. Defaults to None.
+            data (DataFrame): Data frame or file path to export
+            bucket_name (str): Name of the bucket to export data frame to.
+            object_key (str): Object key in GoogleCloudStorage bucket to export data frame to.
+            format (FileFormat, optional): Format of the file to export data frame to.
+                Defaults to None, in which case the format is inferred.
         """
         if format is None:
             format = self._get_file_format(object_key)
 
         with self.printer.print_msg(
-            f'Exporting data frame to bucket \'{bucket_name}\' at key \'{object_key}\''
+            f'Exporting data to bucket \'{bucket_name}\' at key \'{object_key}\''
         ):
             bucket = self.client.get_bucket(bucket_name)
             blob = bucket.blob(object_key)
-            buffer = BytesIO()
-            self._write(df, format, buffer, **kwargs)
-            buffer.seek(0)
-            blob.upload_from_string(buffer.read())
+            if isinstance(data, DataFrame) or isinstance(data, pl.DataFrame):
+                buffer = BytesIO()
+                self._write(data, format, buffer, **kwargs)
+                buffer.seek(0)
+                blob.upload_from_string(buffer.read())
+            elif isinstance(data, str):
+                blob.upload_from_filename(data)
+            else:
+                raise Exception(
+                    'Please provide a pandas DataFrame or a valid file path as the input.')
 
     def exists(
         self, bucket_name: str, prefix: str

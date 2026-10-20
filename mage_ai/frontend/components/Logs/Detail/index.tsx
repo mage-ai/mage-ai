@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { createElement, isValidElement, useMemo, useState } from 'react';
 
 import Button from '@oracle/elements/Button';
 import ButtonTabs, { TabType } from '@oracle/components/Tabs/ButtonTabs';
@@ -18,27 +18,32 @@ import { Close } from '@oracle/icons';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { formatTimestamp } from '@utils/models/log';
 import { isJsonString } from '@utils/string';
+import { isObject } from '@utils/hash';
 import { sortByKey } from '@utils/array';
 
 const MESSAGE_KEY = 'message';
+const TAGS_KEY = 'tags';
 const KEYS_TO_SKIP = [
   'error',
   'error_stack',
   'error_stacktrace',
 ];
-const TAB_DETAILS = { uuid: 'Details' };
-const TAB_ERRORS = { uuid: 'Errors' };
+export const TAB_DETAILS = { uuid: 'Details' };
+export const TAB_ERRORS = { uuid: 'Errors' };
 
 type LogDetailProps = {
   log: LogType;
   onClose: () => void;
+  selectedTab: TabType;
+  setSelectedTab: (tab: TabType) => void;
 };
 
 function LogDetail({
   log,
   onClose,
+  selectedTab,
+  setSelectedTab,
 }: LogDetailProps) {
-  const [selectedTab, setSelectedTab] = useState<TabType>(TAB_DETAILS);
   const [showFullLogMessage, setShowFullLogMessage] = useState<boolean>(false);
   const {
     data,
@@ -46,13 +51,25 @@ function LogDetail({
     path,
   } = log;
   const {
-    error,
-    error_stack: errorStack,
-    error_stacktrace: errorStackTrace,
+    error: errorFromData,
+    error_stack: errorStackFromData,
+    error_stacktrace: errorStackTraceFromData,
     level,
     timestamp,
   } = data || {};
   const sharedProps =  { [level.toLowerCase()]: true };
+  let error = errorFromData;
+  let errorStack = errorStackFromData;
+  let errorStackTrace = errorStackTraceFromData;
+  if (errorFromData && !Array.isArray(errorFromData)) {
+    error = [errorFromData];
+  }
+  if (Array.isArray(errorStackFromData) && !Array.isArray(errorStackFromData?.[0])) {
+    errorStack = [errorStackFromData] as string[][];
+  }
+  if (errorStackTraceFromData && Array.isArray(errorStackTraceFromData)) {
+    errorStackTrace = errorStackTraceFromData?.[0];
+  }
 
   const rows = useMemo(() => {
     const arr = [
@@ -67,7 +84,7 @@ function LogDetail({
     });
 
     if (errorStackTrace) {
-      arr.push(['error', errorStackTrace]);
+      arr.push(['error', errorStackTrace as string]);
     }
 
     return sortByKey(arr, ([k, _]) => k);
@@ -93,8 +110,6 @@ function LogDetail({
     );
   }, [
     error,
-    errorStack,
-    errorStackTrace,
     selectedTab,
     setSelectedTab,
   ]);
@@ -143,7 +158,39 @@ function LogDetail({
           columnFlex={[null, 1]}
           columnMaxWidth={(idx: number) => idx === 1 ? '100px' : null}
           rows={rows?.map(([k, v], idx) => {
-            const isMessageKey = k === MESSAGE_KEY;
+            const isMessageKey = MESSAGE_KEY === k;
+            const isTagsKey = TAGS_KEY === k;
+
+            let valueToDisplay = v;
+            let valueTitle = v;
+            if (isTagsKey) {
+              valueToDisplay = isJsonString(v)
+                ? JSON.parse(JSON.stringify(v, null, 2))
+                : JSON.stringify(v, null, 2);
+              valueTitle = valueToDisplay;
+            } else if (isMessageKey && showFullLogMessage && isJsonString(v)) {
+              valueTitle = JSON.stringify(JSON.parse(v), null, 2);
+              valueToDisplay = <pre>{valueTitle}</pre>;
+              if (!isValidElement(valueToDisplay)
+                && isObject(valueToDisplay)
+                && valueToDisplay['_owner'] === null
+                && valueToDisplay.type === 'pre'
+                && typeof valueToDisplay?.props?.children === 'string'
+              ) {
+                valueToDisplay = createElement('pre', null, valueToDisplay.props.children);
+              }
+            }
+            if (typeof valueToDisplay === 'object') {
+              try {
+                valueToDisplay = JSON.stringify(valueToDisplay, null, 2);
+                valueToDisplay = <pre>{valueToDisplay}</pre>;
+              } catch {
+              }
+            }
+            if (typeof valueTitle === 'object') {
+              valueTitle = JSON.stringify(valueTitle);
+            }
+
             return [
               <Text
                 key={`${k}_${idx}_key`}
@@ -156,16 +203,18 @@ function LogDetail({
                 <Text
                   key={`${k}_${idx}_val`}
                   monospace
-                  small={isMessageKey && showFullLogMessage}
                   textOverflow
-                  title={v}
-                  whiteSpaceNormal={isMessageKey && showFullLogMessage}
-                  wordBreak={isMessageKey && showFullLogMessage}
+                  title={valueTitle}
+                  whiteSpaceNormal={(isMessageKey && showFullLogMessage) || isTagsKey}
+                  wordBreak={(isMessageKey && showFullLogMessage) || isTagsKey}
                 >
-                  {(isMessageKey && showFullLogMessage && isJsonString(v))
-                    ? <pre>{JSON.stringify(JSON.parse(v), null, 2)}</pre>
-                    : v
-                  }
+                  {!isTagsKey && valueToDisplay}
+                  {isTagsKey && (
+                    <pre>
+                      {valueToDisplay}
+                    </pre>
+                  )}
+
                 </Text>
                 {isMessageKey &&
                   <Link
@@ -193,13 +242,21 @@ function LogDetail({
             </Text>
           </Spacing>
 
-          {error?.map((lines: string) => lines.split('\n').map((line: string) => (
-            line.split('\\n').map(part => (
-              <Text default key={part} monospace small>
-                {part}
-              </Text>
-            ))
-          )))}
+          {Array.isArray(error) && error?.map(
+            (lines: string) => lines.split('\n').map((line: string) => (
+              line.split('\\n').map(part => (
+                <Text
+                  default
+                  key={part}
+                  monospace
+                  preWrap
+                  small
+                >
+                  {part}
+                </Text>
+              ))
+            )),
+          )}
 
           {errorStack && (
             <Spacing mt={3}>
@@ -209,11 +266,19 @@ function LogDetail({
                 </Text>
               </Spacing>
 
-              {errorStack?.map((lines: string[]) => lines?.map((line: string) => (
-                <Text default key={line} monospace small>
-                  {line}
-                </Text>
-              )))}
+              {(errorStack as string[][])?.map(
+                (lines: string[]) => lines?.map((line: string) => (
+                  <Text
+                    default
+                    key={line}
+                    monospace
+                    preWrap
+                    small
+                  >
+                    {line}
+                  </Text>
+                )),
+              )}
             </Spacing>
           )}
         </Spacing>

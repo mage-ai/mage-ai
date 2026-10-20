@@ -1,0 +1,126 @@
+subword_tokenizer:
+  name: 'Subword tokenizer'
+  description: 'Tokenize text into subwords'
+  inputs:
+    hallucination:
+      options:
+        - label: 'hallucination - 1701048399000'
+          value: 'none'
+      type: dropdown_menu
+    fire:
+      options:
+        - label: 'fire - 1701048399000'
+          value: 'none'
+      type: dropdown_menu
+    spell:
+      options:
+        - label: 'spell - 1701048399000'
+          value: 'none'
+      type: dropdown_menu
+    max_length:
+      options:
+        - label: 'max_length - 1701048399000'
+          value: 'none'
+      type: dropdown_menu
+    add_special_tokens:
+      options:
+        - label: 'add_special_tokens - 1701048399000'
+          value: 'none'
+      type: dropdown_menu
+  variables:
+    hallucination:
+      input: hallucination
+      description: '...'
+      name: 'hallucination - 1701048399000'
+      required: true
+      types:
+        - string
+    fire:
+      input: fire
+      description: '...'
+      name: 'fire - 1701048399000'
+      required: true
+      types:
+        - string
+    spell:
+      input: spell
+      description: '...'
+      name: 'spell - 1701048399000'
+      required: true
+      types:
+        - string
+    max_length:
+      input: max_length
+      description: 'max_length - 1701048399000'
+      name: 'max_length - 1701048399000'
+      required: true
+      types:
+        - string
+    add_special_tokens:
+      input: add_special_tokens
+      description: 'add_special_tokens - 1701048399000'
+      name: 'add_special_tokens - 1701048399000'
+      required: true
+      types:
+        - string
+
+word_tokenizer:
+  name: 'Word Tokenizer'
+  description: 'Tokenize text into words'
+  inputs:
+    hallucination_variable:
+      style:
+        multiline: true
+      type: text_field
+    fire_variable:
+      style:
+        multiline: true
+      type: text_field
+    spell_variable:
+      style:
+        multiline: true
+      type: text_field
+    max_length_variable:
+      style:
+        multiline: true
+      type: text_field
+    add_special_tokens_variable:
+      style:
+        multiline: true
+      type: text_field
+  variables:
+    hallucination_variable:
+      description: 'Enter the text you want to tokenize into words.'
+      name: Hallucination Variable
+      input: hallucination_variable
+      required: true
+      types:
+        - string
+    fire_variable:
+      description: 'Enter the text you want to tokenize into words.'
+      name: Fire Variable
+      input: fire_variable
+      required: true
+      types:
+        - string
+    spell_variable:
+      description: 'Enter the text you want to tokenize into words.'
+      name: Spell Variable
+      input: spell_variable
+      required: true
+      types:
+        - string
+    max_length_variable:
+      description: 'Enter the text you want to tokenize into words.'
+      name: Max Length Variable
+      input: max_length_variable
+      required: true
+      types:
+        - string
+    add_special_tokens_variable:
+      description: 'Enter the text you want to tokenize into words.'
+      name: Add Special Tokens Variable
+      input: add_special_tokens_variable
+      required: true
+      types:
+        - string

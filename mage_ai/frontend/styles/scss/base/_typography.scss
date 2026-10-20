@@ -1,0 +1,121 @@
+@mixin base-font-family {
+  font-family: var(--fonts-family-base-regular);
+
+  &.light {
+    font-family: var(--fonts-family-base-lightfont);
+  }
+  &.medium {
+    font-family: var(--fonts-family-base-medium);
+  }
+  &.semibold {
+    font-family: var(--fonts-family-base-semibold);
+  }
+  &.black {
+    font-family: var(--fonts-family-base-black);
+  }
+  &.bold {
+    font-family: var(--fonts-family-base-bold);
+  }
+}
+
+@mixin monospace-font-family {
+  font-family: var(--fonts-family-monospace-regular);
+
+  &.monospace.light {
+    font-family: var(--fonts-family-monospace-lightfont);
+  }
+  &.monospace.medium {
+    font-family: var(--fonts-family-monospace-medium);
+  }
+  &.monospace.semibold {
+    font-family: var(--fonts-family-monospace-semibold);
+  }
+  &.monospace.black,
+  &.monospace.bold {
+    font-family: var(--fonts-family-monospace-bold);
+
+    &.italic {
+      font-family: var(--fonts-family-monospace-bolditalic) !important;
+    }
+  }
+
+  &.monospace.italic {
+    font-family: var(--fonts-family-monospace-regularitalic);
+  }
+}
+
+@mixin base-styles {
+  color: var(--fonts-color-text-base);
+  margin: 0;
+
+  &.inverted {
+    color: var(--fonts-color-text-inverted);
+  }
+  &.blue {
+    color: var(--fonts-color-text-blue);
+  }
+  &.secondary {
+    color: var(--colors-whitemd);
+  }
+  &.muted {
+    color: var(--colors-whitelo);
+  }
+  &.warning {
+    color: var(--fonts-color-text-warning);
+  }
+
+  font-size: var(--fonts-size-base);
+  font-style: var(--fonts-style-base);
+  font-weight: var(--fonts-weight-regular);
+
+  &.italic {
+    font-style: var(--fonts-style-italic);
+  }
+  &.light {
+    font-weight: var(--fonts-weight-light);
+  }
+  &.medium {
+    font-weight: var(--fonts-weight-medium);
+  }
+  &.semibold {
+    font-weight: var(--fonts-weight-semibold);
+  }
+  &.bold {
+    font-weight: var(--fonts-weight-bold);
+  }
+}
+@mixin base {
+  @include base-styles;
+  @include base-font-family;
+  line-height: var(--fonts-lineheight-md);
+}
+
+@mixin base-sm {
+  @include base;
+  font-size: var(--fonts-size-sm);
+  line-height: var(--fonts-lineheight-base);
+}
+
+@mixin base-xs {
+  @include base;
+  font-size: var(--fonts-size-xs);
+  line-height: var(--fonts-lineheight-xs);
+}
+
+@mixin monospace {
+  @include base-styles;
+  @include monospace-font-family;
+  line-height: var(--fonts-lineheight-monospace);
+}
+
+@mixin monospace-sm {
+  @include monospace;
+  font-size: var(--fonts-size-sm);
+  line-height: var(--fonts-lineheight-base);
+}
+
+@mixin monospace-xs {
+  @include monospace;
+  font-size: var(--fonts-size-xs);
+  line-height: var(--fonts-lineheight-xs);
+}

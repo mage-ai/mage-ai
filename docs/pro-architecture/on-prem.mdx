@@ -1,0 +1,68 @@
+---
+title: "On-prem deployment"
+sidebarTitle: "On-prem"
+icon: "house"
+description: "Deploy securely from your own on-prem servers"
+---
+
+Deploy the control plane and the data plane on your own servers for the most secure environment.
+
+<img
+    alt="SaaS Deployment"
+    src="https://raw.githubusercontent.com/mage-ai/assets/main/pro/deployments/On-prem%20deployment%20(1).png"
+/>
+
+## Deployment options
+
+Mage Pro supports two modes of on-prem deployment. The Mage team will provide all necessary deliverables and installation support.
+
+### 1. Kubernetes cluster
+
+Run Mage Pro in your own on-prem Kubernetes cluster for production-grade orchestration and scalability. This includes Kubernetes distributions such as **Red Hat OpenShift**, Rancher, or other enterprise Kubernetes platforms.
+
+**Deliverables from Mage**:
+- Helm chart(s) pre-configured for Mage Pro (control plane, scheduler, and executor pods)
+- Docker image (if your environment does not have internet access) **or** secure registry credentials to pull the image (if your cluster has network access)
+- Configuration templates for networking, secrets, monitoring, and scaling
+- Documentation and best practices for integrating with your Kubernetes environment
+
+**Highlights**:
+- Pod-level isolation for workspaces and jobs
+- Leverage Kubernetes-native scaling, security, and monitoring
+- Recommended for enterprise-grade, multi-team deployments
+
+---
+
+### 2. Docker
+
+For environments without Kubernetes, Mage Pro can be deployed directly on Docker. This simplifies setup while still providing workspace/job isolation using containers.
+
+**Deliverables from Mage**:
+- Docker images for Mage Pro services
+  - Air-gapped environments (no internet): Mage team provides image files directly
+  - Connected environments: Mage team provides secure registry credentials to pull images
+- Docker Compose file with all required configuration
+
+**Highlights**:
+- Quick and easy installation with minimal infrastructure requirements
+- Run the Mage Pro control plane in a long-running Docker container
+- Option to run pipeline jobs in separate, short-lived containers (for isolation) or locally within the same container process (Pro-only feature)
+- Workspaces can also run in their own dedicated containers (Pro-only feature)
+- Ideal for smaller teams or environments without Kubernetes
+
+---
+
+## License key
+
+A valid **Mage Pro license key** is required for all on-prem deployments.
+- The license key is provided when you purchase Mage Pro.
+- It must be included in your deployment configuration (Kubernetes or Docker) before the server will start.
+- License keys can be rotated at any time without downtime.
+
+---
+
+## Benefits
+
+- **Maximum security**: All services and data stay within your on-prem environment.
+- **Flexibility**: Choose between Kubernetes (e.g., OpenShift) or Docker depending on your infra maturity.
+- **Consistency**: Same Mage Pro features and workspace management UI across deployment modes.

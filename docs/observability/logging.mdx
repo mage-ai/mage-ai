@@ -1,0 +1,170 @@
+---
+title: "Logging"
+icon: "typewriter"
+sidebarTitle: "Overview"
+---
+
+## Server Logging
+
+The server logger can be configured to adjust the amount of detail that is included in the server logs. This can be helpful for debugging or troubleshooting server issues. You can change the verbosity level of the logger by setting the `SERVER_VERBOSITY` environment variable.
+
+The `SERVER_VERBOSITY` variable accepts the following values: `DEBUG`, `INFO`, `WARNING`, `ERROR` and `CRITICAL`.
+
+## Server logging format
+
+You can customize the format by setting the `SERVER_LOGGING_FORMAT` environment variable. By default it is set as
+`SERVER_LOGGING_FORMAT=plaintext`. If it is set to unknown format it will use default value instead.
+
+### Plaintext format
+
+The plaintext logging format will be used by default. Or it can be set explicitly by setting the
+`SERVER_LOGGING_FORMAT=plaintext` environment variable.
+
+By default, the server will log messages in the following format:
+```
+%(levelname)s:%(name)s:%(message)s
+```
+
+It can be customized by setting the `SERVER_LOGGING_TEMPLATE` environment variable.
+Example:
+```
+SERVER_LOGGING_TEMPLATE=$'%(asctime)s\t[%(name)25.25s]\t%(levelname)5s: %(message)s'
+```
+
+<Warning>
+    **Important**
+
+    Format string with special characters like `\t`, `\n`, etc. can't be passed through `.env` file as they are getting
+    escaped.
+
+    To pass such string you can
+    1. Use `export SERVER_LOGGING_TEMPLATE=$'%(asctime)s\t[%(name)25.25s]\t%(levelname)5s: %(message)s'` syntax for local
+    python deployment or docker compose with exported env variables
+    2. Use combination of `.env` file and `-e` flag for plain docker deployment
+    `docker run -d --env-file .env -e SERVER_LOGGING_TEMPLATE=$'%(asctime)s\t\t[%(name)25.25s]\t%(levelname)5s: %(message)s' mageai/mageai:latest`
+</Warning>
+
+### JSON format
+
+To use JSON logging format, set `SERVER_LOGGING_FORMAT=json`.
+
+JSON formatted logs will have the following fields:
+```json
+{
+  "timestamp": "...",
+  "level": "...",
+  "message": "...",
+  "logger": "...",
+  "module": "...",
+  "function": "...",
+  "line_number": "..."
+}
+```
+
+More logging formats/customization to come...
+
+## Pipelines logging
+By default, logs for each pipeline run will be stored in the
+`<path_to_project>/pipelines/<pipeline_name>/.logs` folder.
+
+Learn more about logs [here](/design/core-abstractions#log).
+
+### Set logging level
+The default logging level is `INFO`. To customize the logging level for logs of block runs and pipeline runs,
+you can set the `level` of `logging_config` in your project's `metadata.yaml` file.
+
+Example logging config to only log errors:
+```yaml
+logging_config:
+  level: ERROR
+```
+
+### Set log retention period
+To delete old logs in your persistent volume, you can specify the `retention_period` in the `logging_config`. Valid period units
+are 'h', 'd', and 'w'.
+
+Example logging config:
+```yaml
+logging_config:
+  retention_period: '15d'
+```
+
+Then you can run command `mage clean-old-logs [project_path]` to clean up old logs
+
+### Block logging
+A logger is available in the block's context. You can use it to log messages to the block's log file. The logger is passed into
+each block as a keyword argument. You can retrieve the logger by calling `kwargs.get('logger')` within the block.
+
+Example:
+```python
+@data_loader
+def load_data(*args, **kwargs):
+    kwarg_logger = kwargs.get('logger')
+
+    kwarg_logger.info('Test logger info')
+    kwarg_logger.warning('Test logger warning')
+    kwarg_logger.error('Test logger error')
+
+    ...
+```
+
+## Logging to external destination
+
+### S3
+
+To store logs in S3, you need to set the `logging` config in your project's `metadata.yaml` file.
+
+Example S3 logging config:
+```yaml
+logging_config:
+  type: s3
+  level: INFO
+  destination_config:
+    bucket: <bucket name>
+    prefix: <prefix path>
+    aws_access_key_id: <(optional) AWS access key ID>
+    aws_secret_access_key: <(optional) AWS secret access key>
+    endpoint_url: <(optional) custom endpoint url>
+```
+
+To authenticate with S3, the credentials need to be configured in one of the following ways:
+- Configure credentials in the `logging_config`.
+- Configure credentials in environment variables: `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`.
+- Authenticate with IAM role. Grant S3 access to the IAM role of the cloud instance.
+
+The `endpoint_url` can be configured to connect to S3 compatible services (e.g. MinIO).
+
+### Google Cloud Storage
+
+To store logs in GCS, you need to set the `logging` config in your project's `metadata.yaml` file.
+
+Example GCS logging config:
+```yaml
+logging_config:
+  type: gcs
+  level: INFO
+  destination_config:
+    path_to_credentials: <(optional) path to gcp credentials json file>
+    bucket: <bucket name>
+    prefix: <prefix path>
+```
+
+<br />
+
+*More destinations coming...*
+
+<br />
+
+---
+
+## Edit pipeline logging
+
+When you’re editing a pipeline (e.g. `/pipelines/[uuid]/edit`), you can execute the code for an
+individual block and see the output. Any `print` statements in the block of code is displayed
+in the block’s output.
+
+However, you can redirect those `print` statements to output to logs.
+
+To toggle this feature, go to the pipeline settings page (e.g. `/pipelines/[uuid]/settings`)
+and check the box labeled
+<b>When running a block while editing a pipeline, output the block messages to the logs</b>.

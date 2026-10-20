@@ -1,15 +1,21 @@
-from datetime import datetime
-from mage_ai.shared.parsers import encode_complex
-from mage_ai.shared.hash import merge_dict
 import logging
-import simplejson
 import traceback
 import uuid
+from datetime import datetime
+from typing import Dict
+
+import simplejson
+
+from mage_ai.shared.hash import merge_dict
+from mage_ai.shared.parsers import encode_complex
 
 
 class DictLogger():
-    def __init__(self, logger: logging.Logger):
+    def __init__(self, logger: logging.Logger, logging_tags: Dict = None):
         self.logger = logger
+        if logging_tags is None:
+            logging_tags = dict()
+        self.logging_tags = logging_tags
 
     def critical(self, message, **kwargs):
         self.__send_message('critical', message, **kwargs)
@@ -32,6 +38,12 @@ class DictLogger():
     def warning(self, message, **kwargs):
         self.__send_message('warning', message, **kwargs)
 
+    def warn(self, message, **kwargs):
+        """
+        Same as warning, but in some cases we may need to use warn instead of warning
+        """
+        self.__send_message('warning', message, **kwargs)
+
     def __send_message(
         self,
         method_name,
@@ -42,19 +54,19 @@ class DictLogger():
     ):
         now = datetime.utcnow()
         data = dict(
-            level=method_name.upper(),
+            level=logging.getLevelName(log_level) if log_level else method_name.upper(),
             message=message,
             timestamp=now.timestamp(),
             uuid=uuid.uuid4().hex,
         )
 
         if error:
-            data['error'] = traceback.format_exc(),
-            data['error_stack'] = traceback.format_stack(),
-            data['error_stacktrace'] = str(error),
+            data['error'] = traceback.format_exc()
+            data['error_stack'] = traceback.format_stack()
+            data['error_stacktrace'] = str(error)
 
         msg = simplejson.dumps(
-            merge_dict(kwargs, data),
+            merge_dict(self.logging_tags or dict(), merge_dict(kwargs, data)),
             default=encode_complex,
             ignore_nan=True,
         )
@@ -74,6 +86,7 @@ class DictLogger():
             'info',
             'log',
             'warning',
+            'warn',
         ]:
             return getattr(self.logger, method_name)
         return getattr(self, method_name)

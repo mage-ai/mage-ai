@@ -1,0 +1,285 @@
+---
+title: "AI Sidekick"
+sidebarTitle: "Overview"
+description: "Use Mage Pro AI Sidekick to build, debug, operate, explore, and automate data work from inside Mage."
+icon: "user-robot"
+---
+
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="ai-sidekick" />
+
+AI Sidekick is the Mage Pro assistant built for data teams. It understands the
+Mage page you are viewing, the project you are working in, your pipelines,
+blocks, runs, logs, data outputs, connected sources, docs, and chat history, then
+turns natural-language requests into useful answers and real Mage actions.
+
+Use Sidekick when you want to move from an idea to a working pipeline, explain a
+production failure, explore data without opening a separate tool, generate an
+Analytics chart, update project files, or ask a teammate-style question about
+what is happening in Mage.
+
+<Frame>
+  <img
+    alt="AI Sidekick creating Titanic survival charts from inside Mage Pro."
+    src="/media/ai-sidekick/ai-sidekick-hero.png"
+  />
+</Frame>
+
+In this example, Sidekick is working from the open analytics workflow. It turns
+plain-language chart requests into visual analysis, keeps the generated charts
+in context, and gives you a path to add useful results to a dashboard without
+leaving Mage.
+
+## How to Access AI Sidekick
+
+AI Sidekick is available in Mage Pro wherever contextual help or automation is
+most useful.
+
+1. Open a Mage Pro workspace.
+1. Open a pipeline, block, run, Analytics page, data preview, or code page.
+1. Click the AI Sidekick entry point in the page header, right panel, output
+   toolbar, chart workflow, or contextual action menu.
+1. Ask in plain English, choose a suggested prompt, or attach the current page,
+   file, block output, chart, or data preview as context.
+
+Sidekick starts with the context of the page you are on. On a pipeline page, it
+can see the pipeline shape and active block. On an Analytics page, it can keep
+the target dashboard or chart in focus. In code-oriented surfaces, it can work
+with the active file and selected source text. When the prompt is ambiguous, it
+can ask you to choose the right source, table, pipeline, or action before making
+changes.
+
+## How to Use It
+
+Start with the outcome you want, not the implementation details.
+
+```text
+Create a pipeline that loads Salesforce opportunities, joins them with Stripe
+invoices, calculates expansion revenue, and runs every weekday morning.
+```
+
+```text
+This run failed overnight. Explain the root cause, fix the broken block, and
+retry the failed work from the same run.
+```
+
+```text
+Show active customers by region from Snowflake, filter to enterprise accounts,
+then make a bar chart for the Analytics dashboard.
+```
+
+```text
+Open the current block output, find outliers in order_value, and explain what
+changed from the previous run.
+```
+
+Sidekick streams its progress as it works. For changes that affect Mage objects
+or project files, it can read back the result, refresh the open page, and keep
+the conversation tied to the exact run, block, preview, chart, or file it used.
+
+## What AI Sidekick Can Do
+
+### Build Pipelines from a Prompt
+
+Describe the data workflow you want and Sidekick can create the pipeline,
+choose the right block types, generate block code, wire dependencies, apply
+templates, and set up the supporting configuration. It can work with batch
+pipelines, streaming pipelines, integration pipelines, dbt workflows, dynamic
+blocks, callbacks, conditionals, sensors, charts, global data products, and
+custom project code.
+
+Examples:
+
+- "Build a daily customer health pipeline from HubSpot, Stripe, and Snowflake."
+- "Add a dbt model step after this loader and run only the selected model."
+- "Create a streaming pipeline for Kafka events and write clean records to S3."
+- "Split this block into dynamic children by country, then reduce the results."
+
+### Generate, Edit, and Repair Blocks
+
+Sidekick can create blocks, update existing logic, refactor code, explain what a
+block does, change dependencies, and keep block metadata aligned with the
+pipeline. It understands common Mage block languages and patterns, including
+Python, SQL, R, YAML, Markdown, dbt, and data integration templates.
+
+Use it for everyday engineering work:
+
+- turn a plain-language transform into reusable code
+- add retries, timeouts, variables, secrets, or execution settings
+- convert exploratory code into production-ready blocks
+- update upstream or downstream dependencies
+- fix syntax errors, runtime exceptions, and broken imports
+- preserve the current editor context while applying file-backed updates
+
+### Debug Runs and Self-Heal Failures
+
+When a pipeline run fails, Sidekick can inspect the run, block statuses, logs,
+outputs, and recent changes, then explain what happened in terms a data team can
+act on. If you ask it to fix the problem, it can update the broken code and
+retry the failed or incomplete work on the original run instead of creating a
+separate run with different context.
+
+Examples:
+
+- "Why did this run fail?"
+- "Fix the failed block and retry the downstream blocks."
+- "Summarize all ERROR logs for the last three runs."
+- "Find the schema change that caused this exporter to break."
+
+### Explore Data in Chat
+
+Sidekick can discover authorized data sources and pipeline outputs, inspect
+schemas, ask for missing warehouse, database, schema, dataset, table, or catalog
+selection, and open a windowed data preview directly in chat. For SQL-capable
+sources, it can create read-only query previews for grouped results, joins,
+derived columns, filters, and comparisons.
+
+The preview stays interactive. You can sort, filter, select columns, ask
+follow-up questions, return to a parent preview, or branch into another
+refinement without copying a full dataset into the conversation.
+
+Examples:
+
+- "Show revenue by month from the warehouse."
+- "Only include enterprise accounts and sort by ARR descending."
+- "Compare this block output against yesterday's run."
+- "Count rows by status, then open the result as a table."
+
+### Create Analytics and Data Products
+
+Sidekick can turn pipeline outputs, data previews, SQL results, and existing
+charts into Analytics assets. It can generate Plotly code, create chart metadata,
+save bounded chart-ready datasets, attach charts to the right dashboard, and
+refresh the open Analytics page after the chart is saved.
+
+Ask for:
+
+- operational dashboards from pipeline outputs
+- revenue, usage, churn, or conversion charts from warehouse data
+- chart edits such as new filters, titles, colors, or grouping
+- table-backed data products for analysts and stakeholders
+- chart explanations for people who did not build the pipeline
+
+### Understand the Page You Are On
+
+Sidekick can answer page-relative questions such as "what am I looking at?",
+"why is this empty?", "what changed here?", or "what should I do next?" because
+Mage passes it scoped page context for the active chat turn. It can also use
+recent interaction context, selected text, current file context, active preview
+context, and chart workflow attachments when those are available.
+
+<Frame>
+  <img
+    alt="AI Sidekick response explaining a pipeline and recommending a monitoring chart."
+    src="/media/ai-sidekick/pipeline-sidekick-chat.jpg"
+  />
+</Frame>
+
+This makes Sidekick useful for onboarding and review:
+
+- explain a pipeline graph to a new teammate
+- summarize the selected code in Apps Coder
+- describe why a chart or preview is filtered
+- compare what the UI shows with the last successful run
+- keep an Analytics edit focused on the selected chart
+
+### Search Docs, Project Knowledge, and Chat History
+
+Sidekick can search Mage documentation, read relevant pages, inspect project
+instructions when they matter, and use previous chat turns or tool outputs to
+continue work without making you repeat context. When retrieval is enabled for a
+project, it can reference the project files, configuration, docs, and code that
+you permit it to read.
+
+Use this for:
+
+- "How should I configure this trigger?"
+- "Find the docs for dynamic blocks and apply the pattern here."
+- "Continue from the chart we created earlier."
+- "Read the last tool output and explain why it failed."
+
+### Operate Production Workflows
+
+Sidekick can help with the operational surfaces around pipelines: schedules,
+triggers, backfills, runs, jobs, block runs, outputs, logs, variables, secrets,
+notifications, permissions, users, roles, deployments, compute, Spark, global
+hooks, version control, and workspace settings. It can list, inspect, create, or
+update supported Mage resources through the same authenticated Mage APIs that
+power the product.
+
+Examples:
+
+- "Create a weekday trigger for this pipeline with these runtime variables."
+- "Backfill this pipeline for the last seven days."
+- "Show active triggers and the next run time for each."
+- "Check whether this user has permission to view the workspace."
+- "Review Spark executor status for the slow run."
+
+### Work with Files and Versioned Project Code
+
+Sidekick can read and update project files, upload or download supported files,
+record changes so Mage file versions stay accurate, inspect file history, and
+coordinate code changes with pipeline or block metadata updates. It can also use
+sync workflows when local and remote project files need to be reconciled.
+
+Use it when you want to:
+
+- update a utility module used by multiple blocks
+- change a YAML config and apply the related Mage metadata update
+- inspect file versions before accepting a change
+- create a new project file from a prompt
+- pull or push project changes through an agent workflow
+
+### Coordinate Longer AI Workflows
+
+For larger requests, Sidekick can break work into smaller AI tasks, wait for
+results, cancel stale work, and summarize progress back into the main chat. This
+is useful for independent review, broad discovery, test-gap analysis, migration
+work, or multi-step implementation where several pieces can be investigated at
+the same time.
+
+Examples:
+
+- "Audit these five pipelines and summarize the risky patterns."
+- "Have one agent inspect docs and another inspect code before proposing a fix."
+- "Generate a migration plan and check the source project inventory."
+- "Run an independent review of the changes before I ship them."
+
+### Generate and Understand Media
+
+In Sidekick sessions that enable media tools, Sidekick can transcribe audio,
+translate audio to English, create spoken audio from text, generate images, edit
+images, and create or download short videos. Generated files are saved to the
+Sidekick media area for the active chat and are returned through authenticated
+preview links.
+
+Use this for:
+
+- transcribing a stakeholder recording into requirements
+- generating a narrated explanation of a pipeline result
+- drafting images for reports, demos, or internal docs
+- editing chart screenshots or data-product visuals
+- producing short demo clips from a written prompt
+
+## Built for Data Teams
+
+AI Sidekick is not a generic chatbot placed next to your pipeline editor. It is
+connected to Mage's data engineering model: projects, pipelines, blocks,
+dependencies, schedules, logs, previews, dashboards, files, users, roles,
+deployments, compute resources, and production history. That connection lets it
+answer with context and take action where the work already happens.
+
+## Safety and Control
+
+Sidekick uses your Mage Pro authentication and respects the same project,
+workspace, and resource boundaries as the product. It uses redacted tool
+responses for sensitive fields, works with preview IDs and bounded row windows
+instead of dumping full datasets into chat, validates read-only SQL previews
+before execution, and asks clarifying questions when a request could target
+multiple resources.
+
+For changes that mutate pipelines, blocks, files, schedules, secrets, users,
+permissions, or other resources, review the proposed result in Mage and ask
+Sidekick to explain what changed, show the relevant diff or resource state, or
+run the affected workflow again.

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Meta, Story } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 
 import BarGraphHorizontal, { BarStackHorizontalContainerProps } from '@components/charts/BarGraphHorizontal';
 import ThemeBlock from '../../ThemeBlock';
@@ -17,7 +17,7 @@ const TemplateWithTheme = ({ ...props }) => (
   </ThemeBlock>
 );
 
-const Template: Story<BarStackHorizontalContainerProps> =
+const Template: StoryFn<BarStackHorizontalContainerProps> =
   (args) => <TemplateWithTheme {...args} />;
 
 export const Regular = Template.bind({});

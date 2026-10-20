@@ -1,14 +1,20 @@
-from enum import Enum
-from typing import Any, Mapping
-import pathlib
 import os
+from pathlib import Path
+from typing import Any, Mapping, Optional, Union
+
 import yaml
 
+from mage_ai.shared.enum import StrEnum
 
-class IOConfigKeys(str, Enum):
+
+class IOConfigKeys(StrEnum):
     AWS = 'AWS'
     BIGQUERY = 'BigQuery'
+    CLICKHOUSE = 'ClickHouse'
+    DRUID = 'Druid'
+    DUCKDB = 'DuckDB'
     FILE = 'File'
+    PINOT = 'Pinot'
     POSTGRES = 'PostgreSQL'
     REDSHIFT = 'Redshift'
     S3 = 'S3'
@@ -20,14 +26,17 @@ class IOConfig:
     Wrapper around IO configuration file.
     """
 
-    def __init__(self, filepath: os.PathLike = './default_repo/io_config.yaml') -> None:
+    def __init__(
+        self,
+        filepath: Optional[Union[os.PathLike, str]] = None
+    ) -> None:
         """
         Initializes IO Configuration loader
 
         Args:
             filepath (os.PathLike): Path to IO configuration file.
         """
-        self.filepath = pathlib.Path(filepath)
+        self.filepath = Path(filepath) if filepath else Path('default_repo', 'io_config.yaml')
 
     def use(self, profile: str) -> Mapping[str, Any]:
         """

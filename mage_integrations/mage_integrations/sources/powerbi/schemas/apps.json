@@ -1,0 +1,22 @@
+{
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "id": {
+            "type": ["string", "null"]
+        },
+        "description": {
+            "type": ["string", "null"]
+        },
+        "lastUpdate": {
+            "type": ["string", "null"],
+            "format": "date-time"
+        },
+        "name": {
+            "type": ["string", "null"]
+        },
+        "publishedBy": {
+            "type": ["string", "null"]
+        }
+    }
+}

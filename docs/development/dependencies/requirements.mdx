@@ -1,0 +1,189 @@
+---
+title: "Install Python packages using `requirements.txt`"
+sidebarTitle: "Python packages"
+description: "Mage allows you to easily integrate third-party Python packages into your project and pipelines.
+This guide will walk you through the process of adding and managing external dependencies."
+---
+
+import { ProButton } from '/snippets/pro/button.mdx';
+
+<p align='center'>
+<img
+  alt="Python mecha"
+  src="https://mage-ai.github.io/assets/development/python-package.png"
+  width="250"
+></img>
+</p>
+
+<Note>
+**Mage Pro: Advanced Dependency Management**
+
+Mage Pro includes an advanced dependency management system with isolated virtual environments, automatic caching, and intelligent package resolution. Features include:
+
+- **Isolated environments** for each unique combination of dependencies
+- **Automatic caching** with fingerprint-based environment reuse
+- **Fast installation** using `uv` with `pip` fallback
+- **Smart compatibility checking** to reuse global packages
+- **No cluster restarts required** for dependency updates
+- **Easy UI-based installation** via Terminal page
+
+See the [Advanced Dependency Management](/development/dependencies/dependency-management) guide for complete documentation, or the [Quick Start guide](/getting-started/install-dependencies) for UI-based installation.
+
+<ProButton />
+</Note>
+
+## Add Python packages to `requirements.txt`
+
+### Location
+
+At the root of your Mage project directory, you'll find a file named `requirements.txt`.
+This file is used to specify all the Python packages that your project depends on.
+
+### Path
+
+At the root of your project directory, there is a file named `requirements.txt`. Open this file
+and add the Python package you want installed and available throughout your entire project.
+
+For example, if your project is named `demo_project` then the file will be located at
+`demo_project/requirements.txt`.
+
+### Adding packages
+
+To add a package, simply open the `requirements.txt` file and list each package on a new line. You can also specify version requirements if needed.
+
+### Example `requirements.txt`:
+
+```
+matplotlib==3.5.2
+tqdm
+```
+In this example the `requirements.txt` file will install:
+
+- matplotlib version 3.5.2
+- tqdm
+
+## Automatic installation
+
+When installing Mage using Docker, Mage provides two main methods for automatically installing third-party packages at runtime.
+These methods utilize the `USER_CODE_PATH` environment variable, which defines your project path (e.g. `/home/src/project_name`),
+to locate your `requirements.txt` file and install the packages listed there.
+
+<Accordion title="Using Command Line Flags">
+
+## Using command line flags
+
+If you installed Mage using Docker, the `USER_CODE_PATH` can be set using command line flags. You will need to add these command line flags at every run when running a new Docker container or installing a new version of Mage.
+
+### Setting `USER_CODE_PATH` in Docker
+
+The `USER_CODE_PATH` environment variable tells Mage where your project code is located within the Docker container. This is essential for features like automatic package installation from `requirements.txt`.
+
+#### Docker run command
+
+To set the `USER_CODE_PATH` when running a Mage Docker container, use the following command structure:
+
+```Shell
+docker run -it -p 6789:6789 -v $(pwd):/home/src \
+  -e USER_CODE_PATH=/home/src/project_name \
+  mageai/mageai /app/run_app.sh mage start [project_name]
+```
+Let's break down this command:
+
+- `it`: Runs the container interactively with a pseudo-TTY.
+- `p 6789:6789`: Maps port 6789 from the container to your host machine.
+- `v $(pwd):/home/src`: Mounts your current directory to `/home/src` in the container.
+- `e USER_CODE_PATH=/home/src/project_name`: Sets the `USER_CODE_PATH` environment variable.
+- `mageai/mageai`: Specifies the Mage Docker image to use.
+- `/app/run_app.sh mage start [project_name]`: The command to run inside the container.
+
+### Important Notes
+
+1. **Persistence**: The `USER_CODE_PATH` setting is not persistent across container restarts or when installing new versions of Mage. You must include these flags each time you run a new Docker container.
+2. **Project Name**: Replace `[project_name]` with your actual Mage project name in both the `USER_CODE_PATH` and the start command.
+3. **Path Consistency**: Ensure that the path in `USER_CODE_PATH` matches the mount point specified in the `v` flag. In this example, we mount to `/home/src`, so the `USER_CODE_PATH` starts with `/home/src`.
+4. **Working Directory**: The `$(pwd)` in the `v` flag assumes you're running the Docker command from your project's parent directory. Adjust this path if you're running from a different location.
+
+For more detailed information on environment variables and their impact on Mage's functionality, please refer to our comprehensive environment variable [documentation](https://docs.mage.ai/development/variables/environment-variables).
+</Accordion>
+
+<Accordion title="Using Dockerfile">
+
+## Using Dockerfiles
+
+One important aspect of configuring Mage is setting the `USER_CODE_PATH`, which tells Mage where your project code is located.
+While this can be done using command-line flags when running Docker containers, it's also possible to set the `USER_CODE_PATH`
+directly in your Dockerfile. This approach can be more convenient for consistent deployments and when building custom images.
+
+```Bash
+FROM mageai/mageai:latest
+
+### Set up project-specific arguments
+ARG PROJECT_NAME=[project_name]
+ARG MAGE_CODE_PATH=/home/mage_code
+ARG USER_CODE_PATH=${MAGE_CODE_PATH}/${PROJECT_NAME}
+
+### Set working directory
+WORKDIR ${MAGE_CODE_PATH}
+
+### Copy project files
+COPY ${PROJECT_NAME} ${PROJECT_NAME}
+
+### Set the command to run on container startup
+CMD ["/bin/sh", "-c", "/app/run_app.sh"]
+```
+
+Breakdown of the Dockerfile:
+
+1. `FROM mageai/mageai:latest`
+    - Specifies the base image as the latest version of the official Mage AI image.
+2. Project-specific arguments:
+
+```Bash
+ARG PROJECT_NAME=[project_name]
+ARG MAGE_CODE_PATH=/home/mage_code
+ARG USER_CODE_PATH=${MAGE_CODE_PATH}/${PROJECT_NAME}
+```
+- `PROJECT_NAME`: Should be replaced with your actual project name.
+- `MAGE_CODE_PATH`: Sets the base path for Mage code.
+- `USER_CODE_PATH`: Constructs the full path to your project, effectively setting the `USER_CODE_PATH` for Mage.
+3. `WORKDIR ${MAGE_CODE_PATH}`
+    - Sets the working directory inside the container to the path specified by `MAGE_CODE_PATH`.
+4. `COPY ${PROJECT_NAME} ${PROJECT_NAME}`
+    - Copies your project files from the host machine into the container.
+5. `CMD ["/bin/sh", "-c", "/app/run_app.sh"]`
+    - Specifies the command to run when the container starts, which launches the Mage application.
+
+To use this Dockerfile:
+
+1. Replace `[project_name]` with your actual project name.
+2. Ensure your project files are in a directory named after your project.
+3. Build the Docker image using this Dockerfile.
+4. Run the container to start your Mage environment.
+
+This Dockerfile demonstrates how to set the `USER_CODE_PATH` using build arguments. By defining it this way, you ensure that Mage will
+consistently know where to find your project code within the container, without needing to specify it each time you run the container.
+
+Follow the [Repository setup](https://docs.mage.ai/production/ci-cd/local-cloud/repository-setup) documentation to deploy this
+Dockerfile to fully automate the installation of third-party Python packages.
+
+</Accordion>
+If you’re running Mage using pip or conda, your local machine’s environment variables are accessible within the running Mage app.
+
+### Prerequisites
+
+1. Ensure that the environment variable `USER_CODE_PATH` is set to your project path, using
+the command line flags or the Dockerfile methods.
+
+      Example: `/home/src/project_name`
+
+2. Mage uses a script named `run_app.sh` to manage the application startup process.
+
+### Installation process
+
+When you start your Mage server:
+
+1. The `run_app.sh` script checks the `USER_CODE_PATH` environment variable.
+2. It locates the `requirements.txt` file within the specified project directory.
+3. All packages listed in `requirements.txt` are automatically installed before the server starts.
+
+This ensures that all required packages are available for your project and pipelines.

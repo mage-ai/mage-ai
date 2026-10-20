@@ -28,7 +28,8 @@ class RemoveOutliers(BaseRule):
             column (str): Column name of the univariate data
 
         Returns:
-            Union[Dict, None]: If a suggestion is made, returns the suggestion dictionary. Else returns `None`
+            Union[Dict, None]: If a suggestion is made, returns the suggestion dictionary.
+            Else returns `None`
         """
         outlier_count = self.statistics.get(f'{column}/outlier_count')
         if outlier_count:
@@ -40,7 +41,8 @@ class RemoveOutliers(BaseRule):
             wrapped_c = wrap_column_name(column)
             return self._build_transformer_action_suggestion(
                 REMOVE_OUTLIERS_TITLE,
-                f'Remove {outlier_count} outlier(s) and null values to reduce the amount of noise in this column.',
+                f'Remove {outlier_count} outlier(s) and null values to reduce the amount of noise '
+                'in this column.',
                 ActionType.FILTER,
                 action_arguments=[column],
                 action_code=f'{wrapped_c} <= {upper} and {wrapped_c} >= {lower}',

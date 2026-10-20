@@ -1,0 +1,104 @@
+---
+title: "Syncing Local Files"
+description: "Mirror your Mage Pro project to a local directory and push edits back to the cluster."
+---
+
+The sync engine lets you work on pipeline files in your local IDE and keep them in sync with your Mage Pro cluster — pulling remote changes down and pushing local edits back up.
+
+## Supported file types
+
+`.py`, `.sql`, `.r`, `.yaml`, `.yml`, `.md`, `.txt`
+
+---
+
+## Pull remote files to local
+
+Download the full remote project tree to a local directory:
+
+```bash
+mage-agent sync-project-to-local --local-project-dir ./my-mage-project
+```
+
+If `--local-project-dir` is omitted, the CLI prompts for a path (default: `.mage-agent/local_sync`).
+
+---
+
+## Check sync status
+
+See what has changed between your local copy and the cluster:
+
+```bash
+mage-agent sync-status --local-project-dir ./my-mage-project
+```
+
+Files are grouped into four categories:
+
+| Status | Meaning |
+|---|---|
+| `remote_to_local` | Remote changed since last sync — pull needed |
+| `local_to_remote` | Local changed since last sync — push needed |
+| `conflicts` | Both sides changed since last sync |
+| `in_sync` | No changes on either side |
+
+For a human-readable table instead of JSON:
+
+```bash
+mage-agent sync-status --local-project-dir ./my-mage-project --format-output human
+```
+
+---
+
+## Push local changes to the cluster
+
+```bash
+mage-agent sync-local-to-remote --local-project-dir ./my-mage-project
+```
+
+Only files flagged as `local_to_remote` are uploaded.
+
+---
+
+## Bidirectional sync with conflict resolution
+
+Run a full two-way sync in one command:
+
+```bash
+mage-agent sync --local-project-dir ./my-mage-project
+```
+
+For each conflicting file, mage-agent prompts:
+
+```
+pipelines/customer_etl/transformers/clean_names.py — CONFLICT
+  Remote modified: 2024-11-01 14:32
+  Local modified:  2024-11-01 15:10
+  Keep [r]emote / [l]ocal / [s]kip?
+```
+
+Choose `r`, `l`, or `s` for each file. Conflicts are never silently overwritten.
+
+---
+
+## Sync via AI assistant
+
+You can also trigger sync operations through your AI assistant using MCP tools:
+
+| Tool | What it does |
+|---|---|
+| `sync_project_to_local` | Pull remote files to local directory |
+| `sync_status` | Show remote/local diff |
+| `sync_local_to_remote` | Push local changes to cluster |
+
+Example prompt:
+
+> "Pull the latest remote changes to my local project at `./my-mage-project`"
+
+---
+
+## How sync state is tracked
+
+mage-agent stores a state file at `<local-project-dir>/.mage-agent-sync-state.json` after each sync. This file records the last-known timestamps for all tracked files, enabling accurate detection of what changed on each side. Do not delete or edit it manually.
+
+<Note>
+  Files inside hidden directories (`.git`, `.venv`, etc.) and `__pycache__` folders are automatically excluded from sync.
+</Note>

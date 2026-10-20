@@ -1,7 +1,7 @@
 import styled, { css } from 'styled-components';
 import { media } from 'styled-bootstrap-grid';
 
-import light from '../../styles/themes/light';
+import dark from '@oracle/styles/themes/dark';
 import {
   FONT_FAMILY_BOLD,
   FONT_FAMILY_BOLD as FONT_FAMILY_DEMI_BOLD,
@@ -44,10 +44,13 @@ export type HeadlineProps = {
   marketing?: boolean;
   monospace?: boolean;
   muted?: boolean;
+  primary?: boolean;
   spacingBelow?: boolean;
+  strikethrough?: boolean;
   warning?: boolean;
   weightStyle?: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
   wind?: boolean;
+  yellow?: boolean;
 };
 
 const SHARED_STYLES = css<TextProps & HeadlineProps>`
@@ -57,6 +60,10 @@ const SHARED_STYLES = css<TextProps & HeadlineProps>`
 
   ${props => props.color && `
     color: ${props.color}
+  `}
+
+  ${props => props.yellow && `
+    color: ${(props.theme.accent || dark.accent).yellow};
   `}
 
   ${props => props.center && `
@@ -102,11 +109,15 @@ const SHARED_STYLES = css<TextProps & HeadlineProps>`
   ${props => props.lineHeightAuto && `
     line-height: normal !important;
   `}
+
+  ${props => props.strikethrough && `
+    text-decoration: line-through;
+  `}
 `;
 
 const HeadlineContainerStyle = styled.div`
   ${props => `
-    color: ${(props.theme.content || light.content).active};
+    color: ${(props.theme.content || dark.content).active};
   `}
 `;
 

@@ -16,6 +16,7 @@ import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS_LARGE } from '@oracle/styles/units/borders';
 import { FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import { UNIT } from '@oracle/styles/units/spacing';
+import { formatNumber } from '@utils/number';
 import { formatNumberLabel } from './utils/label';
 
 type TooltipData = {
@@ -30,6 +31,7 @@ type TooltipData = {
 };
 
 type BarStackChartProps = {
+  backgroundColor?: string;
   colors: string[];
   data: any[];
   getXValue?: (opts: any) => any;
@@ -41,6 +43,7 @@ type BarStackChartProps = {
   renderXTooltipContent?: (opts: any, index: number) => any | number | string;
   renderYTooltipContent?: (opts: any, index: number) => any | number | string;
   showLegend?: boolean;
+  tooltipLeftOffset?: number;
   width?: number;
   xLabelFormat?: any;
   yLabelFormat?: any;
@@ -52,6 +55,7 @@ export type BarStackContainerProps = {
 } & BarStackChartProps;
 
 function BarStackChart({
+  backgroundColor,
   colors,
   data,
   getXValue,
@@ -61,6 +65,7 @@ function BarStackChart({
   margin,
   numYTicks,
   showLegend,
+  tooltipLeftOffset = 0,
   width,
   xLabelFormat,
   yLabelFormat,
@@ -100,7 +105,15 @@ function BarStackChart({
     domain: [0, Math.max(...yValueTotals)],
     range: [yMax, 0],
     round: true,
-  })
+  });
+
+  let yTooltipValue = null;
+  if (tooltipOpen && tooltipData) {
+    yTooltipValue = tooltipData.bar.data[tooltipData.key];
+    if (Number.isSafeInteger(yTooltipValue)) {
+      yTooltipValue = formatNumber(yTooltipValue);
+    }
+  }
 
   const colorScale = scaleOrdinal<string, string>({
     domain: keys,
@@ -108,55 +121,60 @@ function BarStackChart({
   });
 
   return (
-    <div style={{ position: 'relative' }}>
-      <svg width={width} height={height}>
-        <rect x={0} y={0} width={width} height={height} fill="#2E3036" rx={14} />
+    <div style={{ position: 'relative', zIndex: 2 }}>
+      <svg height={height} width={width}>
+        <rect
+          fill={backgroundColor || dark.background.chartBlock}
+          height={height}
+          rx={14}
+          width={width}
+          x={0}
+          y={0}
+        />
         <GridRows
-          top={margin.top}
+          height={yMax}
           left={margin.left}
           scale={yScale}
-          width={xMax}
-          height={yMax}
           stroke="black"
           strokeOpacity={0.2}
+          top={margin.top}
+          width={xMax}
         />
-        <Group top={margin.top}>
+        <Group left={margin.left} top={margin.top}>
           <BarStack<any, string>
+            color={colorScale}
             data={data}
             keys={keys}
             value={(d, key) => d[key] || 0}
             x={getXValue}
             xScale={xScale}
             yScale={yScale}
-            color={colorScale}
           >
             {(barStacks) =>
               barStacks.map((barStack) =>
-                barStack.bars.map((bar) => {
-                  return (
-                    <rect
-                      key={`bar-stack-${barStack.index}-${bar.index}`}
-                      x={bar.x}
-                      y={bar.y}
-                      height={bar.height}
-                      width={bar.width}
-                      fill={bar.color}
-                      onMouseLeave={hideTooltip}
-                      onMouseMove={(event) => {
-                        // TooltipInPortal expects coordinates to be relative to containerRef
-                        // localPoint returns coordinates relative to the nearest SVG, which
-                        // is what containerRef is set to in this example.
-                        const eventSvgCoords = localPoint(event);
-                        const left = bar.x + bar.width / 2;
-                        showTooltip({
-                          tooltipData: bar,
-                          tooltipTop: eventSvgCoords?.y,
-                          tooltipLeft: left,
-                        });
-                      }}
-                    />
-                  )
-                }),
+                barStack.bars.map((bar) => (
+                  <rect
+                    fill={bar.color}
+                    height={bar.height}
+                    key={`bar-stack-${barStack.index}-${bar.index}`}
+                    onMouseLeave={hideTooltip}
+                    onMouseMove={(event) => {
+                      // TooltipInPortal expects coordinates to be relative to containerRef
+                      // localPoint returns coordinates relative to the nearest SVG, which
+                      // is what containerRef is set to in this example.
+                      const eventSvgCoords = localPoint(event);
+                      const left = bar.x + bar.width / 2 + tooltipLeftOffset;
+                      showTooltip({
+                        tooltipData: bar,
+                        tooltipLeft: left,
+                        tooltipTop: eventSvgCoords?.y + 10,
+                      });
+                    }}
+                    width={bar.width}
+                    x={bar.x}
+                    y={bar.y}
+                  />
+                )),
               )
             }
           </BarStack>
@@ -180,7 +198,6 @@ function BarStackChart({
         <AxisBottom
           hideTicks
           left={margin.left}
-          top={yMax + margin.top}
           scale={xScale}
           stroke={dark.content.muted}
           tickFormat={xLabelFormat}
@@ -190,44 +207,50 @@ function BarStackChart({
             fontSize: 11,
             textAnchor: 'middle',
           })}
+          top={yMax + margin.top}
         />
       </svg>
       {showLegend && (
         <div
           style={{
+            display: 'flex',
+            fontSize: '14px',
+            justifyContent: 'center',
             position: 'absolute',
             top: margin.top / 2 - 10,
             width: '100%',
-            display: 'flex',
-            justifyContent: 'center',
-            fontSize: '14px',
           }}
         >
-          <LegendOrdinal scale={colorScale} direction="row" labelMargin="0 15px 0 0" />
+          <LegendOrdinal
+            direction="row"
+            labelMargin="0 15px 0 0"
+            scale={colorScale}
+          />
         </div>
       )}
 
       {tooltipOpen && tooltipData && (
         <Tooltip
-          top={tooltipTop}
           left={tooltipLeft}
           style={{
             ...defaultStyles,
             backgroundColor: dark.background.page,
             borderRadius: `${BORDER_RADIUS_LARGE}px`,
+            padding: '.3rem .4rem',
           }}
+          top={tooltipTop}
         >
           <Text bold color={colorScale(tooltipData.key)}>
             {tooltipData.key}
           </Text>
-          <Text>{tooltipData.bar.data[tooltipData.key]}</Text>
+          <Text>{yTooltipValue}</Text>
           <Text>
             {getXValue(tooltipData.bar.data)}
           </Text>
         </Tooltip>
       )}
     </div>
-  )
+  );
 }
 
 function BarStackContainer({
@@ -282,7 +305,7 @@ function BarStackContainer({
         )}
       </div>
     </>
-  )
+  );
 }
 
 export default BarStackContainer;

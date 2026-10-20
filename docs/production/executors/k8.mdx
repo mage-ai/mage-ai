@@ -1,0 +1,563 @@
+---
+title: "Kubernetes executor"
+sidebarTitle: "Kubernetes"
+icon: "python"
+description: "Run Mage pipeline blocks in separate Kubernetes pods for scalability, isolation, and resource control."
+---
+
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProBanner } from '/snippets/pro/banner.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProBanner
+  source="kubernetes-executor"
+  title="Use Mage Pro if you need to run your blocks in separate pods or process while developing in the code editor."
+  description={`
+  Running a block from the code editor, while developing a pipeline, won’t use this executor.
+  Instead, the block will be executed using the same process that the code editor is running on.
+  `}
+/>
+
+If your Mage app is deployed in a **Kubernetes cluster**, you can configure the **Kubernetes Executor** (`executor_type: k8s`) to run each block in its own Kubernetes pod.
+
+**Defaults in Mage Pro:**
+- Namespace: `default`
+- **Job name format:** `mage-data-prep-block-{block_run_id}`
+
+You can override these defaults at the **project level**, **pipeline level**, **block level**, or with a **full Kubernetes job template**.
+
+## Basic Setup
+
+To configure a pipeline block to use Kubernetes executor, you simply just need to update the `executor_type` of the block to `k8s` in pipeline's metadata.yaml:
+
+```yaml
+blocks:
+- uuid: example_data_loader
+  type: data_loader
+  upstream_blocks: []
+  downstream_blocks: []
+  executor_type: k8s
+  ...
+```
+By default, Mage uses `default` as the Kubernetes namespace. You can customize the namespace by setting the `KUBE_NAMESPACE` environment variable.
+
+```bash
+export KUBE_NAMESPACE=my-namespace
+```
+
+## Configuration Methods
+
+You can configure Kubernetes Executor in several places. Mage builds the
+effective config by deep-merging the less specific config first, then applying
+more specific config on top:
+
+1. Environment variable defaults and hardcoded defaults
+2. Project-level `k8s_executor_config`
+3. Pipeline-level `executor_config`
+4. Block-level `executor_config`
+
+For a normal block-level Kubernetes executor run, block settings win over
+pipeline settings, pipeline settings win over project settings, and project
+settings win over environment defaults. For `run_pipeline_in_one_process: true`,
+Mage uses the pipeline-level Kubernetes executor and merges only project-level
+and pipeline-level settings because the whole pipeline runs in one pod.
+
+Most nested dictionaries are merged, so you can set broad defaults at the
+project level and override only the keys that need to change at the pipeline or
+block level. Resource requests and limits are applied to the job container after
+the pod template is built, so `executor_config.resource_requests` and
+`executor_config.resource_limits` take precedence over `container.resources`.
+
+### 1. Environment Variable Defaults
+
+Use environment variables to set default resource requests, resource limits,
+maximum allowed resource requests, maximum allowed resource limits, and service
+account for all Kubernetes executor jobs. Default values are only applied when a
+more specific project, pipeline, or block config does not set the same resource
+group. Maximum values are Mage Pro-only guardrails: after environment defaults,
+project config, pipeline config, and block config are merged, Mage fails the job
+before creating the Kubernetes Job if the effective request or limit exceeds a
+configured maximum.
+
+```bash
+export K8S_EXECUTOR_DEFAULT_RESOURCE_REQUESTS_CPU=250m
+export K8S_EXECUTOR_DEFAULT_RESOURCE_REQUESTS_MEMORY=512Mi
+export K8S_EXECUTOR_DEFAULT_RESOURCE_LIMITS_CPU=500m
+export K8S_EXECUTOR_DEFAULT_RESOURCE_LIMITS_MEMORY=1Gi
+export K8S_EXECUTOR_MAX_RESOURCE_REQUESTS_CPU=2000m
+export K8S_EXECUTOR_MAX_RESOURCE_REQUESTS_MEMORY=4Gi
+export K8S_EXECUTOR_MAX_RESOURCE_LIMITS_CPU=4000m
+export K8S_EXECUTOR_MAX_RESOURCE_LIMITS_MEMORY=8Gi
+export K8S_EXECUTOR_DEFAULT_SERVICE_ACCOUNT_NAME=default
+```
+
+✅ **Use when:**
+You want a cluster-wide fallback for jobs that do not define their own
+Kubernetes resources.
+
+### 2. Project-Level Configuration
+
+Set `k8s_executor_config` in the project's `metadata.yaml` to apply defaults to
+all blocks and pipeline runs that use the Kubernetes Executor in that project:
+
+```yaml
+k8s_executor_config:
+  job_name_prefix: data-prep
+  namespace: default
+  resource_limits:
+    cpu: 1000m
+    memory: 2048Mi
+  resource_requests:
+    cpu: 500m
+    memory: 1024Mi
+  service_account_name: default
+  pod:
+    node_selector:
+      workload: batch
+    tolerations:
+      - key: "workload"
+        operator: "Equal"
+        value: "batch"
+        effect: "NoSchedule"
+```
+
+✅ **Use when:**
+You want consistent Kubernetes settings across a project, such as default
+CPU/RAM, namespace, service account, or node scheduling.
+
+### 3. Pipeline-Level Configuration
+
+Add `executor_type: k8s` and `executor_config` to the pipeline's
+`metadata.yaml`. Pipeline-level config applies to the pipeline executor when
+`run_pipeline_in_one_process: true`; it also acts as a shared default for block
+runs in that pipeline before block-level overrides are applied.
+
+```yaml
+executor_type: k8s
+run_pipeline_in_one_process: true
+executor_config:
+  namespace: default
+  resource_limits:
+    cpu: 2000m
+    memory: 4096Mi
+  resource_requests:
+    cpu: 1000m
+    memory: 2048Mi
+```
+
+✅ **Use when:**
+You want every block run in one pipeline to inherit the same Kubernetes config,
+or you run the entire pipeline in one Kubernetes pod with
+`run_pipeline_in_one_process: true`.
+
+### 4. Block-Level Configuration
+
+Add `executor_type: k8s` and `executor_config` to a block in the pipeline's
+`metadata.yaml`:
+
+```yaml
+blocks:
+- uuid: example_data_loader
+  type: data_loader
+  executor_type: k8s
+  executor_config:
+    namespace: default
+    resource_limits:
+      cpu: 1000m
+      memory: 2048Mi
+    resource_requests:
+      cpu: 500m
+      memory: 1024Mi
+```
+
+✅ **Use when:**
+You only want to:
+* Run certain blocks in the Kubernetes executor
+* Override the Kubernetes executor config for specific blocks
+
+* The Kubernetes job name is in this format: `mage-{job_name_prefix}-block-{block_run_id}`.
+  The default `job_name_prefix` is `data-prep`.
+  You can customize it in the `k8s_executor_config`.
+  You can interpolate the trigger name in the `job_name_prefix` field with the format `{trigger_name}`.
+
+- **GPU Support:**
+  ```yaml
+  k8s_executor_config:
+    resource_limits:
+      nvidia.com/gpu: 1  # request 1 GPU
+    pod:
+      node_selector:
+        accelerator: nvidia-tesla-v100
+      tolerations:
+        - key: "nvidia.com/gpu"
+          operator: "Exists"
+          effect: "NoSchedule"
+  ```
+  Make sure [GPU device plugins](https://kubernetes.io/docs/tasks/manage-gpus/scheduling-gpus/#using-device-plugins) are installed.
+
+- **Custom container & job spec:**
+  ```yaml
+  k8s_executor_config:
+    container_config:
+      image: mageai/mageai:0.9.7
+      env:
+      - name: USER_CODE_PATH
+        value: /home/src/k8s_project
+    job:
+      active_deadline_seconds: 120
+      backoff_limit: 3
+      ttl_seconds_after_finished: 86400
+  ```
+
+✅ **Use when:**
+You need specialized resources or scheduling for one expensive block without
+changing the rest of the pipeline.
+
+
+### 5. Full Kubernetes Job Template (maximum control)
+
+Set the `K8S_CONFIG_FILE` environment variable to the path of a YAML
+configuration file. This is the raw job template for Kubernetes executor jobs.
+Use `K8S_DEFAULT_CONFIG_PATH` instead when you want a reusable policy that
+merges with user config as described in [Default config file](#default-config-file).
+
+**Example template:**
+
+```yaml
+metadata:
+  annotations:
+    application: "mage"
+    component: "executor"
+  labels:
+    application: "mage"
+    type: "spark"
+  namespace: "default"
+
+pod:
+  service_account_name: "mage-service-account"
+  image_pull_secrets: "my-registry-secret"
+  node_selector:
+    node-type: "compute"
+    instance-type: "c5.xlarge"
+    zone: "us-west-1a"
+  scheduler_name: "custom-scheduler"
+  tolerations:
+    - key: "nvidia.com/gpu"
+      operator: "Exists"
+      effect: "NoSchedule"
+    - key: "spot-instance"
+      operator: "Equal"
+      value: "true"
+      effect: "NoSchedule"
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: "node-type"
+                operator: "In"
+                values: ["compute", "gpu"]
+              - key: "instance-type"
+                operator: "In"
+                values: ["c5.xlarge", "c5.2xlarge"]
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          preference:
+            matchExpressions:
+              - key: "zone"
+                operator: "In"
+                values: ["us-west-1a", "us-west-1b"]
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchLabels:
+              app: "mage-pipeline"
+          topologyKey: "kubernetes.io/hostname"
+  volumes:
+  - name: data-pvc
+    persistent_volume_claim:
+      claim_name: mage-data-pvc
+  - name: config-volume
+    config_map:
+      name: mage-config
+  - name: secret-volume
+    secret:
+      secret_name: mage-secrets
+  - name: empty-dir-volume
+    empty_dir: {}
+
+container:
+  name: "mage-data"
+  image: "mageai/mageai:latest"
+  image_pull_policy: "IfNotPresent"
+  env:
+    - name: "KUBE_NAMESPACE"
+      value: "default"
+    - name: "secret_key"
+      value: "somesecret"
+  resources:
+    limits:
+      cpu: "1"
+      memory: "1Gi"
+      nvidia.com/gpu: 1
+    requests:
+      cpu: "0.1"
+      memory: "0.5Gi"
+      nvidia.com/gpu: 1
+  volume_mounts:
+    - mount_path: "/tmp/data"
+      name: "data-pvc"
+    - mount_path: "/etc/config"
+      name: "config-volume"
+    - mount_path: "/etc/secrets"
+      name: "secret-volume"
+      read_only: true
+```
+
+## Node Scheduling Configuration
+
+### Node Selector
+Use `node_selector` to schedule pods on specific nodes based on labels:
+
+```yaml
+k8s_executor_config:
+  pod:
+    node_selector:
+      node-type: "gpu"           # Schedule on GPU nodes
+      instance-type: "c5.large"  # Schedule on specific instance types
+      zone: "us-west-1a"         # Schedule in specific availability zones
+```
+
+### Tolerations
+Use `tolerations` to allow pods to be scheduled on tainted nodes:
+
+```yaml
+k8s_executor_config:
+  pod:
+    tolerations:
+      - key: "nvidia.com/gpu"
+        operator: "Exists"
+        effect: "NoSchedule"
+      - key: "spot-instance"
+        operator: "Equal"
+        value: "true"
+        effect: "NoSchedule"
+```
+
+### Affinity Rules
+Use `affinity` for advanced scheduling rules:
+
+```yaml
+k8s_executor_config:
+  pod:
+    affinity:
+      # Node affinity - prefer specific node types
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: "node-type"
+                  operator: "In"
+                  values: ["compute", "gpu"]
+        preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            preference:
+              matchExpressions:
+                - key: "zone"
+                  operator: "In"
+                  values: ["us-west-1a", "us-west-1b"]
+
+      # Pod anti-affinity - avoid co-locating similar pods
+      podAntiAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app: "mage-pipeline"
+            topologyKey: "kubernetes.io/hostname"
+```
+
+### Custom Scheduler
+Use a custom scheduler for advanced scheduling logic:
+
+```yaml
+k8s_executor_config:
+  pod:
+    scheduler_name: "custom-scheduler"
+```
+
+✅ **Use when:**
+You need full control over pod specs, annotations, volume mounts, and other Kubernetes settings.
+
+
+## Multi-Container Pods
+
+If your Mage deployment runs in a **multi-container pod**, set the `MAGE_CONTAINER_NAME` environment variable to specify which container runs Mage:
+
+```yaml
+env:
+  - name: MAGE_CONTAINER_NAME
+    valueFrom:
+      fieldRef:
+        fieldPath: metadata.name
+```
+
+If not set, Mage defaults to the **first container** in the pod.
+
+
+## Default config file
+
+<ProOnly source="kubernetes-executor" />
+
+You can provide a **default K8s executor config file** that Mage reads from the path in `K8S_DEFAULT_CONFIG_PATH` environment variable. The file is loaded as a policy and merged with block-level and project-level config. Use this to enforce cluster-wide defaults (e.g. resource limits, service account) without editing every project.
+
+**Helm chart:** When deploying **Mage Pro** with the [Mage Helm chart](https://github.com/mage-ai/helm-charts), configure the default via **`k8sExecutorConfig`** in `values.yaml`. The chart creates a ConfigMap from your config, mounts it into the control-plane (and workspace pods), and sets `K8S_DEFAULT_CONFIG_PATH` automatically. Do not set the env var manually when using the chart. See [Using Helm](/production/deploying-to-cloud/using-helm#default-workspace-and-k8s-executor-config) for details. For non-Helm deployments, set the env var and ensure the file exists at that path (e.g. via your own ConfigMap or volume mount).
+
+**File format:**
+
+```yaml
+enabled: true   # Set to false to disable this policy
+enforce: true   # If true, policy overrides user config. If false, user config overrides.
+
+resource_limits:
+  cpu: "500m"
+  memory: "1Gi"
+resource_requests:
+  cpu: "250m"
+  memory: "512Mi"
+service_account_name: default
+
+pod:
+  node_selector:
+    node-type: compute
+  tolerations: []
+  volumes: []
+
+container:
+  env: []
+  volume_mounts: []
+```
+
+**Policy fields:**
+
+| Field | Description |
+|-------|-------------|
+| `enabled` | If `false`, the policy is not applied. |
+| `enforce` | Controls how the default file is merged with **user config** (block + pipeline + project). See [Priority when merging](#priority-when-merging-default-file-with-user-config) below. |
+| *(other keys)* | Same structure as [project-level k8s_executor_config](/production/executors/k8#2-project-level-configuration) (e.g. `resource_limits`, `resource_requests`, `pod`, `container`, `metadata`, `job`). |
+
+The file must exist at the given path on the Mage control-plane. Use a ConfigMap or volume mount to provide it. When **workspaces** are created, only the K8s default config file is injected (volume + volume mount + env var) so workspace pods can read it; see [Workspaces](/guides/developer-ux/workspaces#default-workspace-config-file).
+
+**Priority when merging default file with user config**
+
+The default file is **merged** with the combined user config (block + pipeline + project). The **effective priority order** (who wins for a given key) depends on `enforce`:
+
+| `enforce` | Effective priority (highest → lowest) | Result |
+|-----------|----------------------------------------|--------|
+| **`true`** | **1. Default config file** → 2. Block → 3. Pipeline → 4. Project → 5. Env vars → 6. Hardcoded | **Policy is highest priority.** Values from the default file override block, pipeline, and project for the same keys. Use this to enforce cluster-wide defaults (e.g. resource limits, service account) that users cannot override. Conflicting values can cause an error on update when strict conflict checking is used. |
+| **`false`** | **1. Block** → 2. Pipeline → 3. Project → 4. Default config file (fills gaps only) → 5. Env vars → 6. Hardcoded | **User wins.** Block, pipeline, and project override the policy for the same keys. The policy only fills in keys that user config did not set. Use this to provide optional defaults while allowing per-block, per-pipeline, or per-project overrides. |
+
+So when **`enforce: true`**, the policy has the **highest** priority; when **`enforce: false`**, block, pipeline, and project config are higher and the policy only supplies missing values.
+
+## Environment Variables Reference
+
+### General Configuration
+
+| Variable               | Purpose                                         | Default |
+|------------------------|-------------------------------------------------|---------|
+| `KUBE_NAMESPACE`       | Namespace for job execution                     | default |
+| `K8S_CONFIG_FILE`      | Path to full Kubernetes job config file         | —       |
+| `MAGE_CONTAINER_NAME`  | Container to run Mage in multi-container pods   | —       |
+
+### Resource Usage Metrics
+
+<ProOnly source="kubernetes-resource-usage" />
+
+In Mage Pro, completed Kubernetes executor runs can store CPU and memory usage
+summaries for the run detail **Resources** tab and the pipeline monitoring
+dashboard. Mage uses Prometheus first when
+`K8S_RESOURCE_USAGE_PROMETHEUS_URL` is configured; otherwise it uses the
+Kubernetes Metrics API fallback when available.
+
+Pipeline-level recommendations are available in Mage Pro after completed K8s
+executor runs have stored CPU or memory samples. Mage calculates the suggested
+`resource_requests` and `resource_limits` from observed usage, then shows the
+values in the pipeline monitoring page. Open **Monitoring** for a pipeline, then
+review **Pipeline resource usage** for compute metrics history and **Pipeline
+Recommended K8s executor config** for the recommended Kubernetes executor
+config. Use **Apply** to write the recommendation to the pipeline-level
+`executor_config`, or copy the values into block-level `executor_config` or
+project-level `k8s_executor_config` when you want a narrower or broader scope.
+
+**How recommendations are calculated:**
+
+| Resource | Basis | Request | Limit |
+| --- | --- | --- | --- |
+| CPU | `p95_cores`, then `max_cores`, then latest `current_cores` | `max(basis * 0.75, 50m)` | `max(basis * 1.5, request * 2)` |
+| Memory | `p95_bytes`, then `max_bytes`, then latest `current_bytes` | `basis * 1.1` | `basis * 1.3` |
+
+Mage marks the recommendation as `low` confidence when the run has fewer than
+three samples or an OOM warning, `medium` when enough samples exist from the
+Kubernetes Metrics API fallback, and `high` when Prometheus provides at least
+six samples. Prometheus samples are queried with
+`K8S_RESOURCE_USAGE_PROMETHEUS_STEP_SECONDS` and Mage can wait once after a run
+completes, controlled by
+`K8S_RESOURCE_USAGE_PROMETHEUS_COMPLETION_DELAY_SECONDS`, before retrying sparse
+completed runs. When unset, the completion delay defaults to
+`K8S_RESOURCE_USAGE_PROMETHEUS_STEP_SECONDS`.
+
+The Kubernetes Metrics API fallback samples active pods only. To use it, install
+Metrics Server, confirm `v1beta1.metrics.k8s.io` is available, and grant the
+Mage service account `get` and `list` access to `pods.metrics.k8s.io` in the K8s
+executor job namespace. Because the Metrics API does not keep historical pod
+samples after pods finish, short runs can still have sparse metrics; use
+Prometheus when you need reliable completed-run history.
+
+| Variable | Purpose | Default |
+| --- | --- | --- |
+| `K8S_RESOURCE_USAGE_PROMETHEUS_URL` | Prometheus base URL for K8s resource usage summaries | — |
+| `K8S_RESOURCE_USAGE_PROMETHEUS_BEARER_TOKEN` | Bearer token for Prometheus requests | — |
+| `K8S_RESOURCE_USAGE_PROMETHEUS_USERNAME` | Username for Prometheus basic authentication | — |
+| `K8S_RESOURCE_USAGE_PROMETHEUS_PASSWORD` | Password for Prometheus basic authentication | — |
+| `K8S_RESOURCE_USAGE_PROMETHEUS_TIMEOUT_SECONDS` | Timeout for each Prometheus query | `5` |
+| `K8S_RESOURCE_USAGE_PROMETHEUS_STEP_SECONDS` | Query range step for CPU and memory samples | `15` |
+| `K8S_RESOURCE_USAGE_PROMETHEUS_COMPLETION_DELAY_SECONDS` | Delay before retrying Prometheus for completed runs with too few samples | `K8S_RESOURCE_USAGE_PROMETHEUS_STEP_SECONDS` |
+| `K8S_RESOURCE_USAGE_PROMETHEUS_VERIFY_TLS` | Set to `0`, `false`, `no`, or `off` to skip TLS certificate verification | `true` |
+
+See [Monitoring with Prometheus](/observability/external/prometheus#kubernetes-resource-usage-in-mage-pro) for Prometheus query behavior, authentication details, and Kubernetes Metrics API fallback setup.
+
+### Default Resource Configuration
+
+<ProOnly source="kubernetes-executor" />
+
+
+These environment variables set default resource limits and requests, maximum
+allowed resource limits and requests, and the default service account for all
+K8s executor jobs. Defaults are applied when project-level, pipeline-level, or
+block-level configuration does not specify resource requests or limits.
+Maximums are Mage Pro-only guardrails enforced after environment defaults,
+project-level config, pipeline-level config, and block-level config are merged.
+
+| Variable                                      | Purpose                                    | Example Value |
+|-----------------------------------------------|--------------------------------------------|---------------|
+| `K8S_EXECUTOR_DEFAULT_RESOURCE_REQUESTS_CPU`  | Default CPU request for executor jobs      | `250m`        |
+| `K8S_EXECUTOR_DEFAULT_RESOURCE_REQUESTS_MEMORY` | Default memory request for executor jobs | `512Mi`       |
+| `K8S_EXECUTOR_DEFAULT_RESOURCE_LIMITS_CPU`    | Default CPU limit for executor jobs        | `500m`        |
+| `K8S_EXECUTOR_DEFAULT_RESOURCE_LIMITS_MEMORY` | Default memory limit for executor jobs     | `1Gi`         |
+| `K8S_EXECUTOR_MAX_RESOURCE_REQUESTS_CPU`      | Maximum CPU request allowed for executor jobs | `2000m`    |
+| `K8S_EXECUTOR_MAX_RESOURCE_REQUESTS_MEMORY`   | Maximum memory request allowed for executor jobs | `4Gi`   |
+| `K8S_EXECUTOR_MAX_RESOURCE_LIMITS_CPU`        | Maximum CPU limit allowed for executor jobs | `4000m`     |
+| `K8S_EXECUTOR_MAX_RESOURCE_LIMITS_MEMORY`     | Maximum memory limit allowed for executor jobs | `8Gi`    |
+| `K8S_EXECUTOR_DEFAULT_SERVICE_ACCOUNT_NAME`   | Default service account for executor jobs  | `default`     |
+
+**Priority order without a default config file** (highest to lowest):
+1. Block-level `executor_config` in the pipeline's `metadata.yaml`
+2. Pipeline-level `executor_config` in the pipeline's `metadata.yaml`
+3. Project-level `k8s_executor_config` in the project's `metadata.yaml`
+4. Environment variable defaults (listed above)
+5. Hardcoded defaults
+
+When Mage Pro resource usage recommendations suggest new Kubernetes
+`resource_requests` or `resource_limits`, apply the values at the narrowest
+level you want to tune: block-level for one block, pipeline-level for all runs
+of one pipeline, or project-level for all Kubernetes executor jobs in the
+project.

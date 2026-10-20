@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import styled from 'styled-components';
 
 import Flex from '@oracle/components/Flex';
@@ -26,6 +26,7 @@ export type LabelWithValueClickerProps = {
   notRequired?: boolean;
   selectedTextProps?: TextProps;
   stacked?: boolean;
+  suffixValue?: string;
   tooltipProps?: TooltipProps;
   value?: string;
 } & TextInputProps;
@@ -41,6 +42,7 @@ function LabelWithValueClicker({
   defaultColor,
   description,
   disableWordBreak,
+  fullWidth,
   inputValue,
   inputWidth,
   invertedTheme,
@@ -54,6 +56,7 @@ function LabelWithValueClicker({
   selectedTextProps,
   small,
   stacked,
+  suffixValue,
   tooltipProps,
   value,
   ...props
@@ -84,7 +87,7 @@ function LabelWithValueClicker({
     </>
   );
   const inputEl = (
-    <>
+    <Flex flex={fullWidth ? '1' : 'none'}>
       {value && (
         <Link
           block
@@ -112,6 +115,7 @@ function LabelWithValueClicker({
             disableWordBreak={disableWordBreak}
             monospace={monospace}
             small={small}
+            title={inputWidth ? value : null}
             width={inputWidth}
           >
             {value}
@@ -123,6 +127,7 @@ function LabelWithValueClicker({
         {...props}
         basic
         defaultColor={defaultColor}
+        fullWidth={fullWidth}
         invertedTheme={invertedTheme}
         monospace={monospace}
         onBlur={(e) => {
@@ -145,7 +150,7 @@ function LabelWithValueClicker({
         value={inputValue}
         visible={!value}
       />
-    </>
+    </Flex>
   );
 
   const descriptionEl = description && (
@@ -159,6 +164,12 @@ function LabelWithValueClicker({
       />
     </DescriptionStyle>
   );
+
+  const suffixEl = useMemo(() => (
+    <Text default small={small}>
+      {suffixValue}
+    </Text>
+  ), [small, suffixValue]);
 
   return (
     <>
@@ -174,7 +185,10 @@ function LabelWithValueClicker({
             </LabelStyle>
           )}
 
-          {inputEl}
+          <FlexContainer fullWidth={fullWidth}>
+            {inputEl}
+            {suffixValue && suffixEl}
+          </FlexContainer>
         </>
       )}
 
@@ -187,8 +201,8 @@ function LabelWithValueClicker({
             </>
           )}
 
-
-          <Flex flex="1">{inputEl}</Flex>
+          {inputEl}
+          {suffixValue && suffixEl}
         </FlexContainer>
       )}
 

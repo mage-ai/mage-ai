@@ -1,0 +1,98 @@
+---
+title: Elasticsearch
+description: How to configure Elasticsearch as a destination in Mage to stream or batch index records into an Elasticsearch cluster using custom index metadata, authentication, and bulk operations.
+---
+
+![Elasticsearch logo](https://static-www.elastic.co/v3/assets/bltefdd0b53724fa2ce/blt280217a63b82a734/6202d3378b1f312528798412/elastic-logo.svg)
+
+---
+
+## Configuration Parameters
+
+By default, the Mage `table` name is used to set the Elasticsearch **index** name.
+
+| Key               | Description                                                                                                                                                 | Default     | Required     |
+|--------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------|--------------|
+| `scheme`           | HTTP scheme used to connect to Elasticsearch (`http` or `https`).                                                                                           | `http`      | ✅            |
+| `host`             | Elasticsearch host. Can be a domain or IP address.                                                                                                           | `localhost` | ✅            |
+| `port`             | Elasticsearch port.                                                                                                                                        | `9200`      | ✅            |
+| `username`         | Username for basic authentication.                                                                                                                          | `None`      | ❌            |
+| `password`         | Password for basic authentication.                                                                                                                          | `None`      | ❌            |
+| `bearer_token`     | Bearer token for token-based authentication.                                                                                                                | `None`      | ❌            |
+| `api_key_id`       | API key ID for key-based authentication.                                                                                                                    | `None`      | ❌            |
+| `api_key`          | API key for key-based authentication.                                                                                                                       | `None`      | ❌            |
+| `ssl_ca_file`      | Path to SSL certificate file used for TLS verification.                                                                                                     | `None`      | ❌            |
+| `verify_certs`     | Whether to verify SSL certificates when using HTTPS.                                                                                                        | `True`      | ❌            |
+| `index_schema_fields` | JSONPath mapping for selecting values from the record to generate index names dynamically.                                                                | `None`      | ❌            |
+| `_op_type`         | Operation type for the Elasticsearch request. Typically `index`, but can be `create`, `update`, or `delete`.                                                | `index`     | ❌            |
+| `metadata_fields`  | Dictionary used to map fields in the input record to metadata (e.g. `_id`) in the Elasticsearch index request.                                               | `None`      | ❌            |
+| `bulk_kwargs`      | Settings that control Elasticsearch `bulk` behavior. Useful for tuning performance and retries. See table below.                                            | `None`      | ❌            |
+
+---
+
+## Metadata Field Mapping
+
+Use `metadata_fields` to extract values from incoming records and apply them to Elasticsearch document metadata (e.g., `_id`):
+
+```yaml
+metadata_fields:
+  <stream_name>:
+    <field>: <jsonpath>
+```
+
+**Example:**
+```yaml
+metadata_fields:
+  stream_name:
+    _id: my_id
+```
+> This will set the `_id` of each indexed document to the value of the `my_id` field in the input record.
+
+---
+
+## Bulk Operation Settings (`bulk_kwargs`)
+
+All options below are optional, but useful for controlling indexing performance and fault tolerance.
+
+| Key              | Description                                                                                                                                      | Default     |
+|-------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|-------------|
+| `use_parallel`    | If `true`, enables parallel bulk indexing using multiple threads. Can significantly improve throughput.                                          | `false`     |
+| `chunk_size`      | Max number of records per bulk request.                                                                                                          | `500`       |
+| `max_chunk_bytes` | Max size in bytes of each bulk request payload.                                                                                                  | `104857600` |
+| `max_retries`     | *(Only with `use_parallel: false`)* Number of retry attempts on HTTP 429 (too many requests) errors.                                              | `0`         |
+| `initial_backoff` | *(Only with `use_parallel: false`)* Initial wait time (in seconds) before retry. Each subsequent retry backs off exponentially.                  | `2`         |
+| `max_backoff`     | *(Only with `use_parallel: false`)* Maximum time to wait before retrying.                                                                        | `600`       |
+| `thread_count`    | *(Only with `use_parallel: true`)* Number of threads to use in the bulk operation thread pool.                                                   | `4`         |
+| `queue_size`      | *(Only with `use_parallel: true`)* Size of the task queue buffering chunks between the main thread and processing threads.                       | `4`         |
+
+---
+
+## Example Configuration
+
+```yaml
+scheme: http
+host: localhost
+port: 9200
+metadata_fields:
+  stream_name:
+    _id: my_id
+bulk_kwargs:
+  use_parallel: true
+  chunk_size: 500
+```
+---
+
+## Notes
+
+- You can authenticate with **basic auth**, **bearer tokens**, or **API keys**.
+- Set `_op_type: create` if you want to avoid overwriting documents with the same `_id`.
+- For production environments, it's recommended to use `https`, enable `verify_certs`, and configure `ssl_ca_file`.
+- Performance tuning with `bulk_kwargs` is especially helpful for large datasets or real-time indexing.
+
+---
+
+## Related Resources
+
+- [Elasticsearch Bulk API Docs](https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-bulk.html)
+- [Elasticsearch Python Client (elasticsearch-py)](https://elasticsearch-py.readthedocs.io/en/v8.11.1/)
+- [Elasticsearch Index Lifecycle Management](https://www.elastic.co/guide/en/elasticsearch/reference/current/index-lifecycle-management.html)

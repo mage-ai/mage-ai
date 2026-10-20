@@ -3,19 +3,6 @@ import styled from 'styled-components';
 import dark from '@oracle/styles/themes/dark';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { BORDER_RADIUS_LARGE } from '@oracle/styles/units/borders';
-import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
-
-export const TableContainerStyle = styled.div<{
-  minHeight?: number;
-}>`
-  position: relative;
-  overflow: auto;
-  ${ScrollbarStyledCss}
-
-  ${props => props.minHeight && `
-    min-height: ${props.minHeight}px;
-  `}
-`;
 
 export const PopupContainerStyle = styled.div<any>`
   position: absolute;

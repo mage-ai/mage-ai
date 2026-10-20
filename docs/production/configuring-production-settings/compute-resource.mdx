@@ -1,0 +1,76 @@
+---
+title: "Compute resources"
+sidebarTitle: "Overview"
+icon: "gem"
+---
+
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProBanner } from '/snippets/pro/banner.mdx';
+
+<ProBanner
+  source="compute-resources"
+  description="Mage Pro will automatically scale your workloads to handle any volume of pipeline runs, while optimizing resource utilization and minimizing costs."
+/>
+
+Follow the instructions in this [document](/production/deploying-to-cloud/using-terraform) to deploy
+Mage in a production environment. When running Mage in production,
+you can customize the compute resource for the following services:
+
+1. Front-end application
+1. Pipeline executor
+1. Block executor
+
+## Front-end application
+
+Customize the compute resource of the Mage web service.
+
+The Mage web service is responsible for running Mage web backend, scheduler service
+and local block executions.
+
+You can customize the CPU and memory of the Mage web
+service by updating the Terraform variables and then running `terraform apply`.
+
+### Amazon Web Services (AWS)
+
+Update the `ecs_task_cpu` and `ecs_task_memory` variables in the
+[`mage-ai-terraform-templates/aws/variables.tf`](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/aws/variables.tf)
+file.
+
+### Google Cloud Platform (GCP)
+
+Update the `container_cpu` and `container_memory` variables in the
+[`mage-ai-terraform-templates/gcp/variables.tf`](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/gcp/variables.tf)
+file.
+
+---
+
+## Pipeline executor
+
+Set the pipeline’s executor type to customize the compute resources for pipeline runs.
+Here are the available executor types:
+
+* `local_python`
+* `k8s`
+* `ecs`
+
+### Default for all blocks in a pipeline
+
+You can set the executor type for all the blocks in a pipeline by specifying the `executor_type` at pipeline level.
+
+---
+
+## Block executor
+
+Mage provides multiple executors to execute blocks.
+Here are the available executor types:
+
+* `local_python`
+* `k8s`
+* `ecs`
+* `azure_container_instance`
+* `gcp_cloud_run`
+
+### Default for all blocks
+
+Mage uses `local_python` executor type by default. If you want to specify another executor_type as the default executor type for blocks,
+you can set the environment variable `DEFAULT_EXECUTOR_TYPE` to one executor type mentioned above.

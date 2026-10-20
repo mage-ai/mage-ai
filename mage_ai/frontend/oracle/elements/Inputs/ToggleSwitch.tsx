@@ -3,16 +3,31 @@ import styled from 'styled-components';
 
 import InputWrapper, { InputWrapperProps, SHARED_INPUT_STYLES } from './InputWrapper';
 import dark from '@oracle/styles/themes/dark';
+import { pauseEvent as pauseEventFunc } from '@utils/events';
 
 const HEIGHT = 26;
 const WIDTH = 46;
+const COMPACT_HEIGHT = 20;
+const COMPACT_WIDTH = 35;
 
 type ToggleSwitchProps = {
-  checked: boolean;
-  onCheck: Dispatch<SetStateAction<boolean>>;
+  checked?: boolean;
+  compact?: boolean;
+  disabled?: boolean;
+  id?: string;
+  monotone?: boolean;
+  onCheck?: Dispatch<SetStateAction<boolean>>;
+  pauseEvent?: boolean;
+  purpleBackground?: boolean;
 } & InputWrapperProps;
 
-const ToggleSwitchStyle = styled.label<InputWrapperProps>`
+const ToggleSwitchStyle = styled.label<
+  InputWrapperProps & {
+    compact?: boolean;
+    monotone?: boolean;
+    purpleBackground?: boolean;
+  }
+>`
   ${SHARED_INPUT_STYLES}
 
   position: relative;
@@ -20,6 +35,12 @@ const ToggleSwitchStyle = styled.label<InputWrapperProps>`
   width: ${WIDTH}px;
   min-width: ${WIDTH}px;
   height: ${HEIGHT}px;
+
+  ${props => props.compact && `
+    width: ${COMPACT_WIDTH}px;
+    min-width: ${COMPACT_WIDTH}px;
+    height: ${COMPACT_HEIGHT}px;
+  `}
 
   & input[type="checkbox"] {
     display: none;
@@ -30,7 +51,7 @@ const ToggleSwitchStyle = styled.label<InputWrapperProps>`
     cursor: ${({ disabled }) => (disabled ? 'not-allowed' : 'pointer')};
     background-color: ${({ disabled }) => (disabled ? dark.monotone.white : dark.monotone.black)};
     border-radius: 13px;
-    ${({ disabled }) => disabled && `border: 1px solid ${dark.monotone.grey200}`};
+    ${({ disabled, compact }) => (disabled && !compact) && `border: 1px solid ${dark.monotone.grey200}`};
     top: 0;
     right: 0;
     bottom: 0;
@@ -41,58 +62,77 @@ const ToggleSwitchStyle = styled.label<InputWrapperProps>`
   & span::before {
     position: absolute;
     content: "";
-    left: 2px;
-    top: 2px;
-    width: 22px;
-    height: 22px;
+    left: ${({ compact }) => (compact ? '1' : '2')}px;
+    top: ${({ compact }) => (compact ? '1' : '2')}px;
+    width: ${({ compact }) => (compact ? '18' : '22')}px;
+    height: ${({ compact }) => (compact ? '18' : '22')}px;
     background-color: #787A85;
     border-radius: 50%;
     transition: transform 0.3s ease;
   }
 
   & input[type="checkbox"]:checked + span::before {
-    transform: translateX(20px);
+    transform: ${({ compact }) => (compact ? 'translateX(15px)' : 'translateX(20px)')};
   }
 
-  ${(props) =>
-    !props.disabled && `
+  ${props => !props.disabled && !props.monotone && `
     & input[type="checkbox"]:checked + span {
-      background-color: #6AA1E0;
+      background-color: ${dark.accent.sky};
     }
 
     & input[type="checkbox"]:checked + span::before {
       background-color: ${dark.monotone.white};
     }
   `}
+
+  ${({ purpleBackground }) => purpleBackground && `
+    & input[type="checkbox"]:checked + span {
+      background-color: ${dark.interactive.purple};
+    }
+  `}
 `;
 
 const ToggleSwitch = ({
   checked,
+  disabled,
+  id,
   onCheck,
+  pauseEvent = true,
   ...props
-}: ToggleSwitchProps, ref) => {
-  return (
-    <InputWrapper
-      {...props}
-      input={
-        <ToggleSwitchStyle
-          {...props}
-          noBackground
-          noBorder
-        >
-          <input
-            checked={checked}
-            type="checkbox"
-          />
-          <span
-            onClick={() => onCheck(value => !value)}
-          />
-        </ToggleSwitchStyle>
-      }
-      noBackground
-      ref={ref}
-    />
-  );
-};
+}: ToggleSwitchProps, ref) => (
+  <InputWrapper
+    {...props}
+    disabled={disabled}
+    input={
+      <ToggleSwitchStyle
+        {...props}
+        disabled={disabled}
+        id={id}
+        noBackground
+        noBorder
+      >
+        <input
+          checked={checked}
+          id={id ? `${id}_input` : null}
+          readOnly
+          type="checkbox"
+        />
+        <span
+          onClick={disabled
+            ? null
+            : (e) => {
+              if (pauseEvent) {
+                pauseEventFunc(e);
+              }
+              onCheck?.(value => !value);
+            }
+          }
+        />
+      </ToggleSwitchStyle>
+    }
+    noBackground
+    ref={ref}
+  />
+);
 
 export default React.forwardRef(ToggleSwitch);

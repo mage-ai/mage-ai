@@ -2,11 +2,15 @@
 import singer
 import singer.utils as singer_utils
 from requests.exceptions import HTTPError
-from tap_salesforce.salesforce.exceptions import TapSalesforceException
+
+from mage_integrations.sources.salesforce.client.tap_salesforce.salesforce.exceptions import (
+    TapSalesforceException,
+)
 
 LOGGER = singer.get_logger()
 
 MAX_RETRIES = 4
+
 
 class Rest():
 
@@ -28,8 +32,8 @@ class Rest():
             end_date=None,
             retries=MAX_RETRIES):
         params = {"q": query}
-        url = "{}/services/data/v52.0/queryAll".format(self.sf.instance_url)
-        headers = self.sf._get_standard_headers()
+        url = "{}/services/data/v53.0/queryAll".format(self.sf.instance_url)
+        headers = self.sf.auth.rest_headers
 
         sync_start = singer_utils.now()
         if end_date is None:
@@ -71,7 +75,13 @@ class Rest():
                 raise ex
 
         if retryable:
-            end_date = self.sf.get_window_end_date(singer_utils.strptime_with_tz(start_date_str), end_date)
+            start_date = singer_utils.strptime_with_tz(start_date_str)
+            half_day_range = (end_date - start_date) // 2
+            end_date = end_date - half_day_range
+
+            if half_day_range.days == 0:
+                raise TapSalesforceException(
+                    "Attempting to query by 0 day range, this would cause infinite looping.")
 
             query = self.sf._build_query_string(catalog_entry, singer_utils.strftime(start_date),
                                                 singer_utils.strftime(end_date))
@@ -85,7 +95,7 @@ class Rest():
 
     def _sync_records(self, url, headers, params):
         while True:
-            resp = self.sf._make_request_with_backoff('GET', url, headers=headers, params=params)
+            resp = self.sf._make_request('GET', url, headers=headers, params=params)
             resp_json = resp.json()
 
             for rec in resp_json.get('records'):
@@ -95,5 +105,5 @@ class Rest():
 
             if next_records_url is None:
                 break
-
-            url = "{}{}".format(self.sf.instance_url, next_records_url)
+            else:
+                url = "{}{}".format(self.sf.instance_url, next_records_url)

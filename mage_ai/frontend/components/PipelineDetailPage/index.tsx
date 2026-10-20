@@ -1,39 +1,23 @@
-import { useMemo } from 'react';
-import { useMutation } from 'react-query';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/router';
 
-import BlocksStackedGradient from '@oracle/icons/custom/BlocksStackedGradient';
-import ChartGradient from '@oracle/icons/custom/ChartGradient';
+import ClickOutside from '@oracle/components/ClickOutside';
 import Dashboard, { DashboardSharedProps } from '@components/Dashboard';
 import Divider from '@oracle/elements/Divider';
+import ErrorsType from '@interfaces/ErrorsType';
+import ErrorPopup from '@components/ErrorPopup';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
-import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
-import PipelineType, { PipelineTypeEnum } from '@interfaces/PipelineType';
-import ScheduleGradient from '@oracle/icons/custom/ScheduleGradient';
+import PipelineType from '@interfaces/PipelineType';
 import Spacing from '@oracle/elements/Spacing';
-import TodoListGradient from '@oracle/icons/custom/TodoListGradient';
 import api from '@api';
-
-import {
-  BlocksStacked,
-  Chart,
-  Edit,
-  Schedule,
-  TodoList,
-} from '@oracle/icons';
 import { BannerStyle } from './index.style';
-import { BreadcrumbType, MenuItemType } from '@components/shared/Header';
+import { BreadcrumbType } from '@components/shared/Header';
 import { HEADER_HEIGHT } from '@components/shared/Header/index.style';
 import { PageNameEnum } from './constants';
-import { PURPLE_BLUE } from '@oracle/styles/colors/gradients';
-import {
-  PADDING_UNITS,
-  UNIT,
-  UNITS_BETWEEN_ITEMS_IN_SECTIONS,
-} from '@oracle/styles/units/spacing';
-import { onSuccess } from '@api/utils/response';
-import { randomNameGenerator } from '@utils/string';
+import { PADDING_UNITS, UNIT, UNITS_BETWEEN_ITEMS_IN_SECTIONS } from '@oracle/styles/units/spacing';
+import { buildNavigationItems } from './utils';
+import { displayErrorFromReadResponse } from '@api/utils/response';
 import { useWindowSize } from '@utils/sizes';
 
 type PipelineDetailPageProps = {
@@ -42,13 +26,16 @@ type PipelineDetailPageProps = {
     height: number;
     heightOffset?: number;
     pipeline: PipelineType;
+    width: number;
   }) => any;
   children: any;
+  errors?: ErrorsType;
   headline?: string;
-  pageName: PageNameEnum,
+  pageName: PageNameEnum;
   pipeline: {
     uuid: string;
   };
+  setErrors?: (errors: ErrorsType) => void;
   subheader?: any;
   subheaderBackground?: string;
   subheaderBackgroundImage?: string;
@@ -57,124 +44,85 @@ type PipelineDetailPageProps = {
   title?: (pipeline: PipelineType) => string;
 } & DashboardSharedProps;
 
-function PipelineDetailPage({
-  after: afterProp,
-  afterHidden,
-  afterWidth: afterWidthProp,
-  before,
-  beforeWidth,
-  breadcrumbs: breadcrumbsProp,
-  buildSidekick,
-  children,
-  headline,
-  pageName,
-  pipeline: pipelineProp,
-  subheader,
-  subheaderBackground,
-  subheaderBackgroundImage,
-  subheaderButton,
-  subheaderText,
-  title,
-  uuid,
-}: PipelineDetailPageProps) {
-  const router = useRouter();
-  const { height } = useWindowSize();
-
-  const pipelineUUID = pipelineProp.uuid;
-  const { data } = api.pipelines.detail(pipelineUUID);
-  const pipeline = data?.pipeline;
-
-  const [createPipeline] = useMutation(
-    api.pipelines.useCreate(),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: ({
-            pipeline: {
-              uuid,
-            },
-          }) => {
-            router.push('/pipelines/[pipeline]/edit', `/pipelines/${uuid}/edit`);
-          },
-        },
-      ),
-    },
-  );
-  const [deletePipeline] = useMutation(
-    (uuid: string) => api.pipelines.useDelete(uuid)(),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          callback: () => {
-            router.push('/pipelines');
-          },
-        },
-      ),
-    },
-  );
-
-  const headerMenuItems: MenuItemType[] = [
-    {
-      label: () => 'New standard pipeline',
-      // @ts-ignore
-      onClick: () => createPipeline({
-        pipeline: {
-          name: randomNameGenerator(),
-        },
-      }),
-      uuid: 'PipelineDetail/Header/new_standard_pipeline',
-    },
-    {
-      label: () => 'New streaming pipeline',
-      // @ts-ignore
-      onClick: () => createPipeline({
-        pipeline: {
-          name: randomNameGenerator(),
-          type: PipelineTypeEnum.STREAMING,
-        },
-      }),
-      uuid: 'PipelineDetail/Header/new_streaming_pipeline',
-    },
-    {
-      label: () => 'Delete current pipeline',
-      onClick: () => deletePipeline(pipelineUUID),
-      openConfirmationDialogue: true,
-      uuid: 'PipelineDetail/Header/delete_pipeline',
-    },
-  ];
-
-  const after = useMemo(() => {
-    if (afterProp) {
-      return afterProp;
-    } else if (buildSidekick) {
-      return buildSidekick({
-        height,
-        heightOffset: HEADER_HEIGHT,
-        pipeline,
-      });
-    }
-
-    return null;
-  }, [
-    afterProp,
+function PipelineDetailPage(
+  {
+    after: afterProp,
+    afterHidden,
+    afterWidth: afterWidthProp,
+    before,
+    beforeWidth,
+    breadcrumbs: breadcrumbsProp,
     buildSidekick,
-    height,
-    pipeline,
-  ]);
-  const afterWidth = afterWidthProp || (after ? 50 * UNIT : null);
+    children,
+    errors,
+    headline,
+    pageName,
+    pipeline: pipelineProp,
+    setErrors,
+    subheader,
+    subheaderBackground,
+    subheaderBackgroundImage,
+    subheaderButton,
+    subheaderNoPadding,
+    subheaderText,
+    title,
+    uuid,
+  }: PipelineDetailPageProps,
+  ref,
+) {
+  const { height } = useWindowSize();
+  const router = useRouter();
+  const { pipeline: pipelineUUIDFromUrl }: any = router.query;
+
+  const pipelineUUID = pipelineProp?.uuid;
+  const { data } = api.pipelines.detail(
+    pipelineUUID,
+    {
+      includes_outputs: false,
+    },
+    {
+      revalidateOnFocus: false,
+    },
+  );
+  const pipeline = data?.pipeline;
+  useEffect(() => {
+    displayErrorFromReadResponse(data, setErrors);
+  }, [data, setErrors]);
+
+  const afterWidth = afterWidthProp || (afterProp || buildSidekick ? 50 * UNIT : null);
+
+  const after = useCallback(
+    ({ width }) => {
+      if (afterProp) {
+        return afterProp;
+      } else if (buildSidekick) {
+        return buildSidekick({
+          height,
+          heightOffset: HEADER_HEIGHT,
+          pipeline,
+          width: width || afterWidth,
+        });
+      }
+
+      return null;
+    },
+    [afterProp, afterWidth, buildSidekick, height, pipeline],
+  );
 
   const breadcrumbs = useMemo(() => {
     const arr = [];
 
     if (pipeline) {
-      arr.push(...[
-        {
-          label: () => 'Pipelines',
-          linkProps: {
-            href: '/pipelines',
+      arr.push(
+        ...[
+          {
+            label: () => 'Pipelines',
+            linkProps: {
+              href: '/pipelines',
+            },
           },
-        },
-      ]);
+        ],
+      );
 
       if (breadcrumbsProp) {
         arr.push({
@@ -185,125 +133,74 @@ function PipelineDetailPage({
           },
         });
         arr.push(...breadcrumbsProp);
-
-        // if (!arr[arr.length - 1].gradientColor) {
-        //   arr[arr.length - 1].gradientColor = PURPLE_BLUE;
-        // }
         arr[arr.length - 1].bold = true;
       } else {
         arr.push({
-          // gradientColor: PURPLE_BLUE,
           bold: true,
           label: () => pipeline.name,
         });
       }
+    } else if (data?.error) {
+      arr.push({
+        bold: true,
+        danger: true,
+        label: () => 'Error loading pipeline',
+      });
     }
 
     return arr;
-  }, [
-    breadcrumbsProp,
-    pipeline,
-  ]);
+  }, [breadcrumbsProp, data?.error, pipeline, pipelineUUID]);
 
   return (
-    <Dashboard
-      after={after}
-      afterHidden={afterHidden}
-      afterWidth={afterWidth}
-      before={before}
-      beforeWidth={beforeWidth}
-      breadcrumbs={breadcrumbs}
-      headerMenuItems={headerMenuItems}
-      navigationItems={[
-        {
-          Icon: null,
-          IconSelected: null,
-          id: PageNameEnum.EDIT,
-          label: () => 'Edit pipeline',
-          linkProps: {
-            as: `/pipelines/${pipelineUUID}/edit`,
-            href: '/pipelines/[pipeline]/edit',
-          },
-        },
-        {
-          Icon: Schedule,
-          IconSelected: ScheduleGradient,
-          id: PageNameEnum.TRIGGERS,
-          label: () => 'Triggers',
-          linkProps: {
-            as: `/pipelines/${pipelineUUID}/triggers`,
-            href: '/pipelines/[pipeline]/triggers',
-          },
-          isSelected: () => PageNameEnum.TRIGGERS === pageName,
-        },
-        {
-          Icon: BlocksStacked,
-          IconSelected: BlocksStackedGradient,
-          id: PageNameEnum.RUNS,
-          label: () => 'Runs',
-          linkProps: {
-            as: `/pipelines/${pipelineUUID}/runs`,
-            href: '/pipelines/[pipeline]/runs',
-          },
-          isSelected: () => PageNameEnum.RUNS === pageName,
-        },
-        {
-          Icon: TodoList,
-          IconSelected: TodoListGradient,
-          id: PageNameEnum.PIPELINE_LOGS,
-          label: () => 'Logs',
-          linkProps: {
-            as: `/pipelines/${pipelineUUID}/logs`,
-            href: '/pipelines/[pipeline]/logs',
-          },
-          isSelected: () => PageNameEnum.PIPELINE_LOGS === pageName,
-        },
-        {
-          Icon: Chart,
-          IconSelected: ChartGradient,
-          id: PageNameEnum.MONITOR,
-          label: () => 'Monitor',
-          linkProps: {
-            as: `/pipelines/${pipelineUUID}/monitors`,
-            href: '/pipelines/[pipeline]/monitors',
-          },
-          isSelected: () => PageNameEnum.MONITOR === pageName,
-        },
-      ]}
-      subheaderChildren={typeof subheader !== 'undefined' && subheader}
-      title={pipeline ? (title ? title(pipeline) : pipeline.name) : null}
-      uuid={uuid}
-    >
-      {(subheaderButton || subheaderText) && (
-        <Spacing
-          mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS}
-          mt={PADDING_UNITS}
-          mx={PADDING_UNITS}
-        >
-          <BannerStyle background={subheaderBackground} backgroundImage={subheaderBackgroundImage}>
-            <FlexContainer alignItems="center">
-              {subheaderButton}
-              {subheaderText && <Spacing ml={3} />}
-              {subheaderText}
-            </FlexContainer>
-          </BannerStyle>
-        </Spacing>
-      )}
-
-      {headline && (
-        <Spacing p={PADDING_UNITS}>
-          <Spacing mt={PADDING_UNITS} px={PADDING_UNITS}>
-            <Headline level={5}>
-              {headline}
-            </Headline>
-            <Divider light mt={PADDING_UNITS} short />
+    <>
+      <Dashboard
+        after={(afterProp || buildSidekick) ? after : null}
+        afterHidden={afterHidden}
+        afterWidth={afterWidth}
+        before={before}
+        beforeWidth={beforeWidth}
+        breadcrumbs={breadcrumbs}
+        navigationItems={buildNavigationItems(pageName, pipeline, pipelineUUIDFromUrl)}
+        ref={ref}
+        subheaderChildren={typeof subheader !== 'undefined' && subheader}
+        subheaderNoPadding={subheaderNoPadding}
+        title={pipeline ? (title ? title(pipeline) : pipeline.name) : null}
+        uuid={uuid}
+      >
+        {(subheaderButton || subheaderText) && (
+          <Spacing mb={UNITS_BETWEEN_ITEMS_IN_SECTIONS} mt={PADDING_UNITS} mx={PADDING_UNITS}>
+            <BannerStyle
+              background={subheaderBackground}
+              backgroundImage={subheaderBackgroundImage}
+            >
+              <FlexContainer alignItems="center">
+                {subheaderButton}
+                {subheaderText && <Spacing ml={3} />}
+                {subheaderText}
+              </FlexContainer>
+            </BannerStyle>
           </Spacing>
-        </Spacing>
-      )}
+        )}
 
-      {children}
-    </Dashboard>
+        {headline && (
+          <Spacing p={PADDING_UNITS}>
+            <Spacing mt={PADDING_UNITS} px={PADDING_UNITS}>
+              <Headline level={5}>{headline}</Headline>
+              <Divider light mt={PADDING_UNITS} short />
+            </Spacing>
+          </Spacing>
+        )}
+
+        {children}
+      </Dashboard>
+
+      {errors && (
+        <ClickOutside disableClickOutside isOpen onClickOutside={() => setErrors?.(null)}>
+          <ErrorPopup {...errors} onClose={() => setErrors?.(null)} />
+        </ClickOutside>
+      )}
+    </>
   );
 }
 
-export default PipelineDetailPage;
+export default React.forwardRef(PipelineDetailPage);

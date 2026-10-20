@@ -3,6 +3,8 @@ import styled, { ThemeProvider } from 'styled-components';
 import { GridThemeProvider } from 'styled-bootstrap-grid';
 
 import Divider from '../oracle/elements/Divider';
+import Flex from '../oracle/components/Flex';
+import FlexContainer from '../oracle/components/FlexContainer';
 import Spacing from '../oracle/elements/Spacing';
 import Text from '../oracle/elements/Text';
 import light from '../oracle/styles/themes/light';
@@ -30,12 +32,16 @@ const Container = styled.div<ContainerProps>`
 
 type ThemeBlockProps = {
   children: any;
+  darkOnly?: boolean;
   reducedPadding?: boolean;
+  sideBySide?: boolean;
   title?: string;
 };
 
 const ThemeBlock = ({
   children,
+  darkOnly,
+  sideBySide,
   reducedPadding,
   title,
 }: ThemeBlockProps) => {
@@ -80,8 +86,20 @@ const ThemeBlock = ({
   return (
     <GridThemeProvider gridTheme={gridTheme}>
       <>
-        {lightEl}
-        {darkEl}
+        {!sideBySide && darkEl}
+        {!sideBySide && !darkOnly && lightEl}
+        {sideBySide && (
+          <FlexContainer>
+            <Flex flex="1">
+              {darkEl}
+            </Flex>
+            {!darkOnly && (
+              <Flex flex="1">
+                {lightEl}
+              </Flex>
+            )}
+          </FlexContainer>
+        )}
       </>
     </GridThemeProvider>
   );

@@ -1,4 +1,18 @@
+import json
 import re
+from typing import List
+
+import inflection
+
+
+def is_json(myjson):
+    try:
+        json_object = json.loads(str(myjson))
+        if isinstance(json_object, dict):
+            return json_object
+        return False
+    except Exception:
+        return False
 
 
 def camel_to_snake_case(name):
@@ -8,5 +22,82 @@ def camel_to_snake_case(name):
     return name.lower()
 
 
+def classify(name):
+    return ''.join([n.capitalize() for n in name.split('_')])
+
+
 def format_enum(v):
     return v.value if type(v) is not str else v
+
+
+def is_number(s) -> bool:
+    if s is None:
+        return False
+
+    try:
+        float(s)
+        return True
+    except (ValueError, TypeError):
+        return False
+
+
+def string_to_number(value: str):
+    """
+    Attempts to convert a string to an integer or float.
+
+    Parameters:
+    - value: The string to convert.
+
+    Returns:
+    - int, float, or original str depending on its content.
+    """
+    try:
+        # First, try to convert it to an integer.
+        return int(value)
+    except ValueError:
+        # If it fails, try to convert it to a float.
+        try:
+            return float(value)
+        except ValueError:
+            # If it also fails, return the original string.
+            return value
+
+
+def replacer(s, newstring, index, nofail=False):
+    # raise an error if index is outside of the string
+    if not nofail and index not in range(len(s)):
+        raise ValueError('index outside given string')
+
+    # if not erroring, but the index is still not in the correct range..
+    if index < 0:  # add it to the beginning
+        return newstring + s
+    if index > len(s):  # add it to the end
+        return s + newstring
+
+    # insert the new string between 'slices' of the original
+    return s[:index] + newstring + s[index + 1 :]
+
+
+def remove_extension_from_filename(filename: str) -> str:
+    parts = filename.split('/')
+    fn = parts[-1].split('.')[0]
+    return '/'.join(parts[:-1] + [fn])
+
+
+def singularize(word: str) -> str:
+    return inflection.singularize(word)
+
+
+def capitalize_remove_underscore_lower(word: str) -> str:
+    return word.replace('_', ' ').lower().capitalize()
+
+
+def to_ordinal_integers(word: str) -> List[int]:
+    if not word:
+        return []
+
+    return [ord(char) - 96 for char in word]
+
+
+def size_of_string(string: str) -> float:
+    return len(str(string).encode('utf-8'))

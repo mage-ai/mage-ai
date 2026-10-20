@@ -1,7 +1,12 @@
-import styled from 'styled-components';
+import styled, { css } from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
-import { BORDER_RADIUS } from '@oracle/styles/units/borders';
+import {
+  BORDER_RADIUS,
+  BORDER_STYLE,
+  BORDER_WIDTH,
+} from '@oracle/styles/units/borders';
+import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 import { UNIT } from '@oracle/styles/units/spacing';
 
 type LinkProps = {
@@ -12,13 +17,23 @@ type LinkProps = {
   largePadding?: boolean;
 };
 
-export const FlyoutMenuContainerStyle = styled.div<any>`
+export const FlyoutMenuContainerStyle = styled.div<{
+  maxHeight?: number;
+  roundedStyle?: boolean;
+  width?: number;
+}>`
+  ${ScrollbarStyledCss}
   position: absolute;
   max-height: ${UNIT * 58}px;
+  z-index: 1;
 
   ${props => props.width && `
-    min-width: 0px;
-    width: ${props.width}px;
+    min-width: ${props.width}px;
+  `}
+
+  ${({ maxHeight }) => maxHeight && `
+    max-height: ${maxHeight}px;
+    overflow: auto;
   `}
 
   ${props => `
@@ -30,6 +45,7 @@ export const FlyoutMenuContainerStyle = styled.div<any>`
   `}
 
   ${props => props.roundedStyle && `
+    border: ${BORDER_WIDTH}px ${BORDER_STYLE} ${(props.theme || dark).borders.button};
     border-radius: ${BORDER_RADIUS}px;
 
     div:first-child {
@@ -44,29 +60,36 @@ export const FlyoutMenuContainerStyle = styled.div<any>`
   `}
 `;
 
-export const TitleContainerStyle = styled.div`
+export const TitleContainerStyle = styled.div<{
+  roundedStyle?: boolean;
+}>`
   padding: ${UNIT}px;
   padding-bottom: 0;
 
   ${props => `
-    background-color: ${(props.theme.background || dark.background).popup};
+    background-color: ${(props.theme || dark).background.popup};
+  `}
+
+  ${props => props.roundedStyle && `
+    background-color: ${(props.theme || dark).interactive.defaultBackground};
+    border-bottom: ${BORDER_WIDTH}px ${BORDER_STYLE} ${(props.theme || dark).borders.medium};
+    padding-bottom: ${UNIT}px;
   `}
 `;
 
-export const LinkStyle = styled.div<LinkProps>`
-  align-items: center;
+const SHARED_STYLES = css<LinkProps>`
   justify-content: space-between;
   padding: ${UNIT}px;
 
   ${props => props.largePadding && `
-    padding: ${UNIT * 2}px;
+    padding: ${UNIT * 1.5}px;
     padding-right: ${UNIT * 6}px;
   `}
 
-  ${props => !props.disabled && `  
+  ${props => !props.disabled && `
     &:hover {
-      cursor: default;
       background-color: ${(props.theme.interactive || dark.interactive).hoverBackground};
+      cursor: pointer;
     }
   `}
 
@@ -94,4 +117,13 @@ export const LinkStyle = styled.div<LinkProps>`
   ${props => props.highlighted && `
     background-color: ${(props.theme.interactive || dark.interactive).hoverBackground};
   `}
+`;
+
+export const LinkStyle = styled.div<LinkProps>`
+  ${SHARED_STYLES}
+`;
+
+export const LinkAnchorStyle = styled.a<LinkProps>`
+  ${SHARED_STYLES}
+  display: block;
 `;

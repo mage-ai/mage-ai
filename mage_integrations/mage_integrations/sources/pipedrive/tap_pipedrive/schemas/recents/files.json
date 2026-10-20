@@ -1,0 +1,97 @@
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "integer"
+    },
+    "user_id": {
+      "type": ["null", "integer"]
+    },
+    "deal_id": {
+      "type": ["null", "integer"]
+    },
+    "person_id": {
+      "type": ["null", "integer"]
+    },
+    "org_id": {
+      "type": ["null", "integer"]
+    },
+    "product_id": {
+      "type": ["null", "integer"]
+    },
+    "email_message_id": {
+      "type": ["null", "integer"]
+    },
+    "activity_id": {
+      "type": ["null", "integer"]
+    },
+    "note_id": {
+      "type": ["null", "integer"]
+    },
+    "log_id": {
+      "type": ["null", "integer"]
+    },
+    "add_time": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "update_time": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "file_name": {
+      "type": ["null", "string"]
+    },
+    "file_type": {
+      "type": ["null", "string"]
+    },
+    "file_size": {
+      "type": ["null", "integer"]
+    },
+    "active_flag": {
+      "type": ["null", "boolean"]
+    },
+    "inline_flag": {
+      "type": ["null", "boolean"]
+    },
+    "remote_location": {
+      "type": ["null", "string"]
+    },
+    "remote_id": {
+      "type": ["null", "string"]
+    },
+    "cid": {
+      "type": ["null", "string"]
+    },
+    "s3_bucket": {
+      "type": ["null", "string"]
+    },
+    "mail_message_id": {
+      "type": ["null", "integer"]
+    },
+    "deal_name": {
+      "type": ["null", "string"]
+    },
+    "person_name": {
+      "type": ["null", "string"]
+    },
+    "people_name": {
+      "type": ["null", "string"]
+    },
+    "org_name": {
+      "type": ["null", "string"]
+    },
+    "product_name": {
+      "type": ["null", "string"]
+    },
+    "url": {
+      "type": ["null", "string"]
+    },
+    "name": {
+      "type": ["null", "string"]
+    },
+    "description": {
+      "type": ["null", "string"]
+    }
+  }
+}

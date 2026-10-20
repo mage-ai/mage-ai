@@ -1,22 +1,22 @@
-from datetime import datetime, timedelta
-from dateutil.parser import parse
-from mage_integrations.sources.chargebee.state import (
-    get_last_record_value_for_table,
-    incorporate,
-    save_state
-)
-from mage_integrations.sources.chargebee.streams.util import Util
-from mage_integrations.sources.constants import REPLICATION_METHOD_INCREMENTAL
-from mage_integrations.sources.messages import write_records, write_schema
 import inspect
 import json
 import os
+from datetime import datetime, timedelta
+
 import pytz
 import singer
-import time
-    
+from dateutil.parser import parse
+
+from mage_integrations.sources.chargebee.state import (
+    get_last_record_value_for_table,
+    incorporate,
+)
+from mage_integrations.sources.chargebee.streams.util import Util
+from mage_integrations.sources.constants import REPLICATION_METHOD_INCREMENTAL
+from mage_integrations.sources.messages import write_schema
 
 LOGGER = singer.get_logger()
+
 
 def is_selected(stream_catalog):
     metadata = singer.metadata.to_map(stream_catalog.metadata)
@@ -45,12 +45,13 @@ class BaseChargebeeStream():
     API_METHOD = 'GET'
     REQUIRES = []
 
-    def __init__(self, config, state, catalog, client):
+    def __init__(self, config, state, catalog, client, logger=None):
         self.config = config
         self.state = state
         self.catalog = catalog
         self.client = client
         self.substreams = []
+        self.logger = logger or LOGGER
 
     def write_schema(self):
         bookmark_properties = []
@@ -83,14 +84,13 @@ class BaseChargebeeStream():
             content = record['content']
             words = record['event_type'].split("_")
             sl = slice(len(words) - 1)
-            content_obj = "_".join(words[sl])     
-            
+            content_obj = "_".join(words[sl])
+
             if content_obj in list_of_custom_field_obj:
-                for k in record['content'][content_obj].keys():
+                for k in content[content_obj].keys():
                     if "cf_" in k:
-                        event_custom_fields[k] = record['content'][content_obj][k]
-                record['content'][content_obj]['custom_fields'] = json.dumps(event_custom_fields)    
-        
+                        event_custom_fields[k] = content[content_obj][k]
+                content[content_obj]['custom_fields'] = json.dumps(event_custom_fields)
 
         for key in record.keys():
             if "cf_" in key:
@@ -103,9 +103,9 @@ class BaseChargebeeStream():
     def transform_record(self, record):
         with singer.Transformer(integer_datetime_fmt="unix-seconds-integer-datetime-parsing") as tx:
             metadata = {}
-            
+
             record = self.append_custom_fields(record)
-                
+
             if self.catalog.metadata is not None:
                 metadata = singer.metadata.to_map(self.catalog.metadata)
 
@@ -118,19 +118,22 @@ class BaseChargebeeStream():
         entity = self.ENTITY
         return [self.transform_record(item.get(entity)) for item in data]
 
-    def load_data(self):
+    def load_data(self, logger=None):
         table = self.TABLE
         api_method = self.API_METHOD
         done = False
         sync_interval_in_mins = 2
 
         # Attempt to get the bookmark date from the state file (if one exists and is supplied).
-        LOGGER.info('Attempting to get the most recent bookmark_date for entity {}.'.format(self.ENTITY))
-        bookmark_date = get_last_record_value_for_table(self.state, table, 'bookmark_date')
+        self.logger.info(
+            f'Attempting to get the most recent bookmark_date for entity {self.ENTITY}.')
+        bookmark_date = get_last_record_value_for_table(self.state, table, self.REPLICATION_KEY)
 
         # If there is no bookmark date, fall back to using the start date from the config file.
         if bookmark_date is None:
-            LOGGER.info('Could not locate bookmark_date from STATE file. Falling back to start_date from config.json instead.')
+            self.logger.info(
+                'Could not locate bookmark_date from STATE file. Falling back to start_date '
+                'from config.json instead.')
             bookmark_date = parse(self.config.get('start_date'))
         else:
             bookmark_date = parse(bookmark_date)
@@ -140,24 +143,24 @@ class BaseChargebeeStream():
         to_date = datetime.now(pytz.utc) - timedelta(minutes=sync_interval_in_mins)
         to_date_posix = int(to_date.timestamp())
         sync_window = str([bookmark_date_posix, to_date_posix])
-        LOGGER.info("Sync Window {} for schema {}".format(sync_window, table))
+        self.logger.info("Sync Window {} for schema {}".format(sync_window, table))
 
         # Create params for filtering
         if self.ENTITY == 'event':
             params = {"occurred_at[between]": sync_window}
-            bookmark_key = 'occurred_at'
-        elif self.ENTITY in ['promotional_credit','comment']:
+            # bookmark_key = 'occurred_at'
+        elif self.ENTITY in ['promotional_credit', 'comment']:
             params = {"created_at[between]": sync_window}
-            bookmark_key = 'created_at'
+            # bookmark_key = 'created_at'
         else:
             params = {"updated_at[between]": sync_window}
-            bookmark_key = 'updated_at'
+            # bookmark_key = 'updated_at'
 
         # Add sort_by[asc] to prevent data overwrite by oldest deleted records
         if self.SORT_BY is not None:
             params['sort_by[asc]'] = self.SORT_BY
 
-        LOGGER.info("Querying {} starting at {}".format(table, bookmark_date))
+        self.logger.info("Querying {} starting at {}".format(table, bookmark_date))
 
         while not done:
             max_date = to_date
@@ -169,7 +172,7 @@ class BaseChargebeeStream():
 
             if 'api_error_code' in response.keys():
                 if response['api_error_code'] == 'configuration_incompatible':
-                    LOGGER.error('{} is not configured'.format(response['error_code']))
+                    self.logger.error('{} is not configured'.format(response['error_code']))
                     break
 
             records = response.get('list')
@@ -177,9 +180,10 @@ class BaseChargebeeStream():
             # List of deleted "plans, addons and coupons" from the /events endpoint
             deleted_records = []
 
-            if self.config.get('include_deleted') not in ['false','False', False]:
+            if self.config.get('include_deleted') not in ['false', 'False', False]:
                 if self.ENTITY == 'event':
-                    # Parse "event_type" from events records and collect deleted plan/addon/coupon from events
+                    # Parse "event_type" from events records and collect deleted plan/addon/coupon
+                    # from events
                     for record in records:
                         event = record.get(self.ENTITY)
                         if event["event_type"] == 'plan_deleted':
@@ -188,7 +192,8 @@ class BaseChargebeeStream():
                             Util.addons.append(event['content']['addon'])
                         elif event['event_type'] == 'coupon_deleted':
                             Util.coupons.append(event['content']['coupon'])
-                # We need additional transform for deleted records as "to_write" already contains transformed data
+                # We need additional transform for deleted records as "to_write" already contains
+                # transformed data
                 if self.ENTITY == 'plan':
                     for plan in Util.plans:
                         deleted_records.append(self.transform_record(plan))
@@ -203,7 +208,8 @@ class BaseChargebeeStream():
             to_write = self.get_stream_data(records)
 
             with singer.metrics.record_counter(endpoint=table) as ctr:
-                # Combine transformed records and deleted data of  "plan, addon and coupon" collected from events endpoint
+                # Combine transformed records and deleted data of  "plan, addon and coupon"
+                # collected from events endpoint
                 to_write = to_write + deleted_records
                 yield to_write
 
@@ -214,13 +220,13 @@ class BaseChargebeeStream():
             # so, no data will be missed due to API latency
             max_date = min(max_date, to_date)
             self.state = incorporate(
-                self.state, table, 'bookmark_date', max_date)
+                self.state, table, self.REPLICATION_KEY, max_date)
 
             if not response.get('next_offset'):
-                LOGGER.info("Final offset reached. Ending sync.")
+                self.logger.info("Final offset reached. Ending sync.")
                 done = True
             else:
-                LOGGER.info("Advancing by one offset.")
+                self.logger.info("Advancing by one offset.")
                 params['offset'] = response.get('next_offset')
                 bookmark_date = max_date
 

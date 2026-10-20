@@ -1,0 +1,134 @@
+{
+	"selected": true,
+	"type": [
+		"null",
+		"object"
+	],
+	"additionalProperties": false,
+	"properties": {
+		"date": {
+			"type": "string",
+			"format": "date-time"
+		},
+		"first_open": {
+			"type": [
+				"null",
+				"boolean"
+			]
+		},
+		"client_name": {
+			"type": [
+				"null",
+				"string"
+			]
+		},
+		"client_company": {
+			"type": [
+				"null",
+				"string"
+			]
+		},
+		"client_family": {
+			"type": [
+				"null",
+				"string"
+			]
+		},
+		"os_name": {
+			"type": [
+				"null",
+				"string"
+			]
+		},
+		"os_company": {
+			"type": [
+				"null",
+				"string"
+			]
+		},
+		"os_family": {
+			"type": [
+				"null",
+				"string"
+			]
+		},
+		"platform": {
+			"type": [
+				"null",
+				"string"
+			]
+		},
+		"user_agent": {
+			"type": [
+				"null",
+				"string"
+			]
+		},
+		"geo_countryisocode": {
+			"type": [
+				"null",
+				"string"
+			]
+		},
+		"geo_country": {
+			"type": [
+				"null",
+				"string"
+			]
+		},
+		"geo_regionisocode": {
+			"type": [
+				"null",
+				"string"
+			]
+		},
+		"geo_region": {
+			"type": [
+				"null",
+				"string"
+			]
+		},
+		"geo_city": {
+			"type": [
+				"null",
+				"string"
+			]
+		},
+		"geo_zip": {
+			"type": [
+				"null",
+				"string"
+			]
+		},
+		"geo_coords": {
+			"type": [
+				"null",
+				"string"
+			]
+		},
+		"geo_ip": {
+			"type": [
+				"null",
+				"string"
+			]
+		},
+		"message_id": {
+			"type": "string"
+		},
+		"message_stream": {
+			"type": "string"
+		},
+		"received_at": {
+			"type": "string"
+		},
+		"tag": {
+			"type": [
+				"null",
+				"string"
+			]
+		},
+		"recipient": {
+			"type": "string"
+		}
+	}
+}

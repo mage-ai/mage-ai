@@ -49,7 +49,7 @@ def run_job_flow(
         response = emr_client.run_job_flow(
             Name=name,
             LogUri=log_uri,
-            ReleaseLabel='emr-5.30.1',
+            ReleaseLabel='emr-6.9.0',
             Instances={
                 'MasterInstanceType': 'm5.xlarge',
                 'SlaveInstanceType': 'm5.xlarge',

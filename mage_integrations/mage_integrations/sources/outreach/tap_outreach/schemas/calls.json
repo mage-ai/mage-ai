@@ -1,0 +1,179 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": [
+        "integer"
+      ]
+    },
+    "answeredAt": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "completedAt": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "createdAt": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "direction": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "from": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "note": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "outcome": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "recordingUrl": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "returnedAt": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "sequenceAction": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "state": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "stateChangedAt": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "tags": {
+      "type": [
+        "null",
+        "array"
+      ],
+      "items": {
+        "type": [
+          "null",
+          "string"
+        ]
+      }
+    },
+    "to": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "userCallType": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "voicemailRecordingUrl": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "callDispositionId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "callPurposeId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "opportunityId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "prospectId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "sequenceId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "sequenceStateId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "sequenceStepId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "taskId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "userId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    }
+  }
+}

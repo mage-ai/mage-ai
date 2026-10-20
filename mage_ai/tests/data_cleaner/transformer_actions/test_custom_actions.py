@@ -1,8 +1,9 @@
+import numpy as np
+import pandas as pd
+from pandas.testing import assert_frame_equal
+
 from mage_ai.data_cleaner.transformer_actions.custom_action import execute_custom_action
 from mage_ai.tests.base_test import TestCase
-from pandas.testing import assert_frame_equal
-import pandas as pd
-import numpy as np
 
 
 class CustomActionTests(TestCase):
@@ -38,7 +39,8 @@ class CustomActionTests(TestCase):
         action = dict(
             action_type='custom',
             axis='row',
-            action_code='''from mage_ai.data_cleaner.column_types.column_type_detector import infer_column_types
+            action_code='''from mage_ai.data_cleaner.column_types.column_type_detector \
+            import infer_column_types
 from mage_ai.data_cleaner.column_types.constants import ColumnType
 from mage_ai.data_cleaner.transformer_actions.constants import CURRENCY_SYMBOLS
 import pandas as pd
@@ -68,7 +70,7 @@ if type(x) is str else x)
             series_cleaned = series_cleaned.str.replace(" ", "")
             if column_type == ColumnType.NUMBER:
                 try:
-                    series_cleaned = series_cleaned.astype(int)
+                    series_cleaned = series_cleaned.astype(np.int64)
                 except ValueError:
                     series_cleaned = series_cleaned.astype(float)
             else:
@@ -76,7 +78,8 @@ if type(x) is str else x)
             if is_percent:
                 series_cleaned /= 100
     elif column_type == ColumnType.DATETIME:
-        series_cleaned = pd.to_datetime(series_cleaned, errors="coerce", infer_datetime_format=True)
+        # In pandas 2.x, infer_datetime_format is deprecated and inference is automatic.
+        series_cleaned = pd.to_datetime(series_cleaned, errors="coerce")
     return series_cleaned
 
 @transformer_action
@@ -141,7 +144,8 @@ def add_column(df):
         action = dict(
             action_type='custom',
             axis='row',
-            action_code='''from mage_ai.data_cleaner.column_types.column_type_detector import infer_column_types
+            action_code='''from mage_ai.data_cleaner.column_types.column_type_detector \
+            import infer_column_types
 from mage_ai.data_cleaner.column_types.constants import ColumnType
 from mage_ai.data_cleaner.transformer_actions.constants import CURRENCY_SYMBOLS
 import pandas as pd
@@ -171,7 +175,7 @@ if type(x) is str else x)
             series_cleaned = series_cleaned.str.replace(" ", "")
             if column_type == ColumnType.NUMBER:
                 try:
-                    series_cleaned = series_cleaned.astype(int)
+                    series_cleaned = series_cleaned.astype(np.int64)
                 except ValueError:
                     series_cleaned = series_cleaned.astype(float)
             else:
@@ -179,7 +183,8 @@ if type(x) is str else x)
             if is_percent:
                 series_cleaned /= 100
     elif column_type == ColumnType.DATETIME:
-        series_cleaned = pd.to_datetime(series_cleaned, errors="coerce", infer_datetime_format=True)
+        # In pandas 2.x, infer_datetime_format is deprecated and inference is automatic.
+        series_cleaned = pd.to_datetime(series_cleaned, errors="coerce")
     return series_cleaned
 
 ctypes = infer_column_types(df)

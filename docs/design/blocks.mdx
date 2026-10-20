@@ -1,0 +1,48 @@
+---
+title: "Overview"
+description: "Each block in a pipeline maps to an individual file within a project. Blocks can be reused and shared across multiple pipelines within the same project."
+"og:image": "https://user-images.githubusercontent.com/97557538/198362650-6a61dfb2-8afb-40d4-b5ce-fb9f145f23a6.png"
+---
+
+## Unique block paradigm
+
+### Modularity
+
+Mage breaks down complex data engineering tasks into smaller, manageable units (blocks). Each block in a pipeline is a standalone file that can be executed independently.
+
+Modular design makes it easier to maintain and update data pipelines by modifying a specific block or creating new ones without affecting other parts of the pipeline.
+
+This isolation reduces the risk of introducing new bugs into the system when making changes. The modularity of blocks leads to cleaner, more maintainable codebases.
+
+Modular design enables fault-tolerant pipelines so that when one or more blocks fail, the rest can keep running. Debugging modular blocks is faster than debugging a monolithic code base. Once resolved, failed blocks can be retried without re-running the entire pipeline.
+
+### Reusability
+
+This design encapsulates each step of a data pipeline into reusable blocks that perform a specific function; such as data loading, transformation, or exporting.
+
+Developers can build complex pipelines faster by leveraging existing blocks across different projects, different pipelines, or within the same pipeline.
+
+Designing blocks to be reusable significantly reduces the time and effort required to develop new data pipelines, as developers can reuse blocks instead of writing new code from scratch.
+
+### Scalability
+
+Developers can optimize individual blocks for handling large data volumes or more complex processing tasks efficiently, without the need for extensive redesigns or refactoring of the entire pipeline.
+
+Dynamic blocks adapt their behavior based on input data or runtime conditions, enabling the creation of flexible and complex data pipelines that can easily accommodate varying scalability requirements all without the need to write duplicate code.
+
+---
+
+## Block types
+
+- [Data loader](/design/blocks/data-loader)
+- [Transformer](/design/blocks/transformer)
+- [Data exporter](/design/blocks/data-exporter)
+- [Scratchpad](/design/blocks/scratchpad)
+- [Sensor](/design/blocks/sensor)
+- [dbt](/dbt/overview)
+- [Extensions](/design/blocks/extension)
+- [Callbacks](/design/blocks/callbacks)
+
+<Frame>
+  <img alt="Blocks" src="https://user-images.githubusercontent.com/97557538/198362650-6a61dfb2-8afb-40d4-b5ce-fb9f145f23a6.png" />
+</Frame>

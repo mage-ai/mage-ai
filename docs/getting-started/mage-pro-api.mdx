@@ -1,0 +1,415 @@
+---
+title: "Mage Pro API"
+sidebarTitle: "API"
+icon: "network-wired"
+description: "Deploy your code in seconds!"
+---
+
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="mage-pro-api" />
+
+### **Mage Pro API overview**
+
+Mage Pro offers two main APIs for managing your workflows and infrastructure:
+
+- **Mage Cloud API**: Used to manage and update your Mage clusters from the Mage Cloud Portal.
+- **Mage Pro cluster API**: Runs on your Mage Pro cluster and is similar to the Mage OSS API, used to manage pipelines, runs, variables, and other resources.
+
+# **Mage Cloud API**
+
+The Mage Cloud API is a private API used internally by the Mage Cloud Portal to manage Mage Pro clusters. It supports operations such as:
+
+- Starting, stopping, and restarting clusters
+- Updating cluster environment variables and configurations
+
+## **Base URL**
+
+**`https://cloud.mage.ai/api/v1`**
+
+## **Authentication**
+
+To interact with the Mage Cloud API, you must first authenticate with your Mage Cloud credentials and obtain a session token.
+
+### **Example: Initialize session and get token**
+
+```Python
+import requests
+
+
+API_KEY = 'oMqz2m320NfVERFonfytPFVETfPTHyN5N7db9dLK'
+BASE_API = 'https://cloud.mage.ai/api/v1'
+SESSION_API = f'{BASE_API}/sessions'
+
+
+def authenticate_session(username: str, password: str) -> requests.Session:
+    """
+    Authenticate with the Mage Cloud API using credentials and return an authorized session.
+
+    Args:
+        username (str): Mage Cloud login email.
+        password (str): Mage Cloud login password.
+
+    Required ENV:
+        MAGE_CLOUD_API_KEY
+
+    Returns:
+        requests.Session: An authenticated session with token set in cookies.
+    """
+
+    headers = {
+        "Content-Type": "application/json",
+        "X-API-KEY": API_KEY
+    }
+    payload = {
+        "session": {
+            "email": username,
+            "password": password
+        }
+    }
+
+    session = requests.Session()
+    session.headers = headers
+
+    response = session.post(SESSION_API, json=payload)
+    if response.json().get('error'):
+        raise ValueError(response.text)
+
+    token = response.json()['session']['token']
+    session.headers['Cookie'] = f'oauth_token={token}'
+
+    return session
+```
+
+## **Start or stop a cluster**
+
+Once authenticated, you can update the cluster status by modifying the replicaCount and status in the cluster’s config.
+
+### **Example: Start or stop a cluster**
+
+```Python
+def update_cluster_status(session: requests.Session, team_id: str, cluster_id: str, start: bool = True):
+    """
+    Start or stop a Mage Pro cluster by updating replicaCount and status.
+
+    Args:
+        session (requests.Session): Authenticated Mage Cloud session.
+        team_id (str): Mage Cloud team ID.
+        cluster_id (str): Cluster ID.
+        start (bool): Set True to start, False to stop the cluster.
+    """
+    cluster_url = f'{BASE_API}/teams/{team_id}/clusters/{cluster_id}'
+
+    response = session.get(cluster_url)
+    response.raise_for_status()
+
+    cluster = response.json()['cluster']
+    config = cluster.get('config', {})
+
+    config['replicaCount'] = 1 if start else 0
+    cluster['status'] = 'Active' if start else 'Stopped'
+
+    update_payload = {
+        "cluster": {
+            "config": config,
+            "status": cluster['status']
+        }
+    }
+
+    put_response = session.put(cluster_url, json=update_payload)
+    put_response.raise_for_status()
+
+    print(f"Cluster has been {'started' if start else 'stopped'}.")
+```
+Example usage:
+```Python
+# Pass in credentials from your secret manager or CLI prompt
+username = 'your_email@example.com'
+password = 'your_password_here'
+
+session = authenticate_session(username, password)
+
+# Start the cluster
+update_cluster_status(session, team_id='your_team_id', cluster_id='your_cluster_id', start=True)
+
+# Stop the cluster
+# update_cluster_status(session, team_id='your_team_id', cluster_id='your_cluster_id', start=False)
+```
+## **Update cluster environment variables**
+
+To add or update environment variables in a Mage Pro cluster, modify the **`extraEnvs`** field in the cluster config.
+
+### **Example: update environment variables**
+
+```Python
+def update_cluster_env_vars(session, team_id, cluster_id, updates):
+    """
+    Add or update environment variables in a Mage Pro cluster.
+
+    Args:
+        session (requests.Session): Authenticated session with Mage Cloud API.
+        team_id (str): Mage team ID.
+        cluster_id (str): Cluster ID.
+        updates (dict): Dictionary of environment variable key-value pairs to add or update.
+    """
+    cluster_url = f'https://cloud.mage.ai/api/v1/teams/{team_id}/clusters/{cluster_id}'
+
+    # Fetch current cluster config
+    response = session.get(cluster_url)
+    response.raise_for_status()
+    cluster = response.json()['cluster']
+    config = cluster.get('config', {})
+
+    # Load existing environment variables
+    existing_envs = config.get('extraEnvs', [])
+    env_map = {env['name']: env['value'] for env in existing_envs}
+
+    # Apply updates
+    env_map.update(updates)
+
+    # Convert back to list format
+    config['extraEnvs'] = [{'name': k, 'value': v} for k, v in env_map.items()]
+
+    # Build payload and apply update
+    update_payload = {
+        "cluster": {
+            "config": config
+        }
+    }
+
+    put_response = session.put(cluster_url, json=update_payload)
+    put_response.raise_for_status()
+
+    print("Cluster environment variables updated successfully.")
+```
+Example usage:
+```Python
+session = authenticate_session(username='your_email@example.com', password='your_password')
+
+update_cluster_env_vars(
+    session=session,
+    team_id='your_team_id',
+    cluster_id='your_cluster_id',
+    updates={
+        'AI_SIDEKICK': '1',
+        'DEFAULT_EXECUTOR_TYPE': 'k8s',
+        'ENABLE_SOME_FEATURE': 'true'
+    }
+)
+```
+# **Mage Pro cluster API**
+
+The Mage Pro Cluster API is the set of HTTP APIs available on your running Mage Pro cluster. It extends the Mage OSS API and allows:
+
+- Create/Get/Update/Delete pipelines/blocks
+- Trigger pipelines
+- CRUD pipeline schedules/triggers
+- CRUD pipeline runs
+- CRUD workspaces
+- Deploy git commits
+- More APIs available in Mage Pro UI
+
+<Accordion title="Mage Pro /runs api endpoint">
+
+The `/runs` endpoint executes a single block within a pipeline and returns its output in the same HTTP response. No polling required.
+
+This is the right tool when an external application needs the result of a specific block right now, not after a full pipeline run. Common use cases include real-time scoring, record lookups, and enrichment logic triggered per request.
+
+<Frame>
+    <iframe
+        width="560"
+        height="315"
+        src="https://www.youtube.com/embed/iZzpaO3JumY"
+        title="YouTube video player" frameborder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin"
+        allowfullscreen
+    />
+</Frame>
+
+---
+
+### What It Does
+
+When you call `/runs`, Mage works through the following steps:
+
+1. Validates the token against an API-type pipeline trigger
+2. Resolves the target pipeline and block
+3. Runs upstream blocks if `run_upstream_blocks` is `true`
+4. Executes the target block with any variables injected via `kwargs`
+5. Returns the block output in the same HTTP response
+6. Writes a `PipelineRun` and `BlockRun` record to the database if `record` is `true`
+
+---
+
+### Endpoint
+
+```
+POST https://<your-cluster-hostname>/api/runs/{token}
+```
+
+---
+
+### Authentication
+
+Every call to `/runs` requires a token from an API-type pipeline trigger.
+
+**Option A: Token in the URL**
+
+```
+POST /api/runs/your_token_here
+```
+
+**Option B: Bearer token in the Authorization header**
+
+```
+POST /api/runs
+Authorization: Bearer your_token_here
+```
+
+To generate a token:
+
+1. Open your pipeline in Mage Pro and go to the **Triggers** tab
+2. Click **Add Trigger** and select type **API**
+3. Save and copy the token from the trigger detail page
+
+---
+
+### Request Body
+
+```json
+{
+    "run": {
+        "pipeline_uuid":       "your_pipeline_uuid",
+        "block_uuid":          "your_block_uuid",
+        "variables":           {},
+        "project":             null,
+        "record":              true,
+        "store_variables":     true,
+        "run_upstream_blocks": false,
+        "incomplete_only":     false
+    }
+}
+```
+
+---
+
+
+
+### Example: Run a single block
+
+```python
+import requests
+
+MAGE_URL = 'https://<your-cluster-hostname>'
+TOKEN    = 'your_trigger_token_here'
+
+response = requests.post(
+    f'{MAGE_URL}/api/runs/{TOKEN}',
+    json={
+        'run': {
+            'pipeline_uuid': 'my_pipeline',
+            'block_uuid':    'my_block'
+        }
+    }
+)
+
+result = response.json()['run']
+print(result)
+```
+
+---
+
+### Example: Run a block with runtime variables
+
+Pass variables in the request body and they get injected into the block via `kwargs`.
+
+```python
+response = requests.post(
+    f'{MAGE_URL}/api/runs/{TOKEN}',
+    json={
+        'run': {
+            'pipeline_uuid': 'patient_lookup',
+            'block_uuid':    'transform_medical_data',
+            'variables': {
+                'patient_id': 'PID00087'
+            }
+        }
+    }
+)
+
+result = response.json()['run']
+print(result)
+```
+
+Access the variable inside your block:
+
+```python
+if 'transformer' not in globals():
+    from mage_ai.data_preparation.decorators import transformer
+
+@transformer
+def transform(df, *args, **kwargs):
+    patient_id = kwargs.get('patient_id')
+    # use patient_id in your block logic
+    return df
+```
+
+---
+
+### Response
+
+A successful call returns HTTP 200 with the block output under the `run` key:
+
+```json
+{ "run": { ...block output... } }
+```
+
+---
+
+### Request Options Reference
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `pipeline_uuid` | required | The unique identifier of the pipeline containing the target block |
+| `block_uuid` | required | The unique identifier of the block to execute |
+| `variables` | `{}` | Key-value pairs injected into the block at runtime via `kwargs` |
+| `record` | `true` | Write a PipelineRun and BlockRun record to the Mage database |
+| `store_variables` | `true` | Persist the passed variables to disk alongside the block run record |
+| `run_upstream_blocks` | `false` | Run all upstream block dependencies before executing the target block |
+| `incomplete_only` | `false` | When `run_upstream_blocks` is `true`, skip upstream blocks that already completed successfully |
+
+API runs execute pipelines from the current Mage repository. The legacy `project` option is no
+longer supported; send API-run requests to the workspace that owns the pipeline instead.
+
+---
+
+### Error Handling
+
+The endpoint raises exceptions directly rather than wrapping them in an error envelope.
+
+| Condition | Behaviour |
+| --- | --- |
+| Missing or invalid token | 401 Unauthenticated. The request is rejected before any pipeline lookup. |
+| Token does not match a trigger | 404 Resource Not Found |
+| `pipeline_uuid` not found | 404 Resource Not Found. UUIDs are case-sensitive. |
+| `block_uuid` not found | 404 Resource Not Found. The block must exist within the specified pipeline. |
+| Block throws an exception | The exception propagates to the HTTP response. Database records are marked `FAILED` when `record` is `true`. |
+
+---
+
+### Audit Trail
+
+When `record` is `true`, Mage writes a `PipelineRun` and `BlockRun` record to the database on every call. You can see these in the Mage Pro UI under pipeline run history. Records are marked `COMPLETED` or `FAILED` depending on the outcome.
+
+If you are calling this endpoint at high frequency and do not need the audit log, set `record` to `false` to skip the database writes.
+
+</Accordion>
+
+## **Base URL**
+
+**`https://<your-cluster-hostname>/api`**
+
+For the full list of cluster API endpoints, see the [**Mage Open Source API Reference**](https://docs.mage.ai/extensibility/api-reference/overview).
+
+> Note: Mage Pro may expose additional admin or authentication APIs depending on your deployment and licensing tier.
+>

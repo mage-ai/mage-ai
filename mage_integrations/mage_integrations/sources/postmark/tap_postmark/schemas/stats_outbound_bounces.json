@@ -1,0 +1,81 @@
+{
+	"selected": true,
+	"type": [
+		"null",
+		"object"
+	],
+	"additionalProperties": false,
+	"properties": {
+		"id": {
+			"type": "number",
+			"format": "integer"
+		},
+		"date": {
+			"type": "string",
+			"format": "date-time"
+		},
+		"autoresponder": {
+			"type": [
+				"null",
+				"number"
+			],
+			"format": "integer"
+		},
+		"blocked": {
+			"type": [
+				"null",
+				"number"
+			],
+			"format": "integer"
+		},
+		"dnserror": {
+			"type": [
+				"null",
+				"number"
+			],
+			"format": "integer"
+		},
+		"hardbounce": {
+			"type": [
+				"null",
+				"number"
+			],
+			"format": "integer"
+		},
+		"smtp_api_error": {
+			"type": [
+				"null",
+				"number"
+			],
+			"format": "integer"
+		},
+		"softbounce": {
+			"type": [
+				"null",
+				"number"
+			],
+			"format": "integer"
+		},
+		"spamnotification": {
+			"type": [
+				"null",
+				"number"
+			],
+			"format": "integer"
+		},
+		"transient": {
+			"type": [
+				"null",
+				"number"
+			],
+			"format": "integer"
+		},
+		"unknown": {
+			"type": [
+				"null",
+				"number"
+			],
+			"format": "integer"
+		}
+	}
+}

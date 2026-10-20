@@ -1,6 +1,6 @@
 export enum StateEnum {
   ENABLED = 'ENABLED',
-};
+}
 
 export default interface EventRuleType {
   description: string;

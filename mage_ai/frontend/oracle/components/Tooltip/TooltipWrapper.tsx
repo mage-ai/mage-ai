@@ -11,22 +11,27 @@ export type TooltipWrapperProps = {
   alignLeft?: boolean;
   appearAbove?: boolean;
   appearBefore?: boolean;
+  autoHide?: boolean;
   autoWidth?: boolean;
   basic?: boolean;
   block?: boolean;
+  bottomOffset?: number;
   center?: boolean;
   children?: any;
   default?: boolean;
   description?: any | string;
+  forceVisible?: boolean;
   height?: number;
   fullSize?: boolean;
   inline?: boolean;
   label?: string | any;
   leftPosition?: number;
+  lightBackground?: boolean;
   maxWidth?: number;
   minWidth?: number;
   muted?: boolean;
   noHoverOutline?: boolean;
+  relativePosition?: boolean;
   rightPosition?: boolean;
   size?: number;
   topOffset?: number;
@@ -36,7 +41,11 @@ export type TooltipWrapperProps = {
 };
 
 const SHARED_CONTAINER_STYLES = css<TooltipWrapperProps>`
-  position: relative;
+  position: static;
+
+  ${({ relativePosition }) => relativePosition && `
+    position: relative;
+  `}
 
   ${props => props.height && `
     height: ${props.height}px;
@@ -46,7 +55,7 @@ const SHARED_CONTAINER_STYLES = css<TooltipWrapperProps>`
     height: ${props.size}px;
   `}
 
-  ${props => props.size && `
+  ${props => props.fullSize && `
     height: 100%;
   `}
 `;
@@ -59,7 +68,7 @@ const ContainerSpanStyle = styled.span`
   ${SHARED_CONTAINER_STYLES}
 `;
 
-const HoverStyle = styled.a<TooltipWrapperProps>`
+const HoverStyle = styled.div<TooltipWrapperProps>`
   ${transition()}
 
   ${props => props.size && `
@@ -87,6 +96,12 @@ const HoverStyle = styled.a<TooltipWrapperProps>`
     outline: none;
   }
 
+  ${props => props.noHoverOutline && `
+    &:hover {
+      cursor: pointer;
+    }
+  `}
+
   ${props => !props.noHoverOutline && `
     &:hover {
       cursor: pointer;
@@ -108,6 +123,10 @@ const ContentStyle = styled.div<TooltipWrapperProps>`
     box-shadow: ${(props.theme.shadow || dark.shadow).base};
   `}
 
+  ${props => props.lightBackground && `
+    box-shadow: ${(props.theme.shadow || dark.shadow).window};
+  `}
+
   ${props => props.appearAbove && !props.size && `
     bottom: 0;
   `}
@@ -117,7 +136,7 @@ const ContentStyle = styled.div<TooltipWrapperProps>`
   `}
 
   ${props => props.appearBefore && `
-    right: 0;
+    right: ${UNIT * 2}px;
   `}
 
   ${props => props.leftPosition && `
@@ -139,23 +158,32 @@ const ContentStyle = styled.div<TooltipWrapperProps>`
   ${props => props.topOffset && `
     top: ${props.topOffset}px;
   `}
+
+  ${props => props.bottomOffset && `
+    bottom: ${props.bottomOffset}px;
+  `}
 `;
 
 function TooltipWrapper({
   alignLeft,
   appearAbove,
   appearBefore,
+  autoHide,
   autoWidth,
   basic,
   block,
+  bottomOffset,
   center,
   children,
   content,
+  forceVisible = false,
   fullSize,
   height,
   inline,
+  lightBackground,
   minWidth,
   noHoverOutline,
+  relativePosition,
   size = UNIT * 2,
   topOffset,
   visibleDelay = 1000,
@@ -191,11 +219,18 @@ function TooltipWrapper({
       clearInterval(interval);
     }
 
-    return () => {
-      return clearInterval(interval);
-    };
+    if (autoHide) {
+      setTimeout(() => {
+        setVisibleInterval(false);
+        setVisible(false);
+      }, visibleDelay * 3);
+    }
+
+    return () => clearInterval(interval);
   }, [
+    autoHide,
     setVisible,
+    visibleDelay,
     visibleInterval,
   ]);
 
@@ -207,15 +242,18 @@ function TooltipWrapper({
         setVisibleInterval(false);
         setVisible(false);
       }}
+      relativePosition={relativePosition}
       size={size}
     >
       {elRendered}
 
-      {visible && (
+      {(visible || forceVisible) && (
         <ContentStyle
           appearAbove={appearAbove}
           appearBefore={appearBefore}
+          bottomOffset={bottomOffset}
           leftPosition={center ? leftPosition : null}
+          lightBackground={lightBackground}
           minWidth={autoWidth ? minWidth : null}
           rightPosition={alignLeft}
           size={size}

@@ -2,7 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
+.idea
 # C extensions
 *.so
 
@@ -133,6 +133,8 @@ dmypy.json
 mage_ai/server/data/files/**
 default_repo
 instance_metadata.json
+~/.mage_data
+mage_data/
 
 # test notebook
 test.ipynb
@@ -147,6 +149,7 @@ testfiles/
 .npm/
 .python_history
 mage_ai/frontend/package-lock.json
+docker-compose.override.yml
 
 # DB files
 *.db
@@ -158,3 +161,33 @@ mage_ai/frontend/package-lock.json
 
 # vscode
 .vscode/
+
+# front-end
+node_modules
+.env
+.npmrc
+# mage_ai/server/frontend_dist
+# mage_ai/server/frontend_dist_base_path_template
+mage_ai/server/frontend_dist_base_path
+
+# Scratch files
+scratch*
+
+# Playwright test automation
+playwright-report/
+
+# Testing files
+!mage_ai/test/
+**/TEST_CATALOG.json
+**/TEST_CONFIG*.json
+**/TEST_CONFIG_D.json
+**/TEST_CONFIG_S.json
+**/TEST_OUTPUT
+**/TEST_STATE.json
+mlfow.db
+mlruns/
+package-lock.json
+package.json
+test.py
+test/
+test_data*

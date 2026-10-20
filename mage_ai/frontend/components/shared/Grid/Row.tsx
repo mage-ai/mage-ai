@@ -5,6 +5,7 @@ type RowProps = {
   children: any;
   fullHeight?: boolean;
   gutter?: number;
+  justifyContent?: 'flex-start' | 'flex-end' | 'center' | 'space-between';
   style?: {
     [key: string]: number | string;
   };
@@ -14,10 +15,12 @@ function Row({
   children,
   fullHeight,
   gutter,
+  justifyContent,
   style: styleProp = {},
   ...props
 }: RowProps) {
   const style: {
+    gap?: string;
     height?: string | number;
     marginLeft?: number;
     marginRight?: number;
@@ -35,6 +38,8 @@ function Row({
   return (
     <RowStyled
       {...props}
+      // @ts-ignore
+      justifyContent={justifyContent}
       style={style}
     >
       {React.Children.map(children, (col, idx) => col && React.cloneElement(col, {

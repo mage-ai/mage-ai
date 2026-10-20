@@ -10,8 +10,8 @@ You must enter the following credentials when configuring this source:
 
 | Key | Description | Sample value
 | --- | --- | --- |
-| `account_id` | Amplitude project's unique API key. | `73bb...` |
-| `client_secret` | Amplitude project's unique secret key. | `ABC1...` |
+| `account_id` | Your Stripe account’s unique ID. | `73bb...` |
+| `client_secret` | A secret key associated with your Stripe account. | `ABC1...` |
 | `start_date` | The date you want to start syncing from. | `2022-01-01` |
 
 > Find your API keys

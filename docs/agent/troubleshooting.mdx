@@ -1,0 +1,137 @@
+---
+title: "Troubleshooting"
+description: "Solutions for common mage-agent issues."
+---
+
+## Authentication errors
+
+<AccordionGroup>
+  <Accordion title='"AUTH_EXPIRED" or "AUTH_REQUIRED" errors'>
+    Your session token has expired or is missing.
+
+    ```bash
+    mage-agent login
+    ```
+
+    This fetches a new token and overwrites the existing config.
+  </Accordion>
+
+  <Accordion title='"CONFIG_INVALID" error'>
+    The config file at `~/.mage-agent/config.json` is missing or malformed.
+
+    Re-run login to recreate it:
+
+    ```bash
+    mage-agent login
+    ```
+
+    Or create the file manually:
+
+    ```json
+    {
+      "cluster_url": "https://your-mage-url",
+      "oauth_token": "YOUR_OAUTH_TOKEN"
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## MCP / IDE issues
+
+<AccordionGroup>
+  <Accordion title="MCP tools not showing in the IDE">
+    1. Confirm `mage-agent` is accessible from the IDE's runtime PATH — or use an absolute path (see [Installation](/agent/installation#ide-path-requirement)).
+    2. Save the MCP config and **restart** the IDE or agent client.
+    3. Test the server directly in a terminal:
+
+    ```bash
+    mage-agent mcp
+    ```
+
+    If it starts without errors, the issue is the IDE config. If it errors, check authentication first.
+  </Accordion>
+
+  <Accordion title='"command not found: mage-agent" in IDE'>
+    The IDE cannot find the executable. Run:
+
+    ```bash
+    which mage-agent
+    ```
+
+    Copy the full path and use it in your IDE config:
+
+    ```json
+    {
+      "mcpServers": {
+        "mage-agent": {
+          "command": "/full/path/to/mage-agent",
+          "args": ["mcp"]
+        }
+      }
+    }
+    ```
+  </Accordion>
+
+  <Accordion title="Tools are listed but calls fail">
+    Run login again — the MCP server may have started before credentials were saved, or the token expired during the session:
+
+    ```bash
+    mage-agent login
+    ```
+
+    Then restart the IDE to pick up fresh credentials.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Sync issues
+
+<AccordionGroup>
+  <Accordion title="Unexpected conflicts after syncing">
+    Conflicts are detected by comparing timestamps on each side. Small clock differences between your machine and the cluster can cause false positives.
+
+    Check what the conflict looks like before choosing a side:
+
+    ```bash
+    mage-agent sync-status --local-project-dir ./my-project --format-output human
+    ```
+
+    Then run `mage-agent sync` and choose `r` (remote) or `l` (local) for each affected file.
+  </Accordion>
+
+  <Accordion title="Files not appearing in sync-status">
+    Only these file extensions are tracked: `.py`, `.sql`, `.r`, `.yaml`, `.yml`, `.md`, `.txt`.
+
+    Also check that the files are not inside a hidden directory (`.git`, `.venv`) or a `__pycache__` folder — those are always excluded.
+  </Accordion>
+
+  <Accordion title="Sync state file is missing or corrupted">
+    The state file lives at `<local-project-dir>/.mage-agent-sync-state.json`. If it is missing, mage-agent treats all files as new and will re-pull the full project on the next `sync-project-to-local`. Delete it intentionally only if you want a clean baseline.
+  </Accordion>
+</AccordionGroup>
+
+---
+
+## Enable debug logging
+
+Add `--log-level DEBUG` to any command to see full request/response traces:
+
+```bash
+mage-agent --log-level DEBUG sync-status --local-project-dir ./my-project
+mage-agent --log-level DEBUG mcp
+```
+
+Or set the environment variable permanently in your shell profile:
+
+```bash
+export MAGE_AGENT_LOG_LEVEL=DEBUG
+```
+
+---
+
+## Still stuck?
+
+Open an issue at [github.com/mage-ai/mage-agent](https://github.com/mage-ai/mage-agent/issues) and include the debug log output.

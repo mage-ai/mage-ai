@@ -1,0 +1,371 @@
+---
+title: "Writing data pipeline code"
+sidebarTitle: "Code editor"
+description: "Build the future you want to see."
+icon: "code"
+"og:image": "https://qph.cf2.quoracdn.net/main-qimg-3aed77679a9fbe28bcae784d8fb831a8"
+---
+
+## Adding blocks made easy
+
+You can quickly add blocks of code to your pipeline with these methods:
+
+<AccordionGroup>
+    <Accordion title="Drag blocks from the file browser and drop it on the pipeline" icon="dragon" iconType="duotone" defaultOpen>
+        <Note>
+            **Supported block type directories:** `callbacks`, `conditionals`, `custom`, `data_exporters`, `data_loaders`, `dbt`,
+            `dbts`, `markdowns`, `scratchpads`, `sensors`, and `transformers`
+
+            Version 0.9.64 or greater is required to add `callback` and `conditional`
+            blocks from the file browser.
+        </Note>
+
+        1. Open the file browser on the Pipeline Editor page.
+        1. Click a block file and keep holding down.
+        1. Drag the block file onto the center of the page (the Notebook area).
+        1. Release the button and it’ll be added to the pipeline.
+
+        <Frame>
+            <p align="center">
+                <img
+                    alt="Drag blocks from the file browser and drop it on the pipeline"
+                    src="https://mage-ai.github.io/assets/dev-ux/code-editor/drag-block.gif"
+                />
+            </p>
+        </Frame>
+    </Accordion>
+
+    <Accordion title="Search blocks across entire projects" icon="searchengin" iconType="duotone">
+        Find existing code and add it to the current pipeline.
+
+        <Note>
+            You must first enable the feature named <b>Add new block v2</b> in your
+            [project settings](http://localhost:6789/settings/workspace/preferences).
+            This feature is available in standard (batch) pipelines.
+
+            If you just recently enabled the feature <b>Add new block v2</b>, you must restart Mage
+            so that your blocks can be indexed.
+
+            Version 0.9.64 or greater is required to add `callback` and `conditional`
+            blocks from the block search.
+        </Note>
+
+        Instead of clicking a button to add a new block, type in the search bar to find an
+        existing block across all your projects.
+
+        <Frame>
+            <p align="center">
+                <img
+                    alt="Search blocks across entire projects"
+                    src="https://mage-ai.github.io/assets/dev-ux/code-editor/block-search.gif"
+                />
+            </p>
+        </Frame>
+
+        <Tip>
+            ⌘ + / (Command + Forward Slash) keyboard shortcut will instantly focus your typing on the
+            search bar from anywhere on the page (as long as you aren’t already typing in a
+            block of code).
+        </Tip>
+
+        <Tip>
+            Use the arrow up and arrow down key to browse
+            through the results.
+        </Tip>
+    </Accordion>
+
+    <Accordion title="Custom code templates for reducing boilerplate work" icon="cauldron" iconType="duotone">
+        Create a template for a block or a pipeline that can be reused throughout your project.
+
+        <video
+            controls
+            className="w-full aspect-video"
+            src="https://github.com/mage-ai/assets/raw/main/custom-templates/blocks/overview.mp4">
+        </video>
+
+        [Read more here](/custom-templates/overview)
+    </Accordion>
+</AccordionGroup>
+
+---
+
+## Notes on editing pipelines
+
+<Warning>
+    Avoid opening and editing the **same pipeline in multiple browser tabs or windows** at the same time.
+    Changes from one tab may overwrite changes from another.
+</Warning>
+
+Tips to stay safe:
+
+- Edit a pipeline in **one tab only**.
+- If you need to monitor the pipeline elsewhere, use another tab in **read-only mode**.
+- Close extra editing tabs if opened by mistake.
+
+---
+
+### Collaboration best practices
+
+If multiple users need to develop the **same pipeline**:
+
+- Use **[Workspace mode in Mage Pro](/guides/developer-ux/workspaces)**, which provides:
+  - Isolated environments per user or team.
+  - Safe collaboration without overwriting each other’s changes.
+  - The ability to merge updates back into shared pipelines.
+
+This ensures smooth teamwork and prevents conflicts when more than one person is editing.
+
+---
+
+## Re-arrange and hide or show blocks
+
+<AccordionGroup>
+    <Accordion title="Re-arrange the order of blocks" icon="send-back" iconType="duotone" defaultOpen>
+        Drag a block and move it up or down by dropping it on another block.
+
+        <Frame>
+            <p align="center">
+                <img
+                    alt="Drag a block and move it up or down by dropping it on another block."
+                    src="https://mage-ai.github.io/assets/dev-ux/code-editor/rearrange-blocks.gif"
+                />
+            </p>
+        </Frame>
+    </Accordion>
+
+    <Accordion title="Filter files to the current pipeline" icon="user-secret" iconType="duotone">
+        When editing a pipeline, open the <b>Files</b> tab and use the selector above the search box
+        to switch between <b>All</b> and <b>This pipeline</b>. The
+        <b>This pipeline</b> filter shows repo-backed files related to the current pipeline,
+        including pipeline metadata and configuration files, trigger configuration, referenced block
+        source files, and supporting project configuration such as <code>io_config.yaml</code>,
+        <code>metadata.yaml</code>, and <code>requirements.txt</code>. Runtime data and log files
+        are not included.
+    </Accordion>
+
+    <Accordion title="Block visibility tab" icon="user-secret" iconType="duotone">
+        Use the <b>Visibility</b> tab to hide blocks in the notebook. Hidden blocks are collapsed,
+        and you can click a hidden block to expand it again. This can help optimize vertical screen
+        space while writing code.
+
+        <Frame>
+            <p align="center">
+            <img
+                alt="Hide and show blocks in the current pipeline"
+                src="https://mage-ai.github.io/assets/dev-ux/file-browser/blocks-in-pipeline.gif"
+            />
+            </p>
+        </Frame>
+    </Accordion>
+</AccordionGroup>
+
+---
+
+## Pre-built data integrations for 3rd party sources
+
+<Frame>
+    <p align="center">
+    <img
+        alt="Pre-built data integrations for 3rd party sources"
+        src="https://mage-ai.github.io/assets/batch-pipelines/data-integrations/configuration-credentials.png"
+    />
+    </p>
+</Frame>
+
+Sync data from 3rd party sources without writing boilerplate code by using pre-built
+data integrations (Singer Taps and Targets) provided by the data engineering community.
+
+<Tip>
+    Data integrations to sync your data to 3rd party destinations are also available in the
+    same feature set.
+</Tip>
+
+<Tip>
+    These sources and destinations can be combined and chained together with
+    your existing blocks.
+</Tip>
+
+[Read more here](/data-integrations/batch-pipelines)
+
+---
+
+## Use AI to write code for you
+
+A line of code you don’t write is a line of code you never have to debug.
+Use AI to generate the code for you.
+
+<Frame>
+    <p align="center">
+    <img
+        alt="Generate code using AI."
+        src="https://mage-ai.github.io/assets/dev-ux/code-editor/ai-generate-code.gif"
+    />
+    </p>
+</Frame>
+
+[Read more here](/guides/ai/overview#generate-block-using-ai)
+
+---
+
+## Document and comment code (AI)
+
+“Work smart, not hard.”
+
+Let the robots document your code so you can focus on the fun and creative side of coding.
+
+<AccordionGroup>
+    <Accordion title="Document the code from a block" icon="scroll" iconType="duotone" defaultOpen>
+        <Frame>
+            <p align="center">
+            <img
+                alt="Document the code from a block."
+                src="https://mage-ai.github.io/assets/dev-ux/code-editor/ai-document-block.gif"
+            />
+            </p>
+        </Frame>
+
+        [Read more here](/guides/ai/overview#add-documentation-for-a-block)
+    </Accordion>
+
+    <Accordion title="Write comments inline with the code" icon="comments" iconType="duotone">
+        <Frame>
+            <p align="center">
+            <img
+                alt="Write comments inline with the code."
+                src="https://mage-ai.github.io/assets/dev-ux/code-editor/ai-code-comments.gif"
+            />
+            </p>
+        </Frame>
+
+        [Read more here](/guides/ai/overview#add-comments-in-a-block)
+    </Accordion>
+
+    <Accordion title="Document the entire pipeline and each block in it" icon="book" iconType="duotone">
+        <Frame>
+            <p align="center">
+            <img
+                alt="Document the entire pipeline and each block in it."
+                src="https://mage-ai.github.io/assets/dev-ux/code-editor/ai-document-pipeline.gif"
+            />
+            </p>
+        </Frame>
+
+        [Read more here](/guides/ai/overview#add-documentation-for-a-pipeline-and-all-its-blocks)
+    </Accordion>
+</AccordionGroup>
+
+---
+
+## Block upgrades
+
+Enhance your code with these quick power-ups:
+
+<AccordionGroup>
+    <Accordion title="Recursively dynamic code made simple" defaultOpen icon="spider-web" iconType="duotone">
+        <Frame>
+            <p align="center">
+            <img
+                alt="Recursively dynamic code made simple."
+                src="https://mage-ai.github.io/assets/dev-ux/code-editor/dynamic-blocks.png"
+            />
+            </p>
+        </Frame>
+
+        A very `powerful` <b>ultimate</b> *spell*.
+
+        <Warning>
+            With great power... comes great fun.
+        </Warning>
+
+        [Read more here](/design/blocks/dynamic-blocks)
+    </Accordion>
+
+    <Accordion title="Replicate the code of an existing block" icon="sheep" iconType="duotone">
+        <Frame>
+            <p align="center">
+            <img
+                alt="Replicate the code of an existing block"
+                src="https://mage-ai.github.io/assets/dev-ux/code-editor/replicate-block.gif"
+            />
+            </p>
+        </Frame>
+
+        [Read more here](/guides/blocks/replicate-blocks)
+    </Accordion>
+
+    <Accordion title="Conditionally execute code" icon="code-merge" iconType="duotone">
+        <Frame>
+            <p align="center">
+            <img
+                alt="Conditionally execute code"
+                src="https://mage-ai.github.io/assets/blocks/conditionals-example.png"
+            />
+            </p>
+        </Frame>
+
+        [Read more here](/design/blocks/conditionals)
+    </Accordion>
+
+    <Accordion title="Callbacks" icon="phone-volume" iconType="duotone">
+        A callback block is associated to another block.
+        When the parent block succeeds or fails, the callback block functions are executed.
+
+        [Read more here](/design/blocks/callbacks)
+    </Accordion>
+</AccordionGroup>
+
+---
+
+## Add new block v2
+
+An improved experience for adding new blocks to your pipeline in the
+Pipeline Editor (`/pipelines/[pipeline_uuid]/edit`), which allows you to
+search for existing block files and use data integration blocks inside of
+a standard (batch) pipeline.
+
+---
+
+## Code and output side-by-side view
+
+Run code and see its output right next to where you’re writing.
+
+This makes it so that you don’t have to keep scrolling down every time you make a code change
+and want to see its results.
+
+For table outputs, click a column header to sort the preview or use the filter
+icon beside the header to filter rows by column value. These controls are
+temporary preview tools and don’t change the underlying block output.
+
+<Frame>
+    <p align="center">
+        <img
+            alt="Code and output side-by-side view"
+            src="https://mage-ai.github.io/assets/dev-ux/code-editor/split-view.gif"
+        />
+    </p>
+</Frame>
+
+To enable this feature:
+
+1. Go to your [project settings](http://localhost:6789/settings/workspace/preferences).
+1. Enable the feature named <b>Notebook block output split view</b>.
+1. Open the edit view of a pipeline.
+1. Under the header menu named <b>View</b>, click the option <b>Show output next to code</b>.
+
+<AccordionGroup>
+    <Accordion title="Check out this demo for a quick overview" icon="window" iconType="duotone">
+        <Frame>
+          <iframe
+            width="560"
+            height="315"
+            src="https://www.youtube.com/embed/x4VLyIG6fCc"
+            title="YouTube video player"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        </Frame>
+    </Accordion>
+</AccordionGroup>
+
+---

@@ -2,6 +2,8 @@ connector_type: kafka
 bootstrap_server: "localhost:9092"
 topic: topic_name
 consumer_group: unique_consumer_group
+include_metadata: false
+api_version: 0.10.2
 
 # Uncomment the config below to use SSL config
 # security_protocol: "SSL"
@@ -11,3 +13,15 @@ consumer_group: unique_consumer_group
 #   keyfile: "key.pem"
 #   password: password
 #   check_hostname: true
+
+# Uncomment the config below to use SASL_SSL config
+# security_protocol: "SASL_SSL"
+# sasl_config:
+#   mechanism: "PLAIN"
+#   username: username
+#   password: password
+
+# Uncomment the config below to use protobuf schema to deserialize message
+# serde_config:
+#   serialization_method: PROTOBUF
+#   schema_classpath: "path.to.schema.SchemaClass"

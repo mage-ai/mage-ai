@@ -7,7 +7,6 @@ import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 import { transition } from '@oracle/styles/mixins';
 
 const HEADER_HEIGHT = UNIT * 6.25;
-const INPUT_ROW_HEIGHT = UNIT * 6;
 const MAX_WIDTH = UNIT * 100;
 
 export const WindowContainerStyle = styled.div`
@@ -63,24 +62,5 @@ export const WindowContentStyle = styled.div<{
 
   ${props => !props.minMaxHeight && `
     max-height: calc(100vh - ${HEADER_HEIGHT * 6.5}px);
-  `}
-`;
-
-export const WindowFooterStyle = styled.div`
-  ${HEADER_STYLES}
-  justify-content: flex-end;
-  border-bottom-left-radius: ${BORDER_RADIUS}px;
-  border-bottom-right-radius: ${BORDER_RADIUS}px;
-
-  ${props => `
-    border-top: ${BORDER_WIDTH}px ${BORDER_STYLE} ${(props.theme || dark).borders.medium};
-  `}
-`;
-
-export const InputRowStyle = styled.div`
-  padding: ${UNIT * 0.75}px ${UNIT * 2}px;
-
-  ${props => `
-    border-bottom: ${BORDER_WIDTH}px ${BORDER_STYLE} ${(props.theme || dark).borders.medium};
   `}
 `;

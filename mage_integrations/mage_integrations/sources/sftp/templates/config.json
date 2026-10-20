@@ -1,0 +1,22 @@
+{
+    "host": "SFTP_HOST_NAME",
+    "port": 22,
+    "username": "YOUR_USER",
+    "password": "YOUR_PASS",
+    "tables": [
+        {
+            "table_name": "MyExportData",
+            "search_prefix": "\/Export\/SubFolder",
+            "search_pattern": "MyExportData.*\\.zip.gpg$",
+            "delimiter": ",",
+            "encoding": "utf-8"
+        }
+    ],
+    "start_date":"2021-01-28",
+    "decryption_configs": {
+        "SSM_key_name": "SSM_PARAMETER_KEY_NAME",
+        "gnupghome": "/your/dir/.gnupg",
+        "passphrase": "your_gpg_passphrase"
+    },
+    "private_key_file": "Optional_Path"
+}

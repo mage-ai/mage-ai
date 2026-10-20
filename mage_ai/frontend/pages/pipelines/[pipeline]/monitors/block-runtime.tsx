@@ -7,20 +7,22 @@ import Headline from '@oracle/elements/Headline';
 import LineSeries from '@components/charts/LineSeries';
 import Monitor from '@components/Monitor';
 import PipelineType from '@interfaces/PipelineType';
+import PrivateRoute from '@components/shared/PrivateRoute';
 import Spacing from '@oracle/elements/Spacing';
 import Select from '@oracle/elements/Inputs/Select';
 import Text from '@oracle/elements/Text';
-import api, { MONITOR_STATS } from '@api';
-import buildUrl from '@api/utils/url';
+import api from '@api';
 import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS_LARGE } from '@oracle/styles/units/borders';
 import { ICON_SIZE } from '@components/FileBrowser/index.style';
 import { MonitorTypeEnum } from '@components/Monitor/constants';
 import { ThemeContext } from 'styled-components';
+import { capitalize, removeUnderscore } from '@utils/string';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
+import { getDateRange } from '@utils/date';
 import { indexBy } from '@utils/array';
-import { onSuccess } from '@api/utils/response';
-import { useMutation } from 'react-query';
+
+const ALL_BLOCKS_KEY = 'all_blocks';
 
 type BlockRuntimeMonitorProps = {
   pipeline: PipelineType;
@@ -34,7 +36,12 @@ function BlockRuntimeMonitor({
 
   const pipelineUUID = pipelineProp.uuid;
 
-  const { data: dataPipeline } = api.pipelines.detail(pipelineUUID);
+  const { data: dataPipeline } = api.pipelines.detail(pipelineUUID, {
+    includes_content: false,
+    includes_outputs: false,
+  }, {
+    revalidateOnFocus: false,
+  });
   const pipeline = useMemo(() => ({
     ...dataPipeline?.pipeline,
     uuid: pipelineUUID,
@@ -44,71 +51,79 @@ function BlockRuntimeMonitor({
   ]);
 
   const { data: dataPipelineSchedules } = api.pipeline_schedules.pipelines.list(pipelineUUID);
-  const pipelineSchedules = useMemo( 
+  const pipelineSchedules = useMemo(
     () => dataPipelineSchedules?.pipeline_schedules,
     [dataPipelineSchedules],
   );
 
   const blocksByUUID = useMemo(() => indexBy(pipeline?.blocks, ({ uuid }) => uuid) || {}, [pipeline]);
 
-  const [dataMonitor, setDataMonitor] = useState<any>(null);
-  const [fetchStats] = useMutation(
-    async (id: number) => {
-      let url = `${buildUrl(MONITOR_STATS)}/block_run_time?pipeline_uuid=${pipelineUUID}`;
-      if (id || id === 0) {
-        url += `&pipeline_schedule_id=${id}`;
-      }
-      return fetch(url, { method: 'GET' });
-    },
-    {
-      onSuccess: (response: any) => onSuccess(
-        response,
-        {
-          callback: (res) => {
-            setDataMonitor(res);
-          },
-        },
-      ),
-    }
-  );
+  const monitorStatQuery: {
+    pipeline_uuid: string;
+    pipeline_schedule_id?: number;
+  } = {
+    pipeline_uuid: pipelineUUID,
+  };
+  if (pipelineSchedule || pipelineSchedule === 0) {
+    monitorStatQuery.pipeline_schedule_id = Number(pipelineSchedule);
+  }
+  const { data: dataMonitor, mutate: fetchStats } =
+    api.monitor_stats.detail('block_run_time', monitorStatQuery);
 
   useEffect(() => {
     fetchStats(pipelineSchedule);
-  }, [fetchStats]);
+  }, [fetchStats, pipelineSchedule]);
 
   const {
     stats: monitorStats,
-  } = dataMonitor?.monitor_stats || {};
+  } = dataMonitor?.monitor_stat || {};
 
-  const dateRange = useMemo(() => {
-    const date = new Date();
-    const dateRange = [];
-    for (let i = 0; i < 90; i++) {
-      dateRange.unshift(date.toISOString().split('T')[0]);
-      date.setDate(date.getDate() - 1);
-    }
-    return dateRange;
-  }, []);
+  const dateRange = useMemo(() => getDateRange(), []);
 
   const blockRuntimeData = useMemo(() => {
+    let allBlockRuntimeData;
+    let runtimeDataByBlockUUID;
+
     if (monitorStats) {
-      return Object.entries(monitorStats).reduce(
+      allBlockRuntimeData = { [ALL_BLOCKS_KEY]: [] };
+      runtimeDataByBlockUUID = {};
+
+      Object.entries(monitorStats).forEach(
         // @ts-ignore
-        (obj, [blockUuid, { data: runtimeStats }]) => {
-          return {
-            ...obj,
-            [blockUuid]: dateRange.map(date => ({
+        ([blockUuid, { data: runtimeStats }]) => {
+          runtimeDataByBlockUUID[blockUuid] = [];
+          dateRange.forEach((date, idx) => {
+            runtimeDataByBlockUUID[blockUuid].push({
               x: date,
               y: date in runtimeStats ? [runtimeStats[date]] : null,
-            }))
-          };
-        }, 
-        {},
+            });
+
+            if (!allBlockRuntimeData.all_blocks[idx]) {
+              allBlockRuntimeData.all_blocks[idx] = { x: date, y: null };
+            }
+            if (date in runtimeStats) {
+              if (!allBlockRuntimeData.all_blocks[idx].y) {
+                allBlockRuntimeData.all_blocks[idx].y = [];
+              }
+              allBlockRuntimeData.all_blocks[idx].y.push({
+                blockUUID: blockUuid,
+                runtime: runtimeStats[date],
+              });
+            }
+          });
+        },
       );
     }
+
+    return {
+      ...allBlockRuntimeData,
+      ...runtimeDataByBlockUUID,
+    };
   }, [
+    dateRange,
     monitorStats,
   ]);
+
 
   const breadcrumbs = useMemo(() => {
     const arr = [];
@@ -119,9 +134,7 @@ function BlockRuntimeMonitor({
     });
 
     return arr;
-  }, [
-    pipeline,
-  ]);
+  }, []);
 
   return (
     <Monitor
@@ -136,8 +149,8 @@ function BlockRuntimeMonitor({
             onChange={e => {
               const val = e.target.value;
               if (val !== 'initial') {
-                fetchStats(val);
                 setPipelineSchedule(val);
+                fetchStats(val);
               } else {
                 fetchStats();
                 setPipelineSchedule(null);
@@ -161,7 +174,7 @@ function BlockRuntimeMonitor({
       }
     >
       <Spacing mx={2}>
-        {blockRuntimeData &&
+        {blockRuntimeData?.[ALL_BLOCKS_KEY]?.length > 0 &&
           Object.entries(blockRuntimeData).map(([blockUuid, data], idx) => (
             <Spacing
               key={`${blockUuid}_${idx}`}
@@ -170,13 +183,19 @@ function BlockRuntimeMonitor({
               <FlexContainer alignItems="center">
                 <Spacing mx={1}>
                   <Circle
-                    color={getColorsForBlockType(blocksByUUID[blockUuid]?.type, { theme }).accent}
+                    color={getColorsForBlockType(
+                      blocksByUUID[blockUuid]?.type,
+                      { blockColor: blocksByUUID[blockUuid]?.color, theme },
+                    ).accent}
                     size={ICON_SIZE}
                     square
                   />
                 </Spacing>
                 <Headline level={4}>
-                  {blockUuid}
+                  {blockUuid === ALL_BLOCKS_KEY
+                    ? removeUnderscore(capitalize(blockUuid))
+                    : blockUuid
+                  }
                 </Headline>
               </FlexContainer>
               <div
@@ -190,27 +209,50 @@ function BlockRuntimeMonitor({
                   // @ts-ignore
                   data={data}
                   getX={data => moment(data.x).valueOf()}
+                  getY={blockUuid === ALL_BLOCKS_KEY
+                    ? (data, idx) => data?.y?.[idx]?.runtime
+                    : null
+                  }
+                  getYScaleValues={blockUuid === ALL_BLOCKS_KEY
+                    ? y => y?.map(yItem => yItem?.runtime) || []
+                    : null}
                   gridProps={{
                     stroke: 'black',
                     strokeDasharray: null,
                     strokeOpacity: 0.2,
                   }}
-                  height={200}
+                  height={blockUuid === ALL_BLOCKS_KEY ? 800 : 200}
                   hideGridX
                   margin={{
-                    top: 10,
                     bottom: 30,
                     left: 35,
                     right: -1,
+                    top: 10,
                   }}
                   noCurve
-                  renderXTooltipContent={data => (
+                  renderXTooltipContent={(data: {
+                    x: string | number;
+                    y: string | number | (string | number)[];
+                  }) => (
                     <Text center inverted small>
                       {moment(data.x).format('MMM DD')}
                     </Text>
                   )}
-                  renderYTooltipContent={data => {
-                    const yValue = data?.y?.[0];
+                  renderYTooltipContent={(data: {
+                    x: string | number;
+                    y: string | number | (string | number)[];
+                  }, idx) => {
+                    const yValue = data?.y?.[idx];
+                    if (blockUuid === ALL_BLOCKS_KEY) {
+                      const individualBlockUUID = yValue?.blockUUID;
+                      const yRuntime = yValue?.runtime;
+                      return yRuntime !== undefined && (
+                        <Text center inverted small>
+                          {individualBlockUUID || ''}: {yRuntime.toFixed ? yRuntime.toFixed(3) : yRuntime}s
+                        </Text>
+                      );
+                    }
+
                     return yValue !== undefined && (
                       <Text center inverted small>
                         {yValue.toFixed ? yValue.toFixed(3) : yValue}s
@@ -220,11 +262,12 @@ function BlockRuntimeMonitor({
                   thickStroke
                   xLabelFormat={val => moment(val).format('MMM DD')}
                   xLabelRotate={false}
+                  yLabelFormat={val => val % 1 === 0 ? val : val.toFixed(1)}
                 />
               </div>
             </Spacing>
-          )
-        )}
+          ))
+        }
       </Spacing>
     </Monitor>
   );
@@ -244,4 +287,4 @@ BlockRuntimeMonitor.getInitialProps = async (ctx: any) => {
   };
 };
 
-export default BlockRuntimeMonitor;
+export default PrivateRoute(BlockRuntimeMonitor);

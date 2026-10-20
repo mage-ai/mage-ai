@@ -1,0 +1,30 @@
+export const ProButton = ({
+  href,
+  label = 'Get started with Mage Pro for free',
+  source = 'documentation',
+}) => (
+  <div
+    style={{ height: 32, position: 'relative' }}
+  >
+    <a
+      target="_blank"
+      className="group px-4 py-1.5 relative inline-flex items-center text-sm font-medium rounded-full"
+      href={href ?? `https://cloud.mage.ai/sign-up?source=${source}`}
+    >
+      <span
+        className="absolute inset-0 bg-primary-dark dark:bg-primary-light/10 border-primary-light/30 rounded-full dark:border group-hover:opacity-[0.9] dark:group-hover:border-primary-light/60"
+      >
+      </span>
+
+      <div className="mr-0.5 space-x-2.5 flex items-center">
+        <span class="z-10 text-white dark:text-primary-light">
+          {label}
+        </span>
+
+        <svg width="3" height="24" viewBox="0 -9 3 24" class="h-5 rotate-0 overflow-visible text-white/90 dark:text-primary-light">
+          <path d="M0 0L3 3L0 6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"></path>
+        </svg>
+      </div>
+    </a>
+  </div>
+);

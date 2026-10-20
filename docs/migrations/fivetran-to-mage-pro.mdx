@@ -1,0 +1,127 @@
+---
+title: "Migrate from Fivetran to Mage Pro"
+sidebarTitle: "Fivetran to Mage Pro"
+---
+
+Many teams start with Fivetran for ELT pipelines—but face limitations in flexibility, cost, and transparency. Mage Pro offers a powerful alternative: a unified platform for **data integration, transformation, and orchestration** with full code control, **AI-assisted development**, and **cloud-native scalability**.
+
+## Why migrate from Fivetran to Mage Pro?
+
+Fivetran is convenient for basic replication—but it wasn’t built for:
+
+- Custom transformations or logic  
+- Managing orchestration and dependencies  
+- Running in your own cloud for cost control and security  
+- Debugging and optimizing individual steps  
+- Streaming data or event-driven triggers
+
+Mage Pro replaces Fivetran’s “black-box” connector model with **modular, open pipelines** that give you full control over data extraction, transformation, and loading—plus visibility into every step.
+
+---
+
+## ✨ Mage Pro vs Fivetran: Benefits Overview
+
+Mage Pro offers more flexibility, transparency, and scalability than Fivetran—at a fraction of the cost.
+
+| Capability                         | Fivetran | Mage Pro  |
+|-----------------------------------|----------------------------------------|----------------------------------------|
+| **Data integration**              | ✅ Managed connectors                  | ✅ Native connectors for APIs, DBs, files |
+| **Transformation support**        | ⚠️ External only (via dbt or dest SQL) | ✅ Built-in SQL & Python support        |
+| **Orchestration**                 | ❌ None                                 | ✅ Full DAG-level orchestration         |
+| **Visual pipeline UI**            | ❌                                      | ✅ Drag-and-drop builder                |
+| **AI assistance**                 | ❌                                      | ✅ AI Sidekick for code & pipeline generation |
+| **Incremental loads**             | ✅ Supported                            | ✅ Native with customizable logic       |
+| **Custom logic**                  | ⚠️ Limited (no in-flow transforms)     | ✅ Full Python & SQL control            |
+| **Streaming & event triggers**    | ❌                                      | ✅ Real-time CDC, Kafka, webhooks       |
+| **Data preview & validation**     | ⚠️ Destination-only                    | ✅ Block-level previews & schema validation |
+| **Git integration & CI/CD**       | ❌                                      | ✅ Git-native pipelines & deployments   |
+| **Secrets management**            | ⚠️ Env-only                             | ✅ Built-in secrets & workspace isolation |
+| **Multi-environment support**     | ⚠️ Manual setup                         | ✅ Dev, staging, and production workspaces |
+| **Observability & debugging**     | ⚠️ Basic logs, no pipeline introspection | ✅ Logs, retries, lineage, and alerting |
+| **Scalability**                   | ⚠️ Controlled by Fivetran, usage-priced | ✅ Auto-scaled executors on your infra  |
+| **Deployment options**            | ✅ Cloud, Hybrid, Self-Hosted (HVR)     | ✅ Cloud, Hybrid, or Fully On-Prem      |
+| **Data stays in your VPC**        | ✅ With Hybrid deployment               | ✅ Always (runs in your infra)          |
+| **Control plane ownership**       | ⚠️ Fivetran-managed (except self-hosted) | ✅ Fully under your control             |
+
+---
+
+## 🛠️ Step-by-Step Migration Instructions
+
+<Steps>
+
+1. **Review your Fivetran connectors**
+   - List all source → destination syncs
+   - Identify transformation steps (dbt, SQL, external pipelines)
+   - Export any sync configuration (e.g., schedule, sync mode)
+
+2. **Create your Mage Pro workspace**
+   - Sign up at [Mage Pro](https://cloud.mage.ai)
+   - (Optional) Connect GitHub or GitLab for version control
+
+3. **Rebuild Fivetran sync using Mage pipeline **
+   - Each Fivetran **source** → Mage Data Integration **Source block**
+   - Each Fivetran **destination** → Mage Data Integration **Destination block**
+   - dbt or SQL logic → Mage **SQL block**
+   - Add **Python blocks** for advanced transforms or conditionals
+
+4. **Design pipelines**
+   - Combine extract → transform → load in one visual pipeline
+   - Use UI builder or YAML configs for setup
+
+5. **Configure schedules and triggers**
+   - Replace Fivetran sync schedules with Mage **cron, event, or file triggers**
+   - Add webhooks or file watchers if needed
+
+6. **Validate pipelines**
+   - Preview outputs at each block
+   - Compare target tables and schema to Fivetran outputs
+   - Test incremental sync and backfill behavior
+
+7. **Monitor and scale**
+   - View logs, lineage, and metrics in Mage
+   - Configure **alerts, retries, and concurrency**
+   - Enable **auto-scaling** for high-volume loads
+
+</Steps>
+
+---
+
+## 🤖 Use AI Sidekick to Convert Fivetran Configs
+
+Mage Pro’s **AI Sidekick** helps migrate Fivetran configurations, dbt models, and logic into Mage pipelines.
+
+### 🔧 How to Use It
+
+1. Open your Mage Pro workspace  
+2. Click the **“Ask AI”** field in the Mage Pro header.
+3. Paste in your Fivetran connector settings, sync SQL, or dbt model  
+4. Ask: **“Convert this Fivetran sync into a Mage pipeline.”**  
+5. The AI will:
+   - Generate Extract and Load blocks
+   - Create SQL/Python transforms
+   - Add schedule and retry logic
+6. Insert the generated pipeline into your workspace
+
+---
+
+## 🧠 Tips for Migrating Complex Pipelines
+
+- Use **multiple pipelines** for large source groups (e.g., one per schema)
+- Parameterize **table names and filters** with pipeline variables
+- Replace dbt logic with **modular SQL blocks** using `ref()` and tests
+- Use **batching or streaming** modes for large datasets
+
+---
+
+## ✅ After Migration: What You Gain
+
+- Complete **ELT pipelines** with built-in orchestration  
+- Visual and modular pipeline builder  
+- AI-powered development & debugging  
+- Git-native deployments across environments  
+- Real-time ingestion with event-based triggers  
+- Transparent cost, better performance, full control
+
+> Fivetran is great for getting started. But when you're ready for control, observability, and flexibility—**Mage Pro is built for scale**.
+
+👉 [Start Migrating to Mage Pro](https://cloud.mage.ai)

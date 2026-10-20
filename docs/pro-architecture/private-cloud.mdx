@@ -1,0 +1,32 @@
+---
+title: "Private cloud deployment"
+sidebarTitle: "Private Cloud"
+icon: "lock"
+description: "Deploy securely in your private cloud environment"
+---
+
+Private cloud deployments allow developers to have complete architectural control over the control plane and the data plane. The entire Mage Pro platform will run on your cloud environment.
+
+<img
+    alt="SaaS Deployment"
+    src="https://raw.githubusercontent.com/mage-ai/assets/main/pro/deployments/Copy%20of%20Private%20Cloud%20(1).png"
+/>
+
+### Technical Specifications
+
+- **Deployment Platform**: Kubernetes (AKS, EKS, GKE) or OpenShift
+- **Installation Method**: Helm charts or operator-based deployment
+- **Resource Requirements**:
+    - Minimum 2 vCPUs and 8GB RAM for control plane services
+    - Elastic resources for data plane based on workload
+    - Persistent storage for metadata and logs
+- **Networking**: Internal service mesh for component communication
+- **Monitoring**: Prometheus-compatible metrics endpoints
+- **Backup**: Automated database backup with configurable retention
+
+### Integration Requirements
+
+- Kubernetes cluster with admin access for service deployment
+- Persistent volume provisioning capability
+- Load balancer or ingress controller for web UI access
+- Container registry access for system images

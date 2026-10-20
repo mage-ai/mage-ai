@@ -1,9 +1,14 @@
 {
   "account": "",
   "database": "",
+  "disable_double_quotes": false,
   "password": "",
+  "role": "",
   "schema": "",
   "table": "",
   "username": "",
-  "warehouse": ""
+  "warehouse": "",
+  "private_key_file": null,
+  "private_key_file_pwd": null,
+  "use_batch_load": true
 }

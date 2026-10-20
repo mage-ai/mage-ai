@@ -1,4 +1,4 @@
-from mage_ai.data_preparation.repo_manager import get_repo_path
+from mage_ai.settings.repo import get_repo_path
 from mage_ai.io.config import ConfigFileLoader
 from mage_ai.io.postgres import Postgres
 from pandas import DataFrame
@@ -14,7 +14,7 @@ def export_data_to_postgres(df: DataFrame, **kwargs) -> None:
     Template for exporting data to a PostgreSQL database.
     Specify your configuration settings in 'io_config.yaml'.
 
-    Docs: https://github.com/mage-ai/mage-ai/blob/master/docs/blocks/data_loading.md#postgresql
+    Docs: https://docs.mage.ai/design/data-loading#postgresql
     """
     schema_name = 'your_schema_name'  # Specify the name of the schema to export data to
     table_name = 'your_table_name'  # Specify the name of the table to export data to

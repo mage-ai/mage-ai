@@ -1,0 +1,9 @@
+@use '../base/svg';
+
+.svg {
+  @include svg.stroke-width();
+}
+
+.stop {
+  @include svg.gradient();
+}

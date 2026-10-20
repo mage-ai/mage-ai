@@ -1,9 +1,8 @@
 import React from 'react';
-import { Meta, Story } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 
 import ThemeBlock from 'stories/ThemeBlock';
-import SimpleDataTable from '@oracle/components/Table/SimpleDataTable';
-import SimpleDataTableProps from '@oracle/components/Table/SimpleDataTable';
+import SimpleDataTable, { SimpleDataTableProps } from '@oracle/components/Table/SimpleDataTable';
 
 export default {
   component: SimpleDataTable,
@@ -14,38 +13,38 @@ const rowGroupDataSample = {
   rowData: [
     {
       columnValues: [
-        "1", "2", "3", "4", "5",
+        '1', '2', '3',
       ],
       uuid: 'Row 1',
     },
     {
       columnValues: [
-        "1", "2", "3", "4", "5",
+        '1', '2', '3',
       ],
       uuid: 'Row 2',
     },
   ],
-}
+};
 
 const ColumnHeaderSample = [
   {
     Icon: true,
-    label: "Feature 1",
+    label: 'Feature 1',
   },
   {
     Icon: true,
-    label: "Feature 2",   
+    label: 'Feature 2',   
   },
   {
     Icon: true,
-    label: "Feature 3",
+    label: 'Feature 3',
   },
-]
+];
 
-const TemplateWithTheme = ({ children, ...props }) => (
+const TemplateWithTheme = ({ ...props }) => (
   <ThemeBlock>
     <SimpleDataTable 
-      columnFlexNumbers={[1,1,1,1,1]}
+      columnFlexNumbers={[1,1,1]}
       columnHeaders={ColumnHeaderSample}
       rowGroupData={[rowGroupDataSample]} 
       {...props}
@@ -53,7 +52,7 @@ const TemplateWithTheme = ({ children, ...props }) => (
   </ThemeBlock>
 );
 
-const Template: Story<any> = (args) => <TemplateWithTheme {...args} />;
+const Template: StoryFn<SimpleDataTableProps> = (args) => <TemplateWithTheme {...args} />;
 
 export const Regular = Template.bind({});
 Regular.args = {

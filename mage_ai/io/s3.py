@@ -1,11 +1,14 @@
+import os
 from contextlib import contextmanager
 from io import BytesIO
-from mage_ai.io.base import BaseFile, FileFormat, QUERY_ROW_LIMIT
-from mage_ai.io.config import BaseConfigLoader, ConfigKey
-from pandas import DataFrame
 from pathlib import Path
+from typing import Union
+
 import boto3
-import os
+from pandas import DataFrame
+
+from mage_ai.io.base import QUERY_ROW_LIMIT, BaseFile, FileFormat
+from mage_ai.io.config import BaseConfigLoader, ConfigKey
 
 
 class S3(BaseFile):
@@ -24,7 +27,7 @@ class S3(BaseFile):
 
     def __init__(
         self,
-        verbose=False,
+        verbose: bool = False,
         **kwargs,
     ) -> None:
         """
@@ -42,18 +45,19 @@ class S3(BaseFile):
         self,
         bucket_name: str,
         object_key: str,
-        format: FileFormat = None,
+        format: Union[FileFormat, str, None] = None,
         limit: int = QUERY_ROW_LIMIT,
         **kwargs,
     ) -> DataFrame:
         """
         Loads data from S3 into a Pandas data frame. This function will load at
-        maximum 100,000 rows of data from the specified file.
+        maximum 10,000,000 rows of data from the specified file.
 
         Args:
             import_config (Mapping, optional): Configuration settings for importing file from
             S3. Defaults to None.
-            limit (int, Optional): The number of rows to limit the loaded dataframe to. Defaults to 100000.
+            limit (int, Optional): The number of rows to limit the loaded dataframe to.
+                                    Defaults to 10,000,000.
             read_config (Mapping, optional): Configuration settings for reading file into data
             frame. Defaults to None.
 
@@ -78,13 +82,18 @@ class S3(BaseFile):
             return self._read(buffer, format, limit, **kwargs)
 
     def export(
-        self, df: DataFrame, bucket_name: str, object_key: str, format: FileFormat = None, **kwargs
+        self,
+        data: Union[DataFrame, str],
+        bucket_name: str,
+        object_key: str,
+        format: Union[FileFormat, str, None] = None,
+        **kwargs,
     ) -> None:
         """
         Exports data frame to an S3 bucket.
 
         Args:
-            df (DataFrame): Data frame to export
+            data (DataFrame): Data frame or file path to export
             write_config (Mapping, optional): Configuration settings for writing data frame to
             specified format. Defaults to None.
             export_config (Mapping, optional): Configuration settings for exporting data frame
@@ -94,20 +103,26 @@ class S3(BaseFile):
             format = self._get_file_format(object_key)
 
         with self.printer.print_msg(
-            f'Exporting data frame to bucket \'{bucket_name}\' at key \'{object_key}\''
+            f'Exporting data to bucket \'{bucket_name}\' at key \'{object_key}\''
         ):
-            if format == FileFormat.HDF5:
-                name = os.path.splitext(os.path.basename(object_key))[0]
-                with self.open_temporary_directory() as temp_dir:
-                    obj_loc = temp_dir / f'{name}.hdf5'
-                    self._write(df, format, obj_loc, **kwargs)
-                    with obj_loc.open('rb') as fin:
-                        self.client.put_object(Body=fin, Bucket=bucket_name, Key=object_key)
+            if isinstance(data, DataFrame):
+                if format == FileFormat.HDF5:
+                    name = os.path.splitext(os.path.basename(object_key))[0]
+                    with self.open_temporary_directory() as temp_dir:
+                        obj_loc = temp_dir / f'{name}.hdf5'
+                        self._write(data, format, obj_loc, **kwargs)
+                        with obj_loc.open('rb') as fin:
+                            self.client.put_object(Body=fin, Bucket=bucket_name, Key=object_key)
+                else:
+                    buffer = BytesIO()
+                    self._write(data, format, buffer, **kwargs)
+                    buffer.seek(0)
+                    self.client.put_object(Body=buffer, Bucket=bucket_name, Key=object_key)
+            elif isinstance(data, str) and os.path.exists(data):
+                self.client.upload_file(data, bucket_name, object_key)
             else:
-                buffer = BytesIO()
-                self._write(df, format, buffer, **kwargs)
-                buffer.seek(0)
-                self.client.put_object(Body=buffer, Bucket=bucket_name, Key=object_key)
+                raise Exception(
+                    'Please provide a pandas DataFrame or a valid file path as the input.')
 
     def exists(
         self, bucket_name: str, prefix: str
@@ -146,6 +161,8 @@ class S3(BaseFile):
         return cls(
             aws_access_key_id=config[ConfigKey.AWS_ACCESS_KEY_ID],
             aws_secret_access_key=config[ConfigKey.AWS_SECRET_ACCESS_KEY],
+            aws_session_token=config[ConfigKey.AWS_SESSION_TOKEN],
             region_name=config[ConfigKey.AWS_REGION],
+            endpoint_url=config[ConfigKey.AWS_ENDPOINT],
             **kwargs,
         )

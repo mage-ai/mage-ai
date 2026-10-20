@@ -1,7 +1,6 @@
-from mage_ai.orchestration.db.models import PipelineRun
+from mage_ai.shared.enum import StrEnum
 
 
-IN_PROGRESS_STATUSES = [
-    PipelineRun.PipelineRunStatus.INITIAL,
-    PipelineRun.PipelineRunStatus.RUNNING,
-]
+class DatabaseType(StrEnum):
+    POSTGRESQL = 'postgresql'
+    SQLITE = 'sqlite'

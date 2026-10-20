@@ -1,0 +1,21 @@
+@use '../base/backgrounds';
+@use '../base/borders';
+
+$numbers: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20;
+
+@mixin size() {
+  @each $value1 in $numbers {
+    &.size-#{$value1 * 4} {
+      height: #{$value1 * 4}px;
+      width: #{$value1 * 4}px;
+    }
+  }
+}
+
+.circle {
+  @include backgrounds.background-colors();
+  @include borders.border-colors();
+  @include size();
+
+  border-radius: 50%;
+}

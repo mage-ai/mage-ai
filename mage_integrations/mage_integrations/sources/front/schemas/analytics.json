@@ -1,0 +1,71 @@
+{
+  "type": ["null", "object"],
+  "additionalProperties": false,
+  "properties": {
+    "start_time": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "end_time": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "avg_first_response_time": {
+      "type": ["null", "number"]
+    },
+    "avg_handle_time": {
+      "type": ["null", "number"]
+    },
+    "avg_response_time": {
+      "type": ["null", "number"]
+    },
+    "avg_sla_breach_time": {
+      "type": ["null", "number"]
+    },
+    "avg_total_reply_time": {
+      "type": ["null", "number"]
+    },
+    "new_segments_count": {
+      "type": ["null", "number"]
+    },
+    "num_active_segments_full": {
+      "type": ["null", "number"]
+    },
+    "num_archived_segments": {
+      "type": ["null", "number"]
+    },
+    "num_archived_segments_with_reply": {
+      "type": ["null", "number"]
+    },
+    "num_csat_survey_response": {
+      "type": ["null", "number"]
+    },
+    "num_messages_received": {
+      "type": ["null", "number"]
+    },
+    "num_messages_sent": {
+      "type": ["null", "number"]
+    },
+    "num_sla_breach": {
+      "type": ["null", "number"]
+    },
+    "pct_csat_survey_satisfaction": {
+      "type": ["null", "number"]
+    },
+    "pct_tagged_conversations": {
+      "type": ["null", "number"]
+    },
+    "num_open_segments_start": {
+      "type": ["null", "number"]
+    },
+    "num_closed_segments": {
+      "type": ["null", "number"]
+    },
+    "num_open_segments_end": {
+      "type": ["null", "number"]
+    },
+    "num_workload_segments": {
+      "type": ["null", "number"]
+    }
+  }
+}

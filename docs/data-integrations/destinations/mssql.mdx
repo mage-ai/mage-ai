@@ -1,0 +1,62 @@
+---
+title: MSSQL (Microsoft SQL Server)
+description: How to configure Microsoft SQL Server (MSSQL) as a destination in Mage to write pipeline data into a SQL Server database using SQL authentication or Azure AD.
+---
+
+## Overview
+
+Use **Microsoft SQL Server (MSSQL)** as a destination in Mage to export data from your pipelines into relational tables for analytics, reporting, or operational workloads. Mage supports both on-premise SQL Server deployments and cloud-hosted options like **Azure SQL Database**.
+
+---
+
+## Configuration Parameters
+
+You must provide the following credentials to configure the MSSQL destination:
+
+| Key         | Description                                                                                                   | Example Value         | Required |
+|--------------|---------------------------------------------------------------------------------------------------------------|------------------------|----------|
+| `database`   | Name of the target database where data will be written.                                                      | `msdb`                 | ✅        |
+| `host`       | Hostname or IP address of your MSSQL server.                                                                 | `172.20.0.2`           | ✅        |
+| `port`       | Port used by the MSSQL service. Typically `1433`.                                                            | `1433`                 | ✅        |
+| `username`   | Username with permission to read and write to the specified schema and table.                                | `guest`                | ✅        |
+| `password`   | Password for the MSSQL user.                                                                                  | `abc123...`            | ✅        |
+| `schema`     | Target schema inside the database.                                                                            | `public`               | ✅        |
+| `table`      | Name of the destination table Mage will create or write to.                                                  | `users`                | ✅        |
+
+---
+
+## Optional Parameters
+
+| Key                   | Description                                                                                                                                                            | Example Value                          |
+|------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------|
+| `authentication`       | Authentication method. Set to `ActiveDirectoryServicePrincipal` to use [Azure AD authentication](https://learn.microsoft.com/en-us/sql/connect/jdbc/connecting-using-azure-active-directory-authentication?view=sql-server-ver16). | `ActiveDirectoryServicePrincipal`      |
+| `driver`              | Name of the [ODBC driver for SQL Server](https://learn.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server?view=sql-server-ver16).               | `ODBC Driver 18 for SQL Server`        |
+| `skip_schema_creation`| If `true`, Mage will skip the `CREATE SCHEMA` command during initialization. [See GitHub issue](https://github.com/mage-ai/mage-ai/issues/3416)                        | `true`                                 |
+| `lower_case`           | If `true`, all column names will be converted to lowercase. Default is `true`.                                                   | `true`                                 |
+| `connection_method`   | Connection method. Set to `ssh_tunnel` to connect via SSH tunnel. Default: `direct` | `ssh_tunnel` |
+| `ssh_host`            | (SSH tunnel only) The host of the intermediate bastion server. | `123.45.67.89` |
+| `ssh_port`            | (SSH tunnel only) The port of the intermediate bastion server. Default: `22` | `22` |
+| `ssh_username`        | (SSH tunnel only) The username used to connect to the bastion server. | `username` |
+| `ssh_password`        | (SSH tunnel only, optional) The password used to connect to the bastion server. Required if not using `ssh_pkey`. | `password` |
+| `ssh_pkey`            | (SSH tunnel only, optional) The path to the private key used to connect to the bastion server. Required if not using `ssh_password`. | `/path/to/private/key` |
+
+<Note>
+SSH tunneling is a Mage Pro only feature.
+</Note>
+
+---
+
+## Notes
+
+- Mage uses the **SQLAlchemy MSSQL dialect** to connect and write data into Microsoft SQL Server.
+- Ensure the user has `INSERT` and `CREATE TABLE` permissions if writing to new tables.
+- Azure-hosted SQL Servers may require SSL or Azure AD authentication depending on your network configuration.
+- Make sure any required firewall rules or virtual network settings are properly configured for external access.
+
+---
+
+## Related Resources
+
+- [Microsoft SQL Server Docs](https://learn.microsoft.com/en-us/sql/sql-server/)
+- [ODBC Driver for SQL Server](https://learn.microsoft.com/en-us/sql/connect/odbc/download-odbc-driver-for-sql-server)
+- [Azure Active Directory Authentication](https://learn.microsoft.com/en-us/sql/connect/jdbc/connecting-using-azure-active-directory-authentication?view=sql-server-ver16)

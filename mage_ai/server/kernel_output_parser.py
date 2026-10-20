@@ -1,14 +1,19 @@
-from enum import Enum
+from mage_ai.data_preparation.models.constants import MAX_PRINT_OUTPUT_LINES
+from mage_ai.shared.enum import StrEnum
 
 
-class DataType(str, Enum):
+class DataType(StrEnum):
     DATA_FRAME = 'data_frame'
     IMAGE_PNG = 'image/png'
-    PROGRESS = 'progress'
+    PROGRESS = 'progress'  # Deprecated; can come from Great Expectations
+    PROGRESS_STATUS = 'progress_status'  # Comes from execute_custom_code.py
+    GROUP = 'group'
+    OBJECT = 'object'
     TABLE = 'table'
     TEXT = 'text'
     TEXT_HTML = 'text/html'
     TEXT_PLAIN = 'text/plain'
+
 
 COMMS_MESSAGE_TYPES = [
     'comm_open',
@@ -43,6 +48,9 @@ def parse_output_message(message: dict) -> dict:
         text_stdout = content.get('text')
         data_content = text_stdout.split('\n')
         data_type = DataType.TEXT_PLAIN
+        if content.get('name') == 'stdout' and len(data_content) > MAX_PRINT_OUTPUT_LINES:
+            data_content_truncated = data_content[:MAX_PRINT_OUTPUT_LINES]
+            data_content = data_content_truncated + ['... (output truncated)']
     elif image:
         data_content = image
         data_type = DataType.IMAGE_PNG

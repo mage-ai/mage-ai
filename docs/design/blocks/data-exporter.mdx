@@ -1,0 +1,274 @@
+---
+title: "Data exporter"
+description:
+  "After completing data transformations, utilize the data exporter blocks to either load the processed 
+  data or store a machine learning model in an external data storage system."
+---
+
+<img
+  alt="exporter"
+  src="https://mage-ai.github.io/assets/blocks/exporter/data-exporter.gif"
+/>
+Mage natively supports integration with a variety of data storage systems. However, these integrations often 
+require specific configurations in both the exporter block and the ```io_config.yml``` file to ensure seamless operation. 
+The ```io_config.yml``` file typically includes connection details such as host, port, database name, username, and password. 
+Meanwhile, the exporter block needs to be configured with the appropriate export parameters, such as target table names, 
+schema details, and conflict resolution strategies.
+
+### Technical Details
+
+1. **Data Exporter Blocks**:
+    - These blocks are designed to facilitate the movement of transformed data or trained models to external systems.
+    - Configuration parameters might include destination paths, file formats, table names, schemas, and update strategies.
+    - Most data exporters include a `config_profile` parameter set to `'default'` by default. This parameter can be customized 
+    to use different configuration profiles if you have multiple profiles or have renamed them.
+2. **Supported Data Storage Systems**:
+    - Mage supports a wide range of storage systems including PostgreSQL, MySQL, AWS S3, Google Cloud Storage, Azure Blob Storage, and many more.
+    - Each system may have unique requirements and configurations to ensure compatibility and optimal performance.
+3. **Configuration in `io_config.yml`**:
+    - This file serves as the central configuration hub for defining connection parameters.
+    - Typical parameters include:
+        - `host`: The server address of the storage system.
+        - `port`: The port number for the connection.
+        - `database`: The name of the target database or data storage container.
+        - `username` and `password`: Authentication credentials.
+        - Additional parameters as required by specific storage systems (e.g., SSL settings, API tokens).
+
+### Examples 
+
+<Accordion title="Data Warehouse">
+
+Configure the `io_config.yml` file to connect your Mage pipeline to a snowflake data warehouse. While optional, 
+depending on how your Snowflake DW is configured you may need to enter all information into the .yml file. 
+It’s recommended to store sensitive information as Secrets. See the general [Secrets documentation](https://docs.mage.ai/development/variables/secrets)
+for more information.
+
+```YAML
+  SNOWFLAKE_USER: username
+  SNOWFLAKE_PASSWORD: password
+  SNOWFLAKE_ACCOUNT: account_id.region
+  SNOWFLAKE_DEFAULT_WH: null                  # Optional default warehouse
+  SNOWFLAKE_DEFAULT_DB: null                  # Optional default database
+  SNOWFLAKE_DEFAULT_SCHEMA: null              # Optional default schema
+  SNOWFLAKE_PRIVATE_KEY_PASSPHRASE: null      # Optional private key passphrase
+  SNOWFLAKE_PRIVATE_KEY_PATH: null            # Optional private key path
+  SNOWFLAKE_ROLE: null                        # Optional role name
+  SNOWFLAKE_TIMEOUT: null                     # Optional timeout in seconds
+```
+Enter information for the following in the Data Exporter block
+
+1. table_name - requires developers enter the name of their destination table
+2. database - requires developers enter the name of their destination data base
+3. schema - requires developers enter the name of their destination schema
+
+All other information is handled in the 'io_config.yml' file.
+
+Example Code:
+
+```Python
+from mage_ai.settings.repo import get_repo_path
+from mage_ai.io.config import ConfigFileLoader
+from mage_ai.io.snowflake import Snowflake
+from pandas import DataFrame
+from os import path
+
+if 'data_exporter' not in globals():
+    from mage_ai.data_preparation.decorators import data_exporter
+
+
+@data_exporter
+def export_data_to_snowflake(df: DataFrame, **kwargs) -> None:
+    """
+    Template for exporting data to a Snowflake warehouse.
+    Specify your configuration settings in 'io_config.yaml'.
+
+    Docs: https://docs.mage.ai/design/data-loading#snowflake
+    """
+    table_name = 'your_table_name'
+    database = 'your_database_name'
+    schema = 'your_schema_name'
+    config_path = path.join(get_repo_path(), 'io_config.yaml')
+    config_profile = 'default'
+
+    with Snowflake.with_config(ConfigFileLoader(config_path, config_profile)) as loader:
+        loader.export(
+            df,
+            table_name,
+            database,
+            schema,
+            if_exists='replace',  # Specify resolution policy if table already exists
+        )
+```
+</Accordion>
+<Accordion title="Data Lake">
+Configure the `io_config.yml` file to connect your Mage pipeline to a Azure Blob Storage. Configure some Secrets and enter them into `io_config.yml` file. 
+If you need more information on entering secrets see this [documentation](https://docs.mage.ai/production/deploying-to-cloud/secrets/Azure).
+
+```YAML
+  AZURE_CLIENT_ID: "{{ env_var('AZURE_CLIENT_ID') }}"
+  AZURE_CLIENT_SECRET: "{{ env_var('AZURE_CLIENT_SECRET') }}"
+  AZURE_STORAGE_ACCOUNT_NAME: "{{ env_var('AZURE_STORAGE_ACCOUNT_NAME') }}"
+  AZURE_TENANT_ID: "{{ env_var('AZURE_TENANT_ID') }}"
+```
+Enter information for the following in the Data Exporter block
+
+1. container_name - requires developers enter the name of their destination container
+2. blob_path - requires developers enter the name of their destination blob path
+
+All other information is handled in the `io_config.yml` file.
+
+Example Code:
+
+```Python
+from mage_ai.settings.repo import get_repo_path
+from mage_ai.io.azure_blob_storage import AzureBlobStorage
+from mage_ai.io.config import ConfigFileLoader
+from pandas import DataFrame
+from os import path
+
+if 'data_exporter' not in globals():
+    from mage_ai.data_preparation.decorators import data_exporter
+
+
+@data_exporter
+def export_data_to_azure_blob_storage(df: DataFrame, **kwargs) -> None:
+    """
+    Template for exporting data to a Azure Blob Storage.
+    Specify your configuration settings in 'io_config.yaml'.
+
+    Docs: https://docs.mage.ai/design/data-loading
+    """
+    config_path = path.join(get_repo_path(), 'io_config.yaml')
+    config_profile = 'default'
+
+    container_name = 'your_container_name'
+    blob_path = 'your_blob_path'
+
+    AzureBlobStorage.with_config(ConfigFileLoader(config_path, config_profile)).export(
+        df,
+        container_name,
+        blob_path,
+    )
+```
+</Accordion>
+
+<Accordion title="Database">
+Configure the `io_config.yml` file to connect your Mage pipeline to a PostgreSQL database. Configure some Secrets and enter them into `io_config.yml` file. 
+If you need more information on entering secrets see this [documentation](https://docs.mage.ai/production/deploying-to-cloud/secrets/Azure).
+
+```YAML
+  POSTGRES_CONNECT_TIMEOUT: 10
+  POSTGRES_DBNAME: postgres
+  POSTGRES_SCHEMA: public # Optional
+  POSTGRES_USER: username
+  POSTGRES_PASSWORD: password
+  POSTGRES_HOST: hostname
+  POSTGRES_PORT: 5432
+```
+<Note>
+If exporting from Docker to an external machine use the host.docker.internal for `POSTGRES_HOST:`
+</Note>
+
+Enter information for the following in the Data Exporter block
+
+1. schema_name - requires developers enter the name of their destination container
+2. table_name - requires developers enter the name of their destination blob path
+
+All other information is handled in the `io_config.yml` file.
+
+Example Code:
+
+```Python
+from mage_ai.settings.repo import get_repo_path
+from mage_ai.io.config import ConfigFileLoader
+from mage_ai.io.postgres import Postgres
+from pandas import DataFrame
+from os import path
+
+if 'data_exporter' not in globals():
+    from mage_ai.data_preparation.decorators import data_exporter
+
+
+@data_exporter
+def export_data_to_postgres(df: DataFrame, **kwargs) -> None:
+    """
+    Template for exporting data to a PostgreSQL database.
+    Specify your configuration settings in 'io_config.yaml'.
+
+    Docs: https://docs.mage.ai/design/data-loading#postgresql
+    """
+    schema_name = 'your_schema_name'  # Specify the name of the schema to export data to
+    table_name = 'your_table_name'  # Specify the name of the table to export data to
+    config_path = path.join(get_repo_path(), 'io_config.yaml')
+    config_profile = 'default'
+
+    with Postgres.with_config(ConfigFileLoader(config_path, config_profile)) as loader:
+        loader.export(
+            df,
+            schema_name,
+            table_name,
+            index=False,  # Specifies whether to include index in exported table
+            if_exists='replace',  # Specify resolution policy if table name already exists
+        )
+```
+
+</Accordion>
+
+<Accordion title="Delta Lake">
+
+Unlike other data exporters, delta lake exporters do not currently configure through the `io_config.yml` file. 
+They contain the necessary configurations within the exporter block itself. Lets break that down.
+
+**Storage Options**
+
+- `'AWS_ACCESS_KEY_ID'`: Your AWS access key ID.
+- `'AWS_SECRET_ACCESS_KEY'`: Your AWS secret access key.
+- `'AWS_REGION'`: The AWS region where your S3 bucket is located.
+- `'AWS_S3_ALLOW_UNSAFE_RENAME'`: This option allows unsafe rename operations on S3, which might be necessary for some workflows.
+
+<Note>
+Remember Secrets can be stored in Mage’s internal Secrets Manager, .YAML files, or sync directly with Cloud Secret Managers.
+</Note>
+
+**Additional Configurations**
+
+- `uri`: The S3 URI where the Delta Table is stored.
+
+Example Code:
+
+```Python
+from deltalake.writer import write_deltalake
+if 'data_exporter' not in globals():
+    from mage_ai.data_preparation.decorators import data_exporter
+
+
+@data_exporter
+def export_data(df, *args, **kwargs):
+    """
+    Export data to a Delta Table
+
+    Docs: https://delta-io.github.io/delta-rs/python/usage.html#writing-delta-tables
+    """
+    storage_options = {
+        'AWS_ACCESS_KEY_ID': '',
+        'AWS_SECRET_ACCESS_KEY': '',
+        'AWS_REGION': '',
+        'AWS_S3_ALLOW_UNSAFE_RENAME': 'true',
+    }
+
+    uri = 's3://[bucket]/[key]'
+
+    write_deltalake(
+        uri,
+        data=df,
+        mode='append',          # append or overwrite
+        overwrite_schema=False, # set True to alter the schema when overwriting
+        partition_by=[],
+        storage_options=storage_options,
+    )
+```
+
+</Accordion>
+
+By correctly configuring these components, you can effectively streamline the data loading process into your chosen storage system, 
+whether it be a relational database, a data lake, or a machine learning model repository.

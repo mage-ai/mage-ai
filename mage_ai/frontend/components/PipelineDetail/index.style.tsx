@@ -5,7 +5,6 @@ import { ASIDE_HEADER_HEIGHT } from '@components/TripleLayout/index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { hideScrollBar } from '@oracle/styles/scrollbars';
 
-
 export const ANIMATION_DURATION = 300;
 const TABS_HEADER_HEIGHT = 37;
 
@@ -34,6 +33,7 @@ export const OverlayStyle = styled.div`
 `;
 
 export const PipelineHeaderStyle = styled.div<{
+  relativePosition?: boolean;
   secondary?: boolean;
 }>`
   height: ${ASIDE_HEADER_HEIGHT}px;
@@ -47,9 +47,13 @@ export const PipelineHeaderStyle = styled.div<{
     border-bottom: 1px solid ${(props.theme.borders || dark.borders).medium};
   `}
 
+  ${props => props.relativePosition && `
+    position: relative;
+  `}
+
   ${props => props.secondary && `
     height: ${TABS_HEADER_HEIGHT}px;
-    top: ${ASIDE_HEADER_HEIGHT * 2}px;
+    top: ${ASIDE_HEADER_HEIGHT}px;
     overflow-x: auto;
     z-index: 3;
   `}
@@ -61,9 +65,10 @@ export const FileTabStyle = styled.div<{
   last?: boolean;
   selected?: boolean;
 }>`
-  border-left: 1px solid transparent;
+  border-right: 1px solid transparent;
   height: 100%;
-  padding: ${UNIT}px ${PADDING_UNITS * UNIT}px;
+  padding: ${1 * UNIT}px ${1.5 * UNIT}px;
+  position: relative;
 
   ${props => `
     &:hover {
@@ -77,14 +82,16 @@ export const FileTabStyle = styled.div<{
   `}
 
   ${props => props.selected && `
-    background-color: ${(props.theme.interactive || dark.interactive).hoverBackground};
+    background-color: ${(props.theme.background || dark.background).codeTextarea};
   `}
 
-  ${props => !props.selected && `
+  ${props => !props.selected && !props.last && `
     border-color: ${(props.theme.borders || dark.borders).light} !important;
   `}
+`;
 
-  ${props => props.last && `
-    border-right: 1px solid transparent;
-  `}
+export const HeaderViewOptionsStyle = styled.div`
+  left: 50%;
+  position: absolute;
+  transform: translateX(-50%);
 `;

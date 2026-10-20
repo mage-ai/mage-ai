@@ -1,0 +1,73 @@
+{
+  "type": ["null", "object"],
+  "additionalProperties": false,
+  "properties": {
+    "account_id": {
+      "type": ["null", "string"]
+    },
+    "video_poster_height": {
+      "type": ["null", "integer"]
+    },
+    "name": {
+      "type": ["null", "string"]
+    },
+    "start_time": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "first_choice": {
+      "type": ["null", "string"]
+    },
+    "video_height": {
+      "type": ["null", "integer"]
+    },
+    "video_url": {
+      "type": ["null", "string"]
+    },
+    "content_duration_seconds": {
+      "type": ["null", "integer"]
+    },
+    "second_choice": {
+      "type": ["null", "string"]
+    },
+    "end_time": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "id": {
+      "type": ["null", "string"]
+    },
+    "video_width": {
+      "type": ["null", "integer"]
+    },
+    "video_hls_url": {
+      "type": ["null", "string"]
+    },
+    "created_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "duration_in_minutes": {
+      "type": ["null", "integer"]
+    },
+    "card_uri": {
+      "type": ["null", "string"]
+    },
+    "updated_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "video_poster_url": {
+      "type": ["null", "string"]
+    },
+    "video_poster_width": {
+      "type": ["null", "integer"]
+    },
+    "deleted": {
+      "type": ["null", "boolean"]
+    },
+    "card_type": {
+      "type": ["null", "string"]
+    }
+  }
+}

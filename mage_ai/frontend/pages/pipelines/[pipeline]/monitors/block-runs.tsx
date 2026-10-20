@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo, useState } from 'react';
+import React, { useContext, useMemo, useState } from 'react';
 import moment from 'moment';
 import { ThemeContext } from 'styled-components';
 
@@ -8,22 +8,26 @@ import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import Monitor from '@components/Monitor';
 import PipelineType from '@interfaces/PipelineType';
+import PrivateRoute from '@components/shared/PrivateRoute';
 import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
-import api, { MONITOR_STATS } from '@api';
-import buildUrl from '@api/utils/url';
+import api from '@api';
 import dark from '@oracle/styles/themes/dark';
-import { BAR_STACK_COLORS, BAR_STACK_STATUSES } from '.';
+
+import {
+  BAR_STACK_COLORS,
+  BAR_STACK_STATUSES,
+  MonitorTypeEnum,
+  TOOLTIP_LEFT_OFFSET,
+} from '@components/Monitor/constants';
 import { ICON_SIZE } from '@components/FileBrowser/index.style';
-import { MonitorTypeEnum } from '@components/Monitor/constants';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
+import { getDateRange } from '@utils/date';
 import { indexBy } from '@utils/array';
-import { onSuccess } from '@api/utils/response';
-import { useMutation } from 'react-query';
 
 type BlockRunsMonitorProps = {
   pipeline: PipelineType;
-}
+};
 
 function BlockRunsMonitor({
   pipeline: pipelineProp,
@@ -33,7 +37,12 @@ function BlockRunsMonitor({
 
   const pipelineUUID = pipelineProp.uuid;
 
-  const { data: dataPipeline } = api.pipelines.detail(pipelineUUID);
+  const { data: dataPipeline } = api.pipelines.detail(pipelineUUID, {
+    includes_content: false,
+    includes_outputs: false,
+  }, {
+    revalidateOnFocus: false,
+  });
   const pipeline = useMemo(() => ({
     ...dataPipeline?.pipeline,
     uuid: pipelineUUID,
@@ -43,51 +52,30 @@ function BlockRunsMonitor({
   ]);
 
   const { data: dataPipelineSchedules } = api.pipeline_schedules.pipelines.list(pipelineUUID);
-  const pipelineSchedules = useMemo( 
+  const pipelineSchedules = useMemo(
     () => dataPipelineSchedules?.pipeline_schedules,
     [dataPipelineSchedules],
   );
 
   const blocksByUUID = useMemo(() => indexBy(pipeline?.blocks, ({ uuid }) => uuid) || {}, [pipeline]);
 
-  const [dataMonitor, setDataMonitor] = useState<any>(null);
-  const [fetchStats] = useMutation(
-    async (id) => {
-      let url = `${buildUrl(MONITOR_STATS)}/block_run_count?pipeline_uuid=${pipelineUUID}`;
-      if (id || id === 0) {
-        url += `&pipeline_schedule_id=${id}`;
-      }
-      return fetch(url, { method: 'GET' });
-    },
-    {
-      onSuccess: (response: any) => onSuccess(
-        response,
-        {
-          callback: (res) => {
-            setDataMonitor(res);
-          },
-        },
-      ),
-    }
-  );
-
-  useEffect(() => {
-    fetchStats();
-  }, [fetchStats]);
+  const monitorStatQuery: {
+    pipeline_uuid: string;
+    pipeline_schedule_id?: number;
+  } = {
+    pipeline_uuid: pipelineUUID,
+  };
+  if (pipelineSchedule || pipelineSchedule === 0) {
+    monitorStatQuery.pipeline_schedule_id = Number(pipelineSchedule);
+  }
+  const { data: dataMonitor, mutate: fetchStats } =
+    api.monitor_stats.detail('block_run_count', monitorStatQuery);
 
   const {
     stats: monitorStats,
-  } = dataMonitor?.monitor_stats || {};
+  } = dataMonitor?.monitor_stat || {};
 
-  const dateRange = useMemo(() => {
-    let date = new Date()
-    const dateRange = []
-    for (let i = 0; i < 90; i++) {
-      dateRange.unshift(date.toISOString().split('T')[0]);
-      date.setDate(date.getDate() - 1);
-    }
-    return dateRange;
-  }, []);
+  const dateRange = useMemo(() => getDateRange(), []);
 
   const blockRunData = useMemo(() => {
     if (monitorStats) {
@@ -106,7 +94,7 @@ function BlockRunsMonitor({
         {},
       );
     }
-  }, [monitorStats]);
+  }, [dateRange, monitorStats]);
 
   const breadcrumbs = useMemo(() => {
     const arr = [];
@@ -117,9 +105,7 @@ function BlockRunsMonitor({
     });
 
     return arr;
-  }, [
-    pipeline,
-  ]);
+  }, []);
 
   return (
     <Monitor
@@ -134,8 +120,8 @@ function BlockRunsMonitor({
             onChange={e => {
               const val = e.target.value;
               if (val !== 'initial') {
-                fetchStats(val);
                 setPipelineSchedule(val);
+                fetchStats(val);
               } else {
                 fetchStats();
                 setPipelineSchedule(null);
@@ -147,7 +133,7 @@ function BlockRunsMonitor({
               All
             </option>
             {pipelineSchedules && pipelineSchedules.map(schedule => (
-              <option value={schedule.id}>
+              <option key={schedule.id} value={schedule.id}>
                 {schedule.name}
               </option>
             ))}
@@ -156,41 +142,45 @@ function BlockRunsMonitor({
       }
     >
       <Spacing mx={2}>
-        {blockRunData && Object.entries(blockRunData).map(([blockUuid, blockData]) => {
-          return (
-            <Spacing mt={3}>
-              <FlexContainer alignItems="center">
-                <Spacing mx={1}>
-                  <Circle
-                    color={getColorsForBlockType(blocksByUUID[blockUuid]?.type, { theme }).accent}
-                    size={ICON_SIZE}
-                    square
-                  />
-                </Spacing>
-                <Headline level={4}>
-                  {blockUuid}
-                </Headline>
-              </FlexContainer>
-              <Spacing mt={1}>
-                <BarStackChart
-                  colors={BAR_STACK_COLORS}
-                  // @ts-ignore
-                  data={blockData}
-                  getXValue={(data) => data['date']}
-                  height={200}
-                  keys={BAR_STACK_STATUSES}
-                  margin={{
-                    top: 10,
-                    bottom: 30,
-                    left: 35,
-                    right: 0
-                  }}
-                  xLabelFormat={label => moment(label).format('MMM DD')}
+        {blockRunData && Object.entries(blockRunData).map(([blockUuid, blockData]) => (
+          <Spacing key={blockUuid} mt={3}>
+            <FlexContainer alignItems="center">
+              <Spacing mx={1}>
+                <Circle
+                  color={getColorsForBlockType(
+                    blocksByUUID[blockUuid]?.type, {
+                      blockColor: blocksByUUID[blockUuid]?.color,
+                      theme,
+                    },
+                  ).accent}
+                  size={ICON_SIZE}
+                  square
                 />
               </Spacing>
+              <Headline level={4}>
+                {blockUuid}
+              </Headline>
+            </FlexContainer>
+            <Spacing mt={1}>
+              <BarStackChart
+                colors={BAR_STACK_COLORS}
+                // @ts-ignore
+                data={blockData}
+                getXValue={(data) => data['date']}
+                height={200}
+                keys={BAR_STACK_STATUSES}
+                margin={{
+                  bottom: 30,
+                  left: 35,
+                  right: 0,
+                  top: 10,
+                }}
+                tooltipLeftOffset={TOOLTIP_LEFT_OFFSET}
+                xLabelFormat={label => moment(label).format('MMM DD')}
+              />
             </Spacing>
-          );
-        })}
+          </Spacing>
+        ))}
       </Spacing>
     </Monitor>
   );
@@ -210,4 +200,4 @@ BlockRunsMonitor.getInitialProps = async (ctx: any) => {
   };
 };
 
-export default BlockRunsMonitor;
+export default PrivateRoute(BlockRunsMonitor);

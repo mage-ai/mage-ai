@@ -1,0 +1,47 @@
+---
+title: "File versioning and history"
+sidebarTitle: "File versioning"
+icon: "code-compare"
+description: "Local file edit tracking and version history for restoring changes made in the past."
+---
+
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="file-versioning" />
+
+Mage Pro includes built-in file versioning, eliminating the need to configure Git for rolling back changes or recovering previous file versions.
+
+### How It Works
+
+Every update to a file's contents automatically creates a new version that can be restored at any time. This applies to all files, including pipeline configurations.
+
+### Restoring a Previous File Version
+
+1. **Open the file** – In the pipeline editor, select the file you want to recover from the left hand file browser
+2. **Access version history** – Click the "Version history" button in the top-left portion of the file browser
+
+<Frame>
+    <p align="center">
+        <img
+            alt="Version history button"
+            src="https://raw.githubusercontent.com/mage-ai/assets/main/pro/features/click-version-history.png"
+        />
+    </p>
+</Frame>
+
+3. **Select a version** – Choose the version you want to restore from the available options
+4. **Restore** – Click the "Restore this version" button to apply the changes
+
+<Frame>
+    <p align="center">
+        <img
+            alt="Change version history"
+            src="https://raw.githubusercontent.com/mage-ai/assets/main/pro/features/change-version-history.png"
+        />
+    </p>
+</Frame>
+
+Once restored, the selected version becomes the current active version of your file.
+
+Version history gives you the confidence to experiment and iterate freely without fear of losing work. If you make a mistake or need to reference previous logic, you can always roll back to any saved version.

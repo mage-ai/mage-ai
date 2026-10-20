@@ -1,0 +1,49 @@
+{
+  "type": ["null", "object"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": ["null", "string"]
+    },
+    "name": {
+      "type": ["null", "string"]
+    },
+    "description": {
+      "type": ["null", "string"]
+    },
+    "avatar_url": {
+      "type": ["null", "string"]
+    },
+    "is_spammer": {
+      "type": ["null", "boolean"]
+    },
+    "links": {
+      "type": ["null", "array"],
+      "items": {
+        "type": ["null", "object"],
+        "additionalProperties": true
+      }
+    },
+    "groups": {
+      "type": ["null", "array"],
+      "items": {
+        "type": ["null", "object"],
+        "additionalProperties": true
+      }
+    },
+    "handles": {
+      "type": ["null", "array"],
+      "items": {
+        "type": ["null", "object"],
+        "additionalProperties": true
+      }
+    },
+    "custom_fields": {
+      "type": ["null", "object"],
+      "additionalProperties": true
+    },
+    "is_private": {
+      "type": ["null", "boolean"]
+    }
+  }
+}

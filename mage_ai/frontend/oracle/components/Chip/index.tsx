@@ -16,17 +16,20 @@ import {
 export type ChipProps = {
   border?: boolean;
   children?: any;
+  disabled?: boolean;
   label?: string | any;
-  onClick?: () => void;
+  monospace?: boolean;
+  onClick?: (e: any) => void;
   primary?: boolean;
   small?: boolean;
+  xsmall?: boolean;
 };
 
 const ChipStyle = styled.div<ChipProps>`
   display: inline-block;
 
   ${props => !props.primary && `
-    background-color: ${(props.theme.background || dark.background).popup};
+    background-color: ${(props.theme.background || dark.background).tag};
   `}
 
   ${props => props.primary && `
@@ -45,6 +48,12 @@ const ChipStyle = styled.div<ChipProps>`
     padding: ${UNIT / 4}px ${UNIT}px;
   `}
 
+  ${props => props.xsmall && `
+    border-radius: ${((UNIT / 1) + SMALL_LINE_HEIGHT) / 1}px;
+    height: ${12 + 8}px;
+    padding: 4px 6px;
+  `}
+
   ${props => props.border && `
     border: 1px solid ${(props.theme.content || dark.content).muted};
   `}
@@ -53,28 +62,34 @@ const ChipStyle = styled.div<ChipProps>`
 const Chip = ({
   border,
   children,
+  disabled,
   label,
+  monospace,
   onClick,
   primary,
   small,
+  xsmall,
 }: ChipProps) => (
-  <ChipStyle border={border} primary={primary} small={small}>
+  <ChipStyle border={border} primary={primary} small={small} xsmall={xsmall}>
     <Button
       basic
-      noPadding
+      disabled={disabled}
       noBackground
+      noPadding
       onClick={onClick}
       transparent
     >
       <FlexContainer alignItems="center">
         {children}
         {label && (
-          <Text small={small}>
+          <Text monospace={monospace} small={small} xsmall={xsmall}>
             {label}
           </Text>
         )}
-        <Spacing mr={1} />
-        <Close default={primary} muted={!primary} size={small ? UNIT : UNIT * 1.25} />
+        {!disabled && onClick && <div style={{ marginLeft: 2 }} />}
+        {!disabled && onClick && (
+          <Close default={primary} muted={!primary} size={small ? UNIT : UNIT * 1.25} />
+        )}
       </FlexContainer>
     </Button>
   </ChipStyle>

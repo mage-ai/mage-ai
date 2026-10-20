@@ -12,22 +12,30 @@ export const CONTAINER_MAX_WIDTH_MEDIUM = BREAKPOINT_MEDIUM - (UNIT * 2);
 export const CONTAINER_MAX_WIDTH_LARGE = BREAKPOINT_LARGE - (UNIT * 2);
 export const CONTAINER_MAX_WIDTH_X_LARGE = BREAKPOINT_X_LARGE - (UNIT * 2);
 
+export enum ScreenSizeEnum {
+  XS = 'xs',
+  SM = 'sm',
+  MD = 'md',
+  LG = 'lg',
+  XL = 'xl',
+}
+
 export function screenSizeName(width) {
   if (width === null) {
     return;
   }
 
   if (width > BREAKPOINT_X_LARGE) {
-    return 'xl';
+    return ScreenSizeEnum.XL;
   } else if (width > BREAKPOINT_LARGE) {
-    return 'lg';
+    return ScreenSizeEnum.LG;
   } else if (width > BREAKPOINT_MEDIUM) {
-    return 'md';
+    return ScreenSizeEnum.MD;
   } else if (width > BREAKPOINT_SMALL) {
-    return 'sm';
+    return ScreenSizeEnum.SM;
   }
 
-  return 'xs';
+  return ScreenSizeEnum.XS;
 }
 
 export const gridTheme = {

@@ -1,0 +1,56 @@
+---
+title: Kafka
+description: How to configure Apache Kafka as a destination in Mage to publish JSON records to a Kafka topic using optional message keys.
+---
+
+![Kafka logo](https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Apache_kafka_wordtype.svg/2560px-Apache_kafka_wordtype.svg.png)
+
+---
+
+## Overview
+
+Use **Apache Kafka** as a destination in Mage to stream records from your pipeline into Kafka topics in real time. Each record is serialized as a JSON object and sent to the configured `bootstrap_server`.
+
+If a `Key Property` is defined in the Source Schema, Mage will use the corresponding field value as the Kafka message key—enabling partitioned message routing and supporting downstream systems that rely on message keys.
+
+This is ideal for:
+- Real-time data streaming
+- Event-driven microservices
+- Kafka-based data pipelines and messaging queues
+
+---
+
+## Configuration Parameters
+
+| Key               | Description                                                                                           | Default | Required |
+|--------------------|-------------------------------------------------------------------------------------------------------|---------|----------|
+| `bootstrap_server` | Comma-separated list of Kafka brokers with ports (e.g., `kafka:9093`, `broker1:9092,broker2:9092`).   | None    | ✅        |
+| `topic`            | Kafka topic to publish messages to.                                                                  | None    | ✅        |
+| `api_version`      | *(Optional)* Kafka API version to use. If unspecified, Mage will auto-detect the server version.      | None    | ❌        |
+
+---
+
+## Notes
+
+- Records are serialized as **JSON** using the [Kafka Python client](https://kafka-python.readthedocs.io/en/master/).
+- To set Kafka message keys, define a `Key Property` in your source schema.
+- You can explicitly set the `api_version` to match your Kafka broker version if needed.
+- Compatible with self-hosted Kafka, Confluent Cloud, Amazon MSK, and other Kafka-compatible platforms.
+
+---
+
+## Example Configuration
+
+```yaml
+bootstrap_server: broker1.kafka.internal:9092,broker2.kafka.internal:9092
+topic: mage_data_stream
+api_version: (0, 10, 1)
+```
+
+---
+
+## Related Resources
+
+- [Apache Kafka Documentation](https://kafka.apache.org/documentation/)
+- [Kafka Python Client (kafka-python)](https://kafka-python.readthedocs.io/en/master/)
+- [Confluent Kafka Topic Design](https://developer.confluent.io/learn/kafka/topic-design/)

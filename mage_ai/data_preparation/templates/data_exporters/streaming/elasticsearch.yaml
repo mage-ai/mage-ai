@@ -1,0 +1,11 @@
+connector_type: elasticsearch
+host: http://localhost
+index_name: elastic_index
+api_key: api_key_for_elastic_search
+# # When using Data streams this must be set to create as they are Append-only indexes
+# _op_type: None / index, create or update
+# _source: None (Default '_doc') / Specify the source field
+# # Whether to verify SSL certificates to authenticate.
+# verify_certs: true
+# ca_cert: "certificate.cert"
+# _id: _key

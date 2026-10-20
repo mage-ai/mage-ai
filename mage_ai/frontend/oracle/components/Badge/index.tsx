@@ -3,16 +3,26 @@ import styled from 'styled-components';
 
 import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS_SMALL } from '@oracle/styles/units/borders';
-import { FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
+import { FONT_FAMILY_REGULAR, MONO_FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { REGULAR, SMALL } from '@oracle/styles/fonts/sizes';
+import {
+  REGULAR,
+  SMALL,
+  XXSMALL_FONT_SIZE,
+} from '@oracle/styles/fonts/sizes';
 
 export type BadgeProps = {
   children?: any;
+  color?: string;
+  cyan?: boolean;
   disabled?: boolean;
+  inverted?: boolean;
+  monospace?: boolean;
+  noVerticalPadding?: boolean;
   quantifier?: boolean;
   regular?: boolean;
   small?: boolean;
+  xxsmall?: boolean;
 };
 
 const BadgeStyle = styled.p<BadgeProps>`
@@ -20,10 +30,16 @@ const BadgeStyle = styled.p<BadgeProps>`
   display: inline;
   font-family: ${FONT_FAMILY_REGULAR};
   margin: 0;
+  white-space: nowrap;
   ${REGULAR};
 
   ${props => props.small && `
     ${SMALL};
+  `}
+
+  ${props => props.xxsmall && `
+    font-size: ${XXSMALL_FONT_SIZE}px;
+    line-height: ${XXSMALL_FONT_SIZE}px;
   `}
 
   ${props => !props.regular && `
@@ -34,9 +50,24 @@ const BadgeStyle = styled.p<BadgeProps>`
     padding: ${UNIT * 1}px ${UNIT * 1.25}px;
   `};
 
-  ${props => !props.disabled && `
+  ${props => props.noVerticalPadding && `
+    padding-bottom: 0;
+    padding-top: 0;
+  `}
+
+  ${props => !props.disabled && !props.inverted && `
     background-color: ${(props.theme || dark).background.row};
-    color: ${(props.theme || dark).content.muted};
+    color: ${(props.theme || dark).content.default};
+  `}
+
+  ${props => !props.disabled && props.inverted && `
+    background-color: ${(props.theme || dark).background.dark};
+    color: ${(props.theme || dark).content.inverted};
+  `}
+
+  ${props => props.cyan && `
+    background-color: ${(props.theme || dark).accent.cyan};
+    color: ${(props.theme || dark).monotone.black};
   `}
 
   ${props => props.disabled && `
@@ -44,10 +75,20 @@ const BadgeStyle = styled.p<BadgeProps>`
     color: ${(props.theme || dark).content.disabled};
   `}
 
+  ${props => props.color && `
+    background-color: ${props.color} !important;
+    color: ${(props.theme || dark).content.active};
+  `}
+
   ${props => props.quantifier && `
     border-radius: 34px;
     line-height: 10px;
     padding: 4px 6px;
+  `}
+
+  ${props => props.monospace && `
+    font-family: ${MONO_FONT_FAMILY_REGULAR};
+    word-break: break-all;
   `}
 `;
 

@@ -1,0 +1,55 @@
+@use '../../../base/borders';
+@use '../../../base/grid';
+
+.blockNode {
+  @include borders.border-colors();
+
+  height: inherit;
+  min-width: 312px;
+  padding: var(--padding-base);
+}
+
+.showOnHoverContainer {
+  &:hover {
+    .showOnHover {
+      visibility: visible;
+    }
+  }
+
+  .showOnHover {
+    visibility: hidden;
+  }
+}
+
+.nodeWrapper {
+  @include grid.base();
+
+  &.block {
+    z-index: 6;
+  }
+
+  &.node {
+    z-index: 4;
+  }
+}
+
+.connectionLines {
+  z-index: 1;
+
+  .connectionLine {
+    &.connection-from-port-to-port,
+    &.connection-from-port-to-block,
+    &.connection-from-port-to-node,
+    &.connection-from-block-to-block,
+    &.connection-from-block-to-node,
+    &.connection-from-block-to-port,
+    &.connection-from-node-to-block,
+    &.connection-from-node-to-port {
+      z-index: 5;
+    }
+
+    &.connection-from-node-to-node {
+      z-index: 3;
+    }
+  }
+}

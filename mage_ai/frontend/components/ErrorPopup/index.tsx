@@ -1,44 +1,33 @@
-import { useState } from 'react';
-
 import Button from '@oracle/elements/Button';
-import FlexContainer from '@oracle/components/FlexContainer';
-import Link from '@oracle/elements/Link';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
+import useErrorViews, { UseErrorViewsProps } from './useErrorViews';
 import { Close } from '@oracle/icons';
-import { ErrorPopupStyle } from './index.style';
-
-type ErrorPopupProps = {
-  displayMessage?: string;
-  errors?: {
-    messages: string[];
-  };
-  onClose: () => void;
-  response: {
-    error: {
-      errors: string[];
-    };
-  };
-};
+import {
+  CloseButtonContainerStyle,
+  ErrorPopupStyle,
+} from './index.style';
 
 function ErrorPopup({
-  displayMessage,
-  errors: errorsProp,
   onClose,
-  response,
-}: ErrorPopupProps) {
-  const [stackTraceVisible, setStackTraceVisible] = useState(false);
-  const { messages } = errorsProp;
-
+  ...props
+}: UseErrorViewsProps & {
+  onClose?: () => void;
+}) {
   const {
-    errors,
-  } = response?.error || {};
+    displayMessage,
+    exception,
+    links,
+    stackTrace,
+    traceback,
+  } = useErrorViews(props);
 
   return (
     <ErrorPopupStyle>
-      <FlexContainer justifyContent="flex-end">
+      <CloseButtonContainerStyle>
         <Button
           iconOnly
+          noBackground
           noBorder
           noPadding
           onClick={onClose}
@@ -46,68 +35,37 @@ function ErrorPopup({
         >
           <Close />
         </Button>
-      </FlexContainer>
+      </CloseButtonContainerStyle>
 
-      <Spacing mt={1}>
-        <Text bold large>
-          Error
-        </Text>
+      <Text bold large>
+        Error
+      </Text>
 
-        {displayMessage && (
-          <Spacing mt={1}>
-            <Text default>
-              {displayMessage}
-            </Text>
-          </Spacing>
-        )}
-
-        {messages?.length && (
-          <Spacing mt={1}>
-            {messages.map(msg => (
-              <Text
-                default
-                monospace
-                key={msg}
-                // @ts-ignore
-                dangerouslySetInnerHTML={{
-                  __html: msg.replaceAll(' ', '&nbsp;'),
-                }}
-              />
-            ))}
-          </Spacing>
-        )}
-      </Spacing>
-
-
-      {errors && (
-        <Spacing mt={3}>
-          <Text bold large>
-            Stack trace (<Link
-              muted
-              onClick={() => setStackTraceVisible(prev => !prev)}
-              preventDefault
-            >
-              {stackTraceVisible ? 'hide' : 'show'} stack trace
-            </Link>)
-          </Text>
-
-          {stackTraceVisible && (
-            <Spacing mt={1}>
-              {errors.map(msg => (
-                <Text
-                  default
-                  monospace
-                  key={msg}
-                  // @ts-ignore
-                  dangerouslySetInnerHTML={{
-                    __html: msg.replaceAll(' ', '&nbsp;'),
-                  }}
-                />
-              ))}
-            </Spacing>
-          )}
+      {displayMessage && (
+        <Spacing mt={1}>
+          {displayMessage}
         </Spacing>
       )}
+
+      {exception && (
+        <Spacing mt={1}>
+          {exception}
+        </Spacing>
+      )}
+
+      {traceback && (
+        <Spacing mt={2}>
+          {traceback}
+        </Spacing>
+      )}
+
+      {stackTrace && (
+        <Spacing mt={2}>
+          {stackTrace}
+        </Spacing>
+      )}
+
+      {links}
     </ErrorPopupStyle>
   );
 }

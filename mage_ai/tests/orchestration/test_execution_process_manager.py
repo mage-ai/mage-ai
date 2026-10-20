@@ -1,4 +1,4 @@
-from mage_ai.orchestration.db.models import PipelineRun
+from mage_ai.orchestration.db.models.schedules import PipelineRun
 from mage_ai.orchestration.execution_process_manager import ExecutionProcessManager
 from mage_ai.tests.base_test import DBTestCase
 from mage_ai.tests.factory import create_pipeline_with_blocks

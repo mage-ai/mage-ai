@@ -1,0 +1,75 @@
+{
+  "type": "object",
+  "properties": {
+    "survey_id": {
+      "type": [
+        "null", 
+        "integer"
+      ]
+    }, 
+    "user_id": {
+      "type": [
+        "null", 
+        "integer"
+      ]
+    }, 
+    "feedback": {
+      "type": [
+        "null", 
+        "string"
+      ]
+    }, 
+    "created_at": {
+      "type": [
+        "null", 
+        "string"
+      ], 
+      "format": "date-time"
+    }, 
+    "updated_at": {
+      "type": [
+        "null", 
+        "string"
+      ], 
+      "format": "date-time"
+    }, 
+    "agent_id": {
+      "type": [
+        "null", 
+        "integer"
+      ]
+    }, 
+    "group_id": {
+      "type": [
+        "null", 
+        "integer"
+      ]
+    }, 
+    "id": {
+      "type": [
+        "null", 
+        "integer"
+      ]
+    }, 
+    "ticket_id": {
+      "type": [
+        "null", 
+        "integer"
+      ]
+    },
+    "ratings": {
+      "type": ["null", "array"],
+      "items": {
+        "type": ["null", "object"],
+        "properties": {
+          "question": {
+            "type": ["null", "string"]
+          },
+          "value": {
+            "type": ["null", "integer"]
+          }
+        }
+      }
+    }
+  }
+}

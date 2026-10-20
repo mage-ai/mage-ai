@@ -1,0 +1,383 @@
+---
+title: "Migrate from Mage OSS to Mage Pro"
+sidebarTitle: "Mage OSS to Mage Pro"
+---
+
+Many teams start with Mage OSS for building data pipelines—but as they scale, they need enterprise-grade features like multi-environment workspaces, CI/CD deployments, cluster management, and enhanced observability. **Mage Pro** offers a seamless upgrade path with zero code changes, plus exclusive features that make data engineering more productive and reliable.
+
+## Why migrate from Mage OSS to Mage Pro?
+
+Mage OSS is excellent for getting started, but teams often need:
+
+- **Multi-environment isolation** (dev, staging, production)  
+- **CI/CD workflows** for safe deployments  
+- **Cluster health monitoring** and resource optimization  
+- **Pipeline dependency visualization** across projects  
+- **AI-powered development** assistance  
+- **Enhanced enterprise security** (granular RBAC, SSO with group mapping, audit logs)  
+- **Managed infrastructure** with autoscaling  
+- **Dedicated support** and SLAs  
+
+Mage Pro provides all of this while maintaining **100% code compatibility** with Mage OSS—your existing pipelines work without modification.
+
+---
+
+## Common Features: OSS vs Pro
+
+Both Mage OSS and Mage Pro share a strong foundation of core features, ensuring a consistent development experience regardless of which version you choose. Most importantly, both provide a **unified platform** that consolidates all data engineering capabilities in one place.
+
+### Unified Platform Capabilities
+
+Both OSS and Pro offer a single, unified platform that combines:
+
+- **Batch pipelines**: Traditional ETL/ELT workflows for scheduled data processing
+- **No-code data integration pipelines**: Pre-built connectors for seamless data ingestion and loading
+- **Streaming pipelines**: Real-time data processing for event-driven architectures (Pro includes stateful streaming with checkpointing)
+- **Unified ingestion, transformation, and orchestration**: All pipeline types share the same interface, configuration, and execution framework
+- **Integrated observability**: Built-in monitoring, logging, and data previews across all pipeline types
+
+This unification means you can build end-to-end data workflows—from ingestion to transformation to orchestration—all within a single platform, without needing separate tools for different pipeline types.
+
+### Features Available in Both OSS and Pro
+
+- **Visual pipeline builder**: Drag-and-drop interface for building data pipelines
+- **Multi-language support**: Python, SQL, and R blocks for data transformation
+- **Data connectors**: Access to core data sources and destinations (Pro includes 200+ connectors with exclusive options)
+- **Built-in secret manager**: Secure storage and management of credentials
+- **External vault integration**: Support for AWS Secrets Manager, GCP Secret Manager, Azure Key Vault
+- **SSO authentication**: SAML/OAuth/Okta integration for single sign-on
+- **TLS encryption**: Secure data in transit
+- **Read-only mode**: Protect production notebooks and assets from accidental edits
+- **Git integration**: Version control for pipeline code
+- **Pipeline scheduling**: Cron-based and event-driven triggers
+- **Data previews**: Preview data at each pipeline step
+- **Block library**: Reusable code blocks across projects
+- **Testing framework**: Built-in testing capabilities for data quality
+- **dbt integration**: Run dbt models within pipelines
+
+### When to Use Mage OSS
+
+Mage OSS is ideal for:
+
+- **Small teams or individual developers** getting started with data pipelines
+- **Proof of concept projects** or experimental pipelines
+- **Organizations with strong DevOps capabilities** who prefer self-managed infrastructure
+- **Budget-conscious teams** who can manage their own infrastructure
+- **Simple use cases** that don't require multi-environment isolation
+- **Teams comfortable with manual Git workflows** and self-service upgrades
+- **Organizations with strict data governance** requiring full control over infrastructure
+
+**Best for**: Teams that want the core Mage functionality with full infrastructure control and are comfortable managing deployments, upgrades, and scaling manually.
+
+### When to Use Mage Pro
+
+Mage Pro is recommended for:
+
+- **Growing teams** that need multi-environment workspaces (dev, staging, production)
+- **Enterprise organizations** requiring granular RBAC, audit logs, and compliance certifications (SOC 2, ISO 27001)
+- **Teams needing CI/CD workflows** with automated deployments and rollback capabilities
+- **Organizations requiring managed infrastructure** with autoscaling and high availability
+- **Teams building stateful streaming pipelines** or using database CDC (MySQL, PostgreSQL, MSSQL, Oracle)
+- **Organizations needing dedicated support** with SLAs and proactive monitoring
+- **Teams requiring advanced observability** with cluster health insights and pipeline dependency views
+- **Organizations with compliance requirements** that need per-workspace secret scoping and audit trails
+- **Teams wanting AI-powered development** assistance with AI Sidekick
+- **Organizations needing multi-region deployment** options
+
+**Best for**: Teams that need enterprise-grade features, managed infrastructure, advanced orchestration capabilities, and dedicated support to scale their data engineering operations efficiently.
+
+### Migration Path
+
+Since Mage Pro maintains **100% code compatibility** with Mage OSS, you can start with OSS and seamlessly migrate to Pro when you need additional features. Your pipelines, blocks, and configurations will work without any code changes.
+
+---
+
+## Mage Pro Deployment Options
+
+Mage Pro supports **4 flexible deployment options** to meet your infrastructure and compliance needs:
+
+1. **Mage Pro SaaS** - Fully managed service where Mage maintains the infrastructure and your code executes in our environment. Zero DevOps overhead with automatic scaling and updates.
+
+2. **Mage Pro Hybrid Cloud** - Mage Pro infrastructure maintains the control plane, while the data plane is deployed in your cloud. Best of both worlds: reduced overhead with full data privacy.
+
+3. **Mage Pro Private Cloud** - Both control and data plane are deployed in your cloud infrastructure. Ideal for teams with data residency or compliance requirements who want full control.
+
+4. **Mage Pro On-Prem** - Mage Pro infrastructure is deployed on your on-premises servers. Perfect for organizations with strict data governance or air-gapped environments.
+
+All deployment options provide the same enterprise features, including workspaces, CI/CD deployments, cluster management, and AI Sidekick. Choose the option that best fits your security, compliance, and infrastructure requirements.
+
+---
+
+## Mage Pro vs Mage OSS: Benefits Overview
+
+Mage Pro is more performant, reliable, and cost-effective than Mage OSS, with enterprise-grade features built-in.
+
+| Capability | Mage OSS | Mage Pro |
+|------------|----------|----------|
+| **Code compatibility** | ✅ | ✅ 100% compatible (no code changes needed) |
+| **Workspaces & Multi-tenancy** | ❌ Single project environment | ✅ Workspace-based tenant isolation with hard separation |
+| **CI/CD Deployments** | ❌ Manual Git sync | ✅ Git-based CI/CD with environment promotion, approvals, and rollback |
+| **Managed upgrades & rollbacks** | ❌ Manual (via images/Helm) | ✅ Coordinated releases and managed rollbacks |
+| **Cluster management** | ❌ Self-managed infrastructure | ✅ Cluster health insights, monitoring, and managed infrastructure |
+| **Pipeline dependency views** | ❌ Manual tracking | ✅ Visual dependency graph across pipelines |
+| **AI assistance** | ❌ | ✅ AI Sidekick for code generation, debugging, and fixes |
+| **Enhanced code editor** | ⚠️ Basic editor | ✅ Smart autocomplete, live error checking, documentation hints |
+| **Stateful streaming** | ❌ Not available | ✅ Native stateful streaming with checkpointing and operators |
+| **Database CDC** | ❌ Not available | ✅ Native Change Data Capture for MySQL, PostgreSQL, MSSQL, and Oracle |
+| **Unified IO Config** | ⚠️ Separate configs | ✅ Single config framework across all pipeline types |
+| **Data connectors** | ✅ Core connectors | ✅ 200+ connectors + exclusive Pro connectors (e.g., YouTube Analytics) |
+| **Spark/Databricks** | ⚠️ Manual setup | ✅ Simplified integration with less configuration |
+| **Iceberg support** | ❌ | ✅ Native Iceberg table format support |
+| **SSO (SAML/OAuth/Okta)** | ✅ Supported | ✅ Enterprise SSO integration |
+| **RBAC** | ⚠️ Basic auth | ✅ Granular roles and permissions at workspace/project levels |
+| **Audit logs** | ❌ | ✅ User activity tracking and audit logs for compliance |
+| **SCIM provisioning** | ❌ | ✅ Automated user/group lifecycle from your Identity Provider (IdP) |
+| **Per-workspace secret scoping** | ❌ | ✅ Workspace-level secret isolation |
+| **Static CP egress IPs** | ❌ | ✅ IP allowlisting for Hybrid/Cloud deployments |
+| **Autoscaling pipeline orchestration** | ❌ Manual scaling | ✅ Auto-scales pipelines vertically/horizontally |
+| **Per-tenant quotas/limits** | ❌ | ✅ Compute and concurrency limits per workspace/tenant |
+| **Observability** | ⚠️ Basic logs | ✅ Full dashboards (CPU, memory, errors, alerts) with org-level views |
+| **Infrastructure management** | ⚠️ Self-hosted | ✅ 4 deployment options: SaaS, Hybrid Cloud, Private Cloud, On-Prem |
+| **SOC 2 / ISO 27001** | ❌ | ✅ Vendor certifications for Pro service/software |
+| **Support** | ⚠️ Community | ✅ 24/7 expert support with SLA-backed incident response |
+| **Proactive monitoring** | ❌ | ✅ Health checks and post-mortems under support plans |
+| **Migration assistance** | ❌ | ✅ Implementation/migration credits and onboarding assistance |
+
+---
+
+## Step-by-Step Migration Instructions
+
+<Steps>
+
+1. **Set up Mage Pro**  
+   - **For Mage Pro SaaS**:
+     - Sign up at [https://cloud.mage.ai](https://cloud.mage.ai) and create an account
+     - Create your cluster directly in the cloud UI
+     - Proceed to step 2 to create workspaces
+   - **For other deployment options** (Hybrid Cloud, Private Cloud, On-Prem):
+     - Purchase a license from the Mage team by contacting [pro@mage.ai](mailto:pro@mage.ai)
+     - The Mage team will provide detailed deployment instructions for your chosen option
+     - Follow the provided instructions to deploy Mage Pro in your cloud infrastructure or on-premises servers
+     - Once deployed, proceed to step 2
+
+2. **Enable workspaces (optional)**  
+   - **For Mage Pro SaaS**: Contact the Mage team at [pro@mage.ai](mailto:pro@mage.ai) to enable the workspaces feature
+   - **For other deployment options**: Follow the instructions provided by the Mage team to enable workspaces
+   - Once workspaces are enabled, you can create workspaces for different environments:
+     - Development workspace for active development
+     - Staging workspace (optional) for pre-production validation
+     - Production workspace for live pipelines
+   - Configure resource limits and Kubernetes settings per workspace
+
+3. **Import your Mage OSS project and set up CI/CD**  
+   - **Connect your Git repository**:
+     - In Mage Pro, navigate to the Deployment settings
+     - Connect your Git repository (GitHub, GitLab, Bitbucket, or Azure DevOps)
+     - Authenticate using OAuth or SSH keys
+   - **Import your project**:
+     - Select the branch containing your Mage OSS pipelines
+     - Mage Pro will automatically detect and import:
+       - All pipelines and blocks
+       - Configuration files (including IO configs)
+       - Variables and secrets (if stored in Git)
+       - Project structure
+       - Trigger files (triggers will be created automatically)
+     - No code changes required—Mage Pro is 100% compatible with Mage OSS code
+   - **Migrate triggers**:
+     - **Before migration**: In Mage OSS, save your triggers in code by following the [configure triggers in code guide](/orchestration/triggers/configure-triggers-in-code#configure-triggers-in-code)
+     - **After pulling code from GitHub**: When you pull code from GitHub in Mage Pro, the trigger files will be automatically imported and triggers will be created in Mage Pro
+     - All your scheduled triggers, event triggers, and API triggers will be automatically set up
+   - **Deploy commits**:
+     - The deployments page will show a list of commits from your GitHub branch
+     - Click the "Deploy" button next to any commit to deploy that version
+     - Your pipelines will be updated with the code from the selected commit
+   - **Update USER_CODE_PATH environment variable**:
+     - After pulling code from GitHub, update the `USER_CODE_PATH` environment variable (default value is `/home/src/default_repo`) to point to your Mage project path
+     - **For SaaS or Hybrid Cloud**: Configure in the [cloud.mage.ai](https://cloud.mage.ai) portal for the cluster, or in the workspace UI
+     - **For Private Cloud or On-Prem**: Configure via Helm chart values for the cluster, or in the workspace UI
+
+4. **Configure environment variables and credentials**
+   - **Set up environment variables**:
+     - **For SaaS or Hybrid Cloud**:
+       - Configure environment variables in the [cloud.mage.ai](https://cloud.mage.ai) portal for each cluster, OR
+       - Configure workspace environment variables in the workspace UI (see [workspace environment configuration guide](/guides/developer-ux/workspaces#environment-configuration))
+     - **For Private Cloud or On-Prem**:
+       - Configure environment variables for the cluster via Helm chart values, OR
+       - Configure workspace environment variables in the workspace UI (see [workspace environment configuration guide](/guides/developer-ux/workspaces#environment-configuration))
+     - Add environment-specific variables (e.g., `ENV`, `API_BASE_URL`)
+     - Use variable interpolation syntax for dynamic values
+   - **Upload necessary credentials**:
+     - Store API keys, database passwords, and service account credentials in Mage Pro's secrets vault
+     - Upload certificate files, SSH keys, or other authentication files as needed
+     - Configure secrets at workspace level for environment isolation
+   - **Enable database connectivity**:
+     - **For Mage Pro SaaS or Hybrid Cloud**: If connecting to databases in private networks:
+       - **Static CP egress IPs / IP allowlisting**: Mage Pro provides static outbound IP addresses for the control plane. Get these IP addresses from the cluster settings and whitelist them in your database firewall/security groups
+       - **PrivateLink / VPC Peering**: Set up PrivateLink or VPC peering between Mage Pro's network and your private database network for secure, direct connectivity without exposing databases to the internet
+       - Contact Mage Pro support to obtain the required IP ranges and VPC peering/PrivateLink configuration details
+     - **For Private/Hybrid Cloud**: Configure network connectivity:
+       - Ensure proper network routing between Mage Pro workspaces and your databases
+       - Set up security groups, firewall rules, or network policies as needed
+       - Configure VPC peering or VPN connections if databases are in separate networks
+     - **For On-Prem**: Configure network access:
+       - Ensure Mage Pro can reach your databases through your internal network
+       - Configure firewall rules to allow connections from Mage Pro to database servers
+   - **Test database connections**:
+     - Use Mage Pro's connection testing feature to verify connectivity
+     - Test from each workspace (dev, staging, prod) to ensure proper isolation
+
+6. **Verify data sources and test connections**  
+   - IO configs are automatically imported from your GitHub repository
+   - Update connection strings to use environment variables and secrets (if needed)
+   - Verify all data connectors are properly configured
+   - Test connections to external systems (databases, APIs, cloud storage) using the connection testing feature
+
+7. **Set up authentication and access control**  
+   - Configure RBAC (Role-Based Access Control) for team members
+   - Set up SSO (Single Sign-On) if needed for enterprise authentication
+   - Define workspace-level permissions
+   - Configure resource limits and autoscaling policies per workspace
+
+8. **Test and validate pipelines**  
+   - Run your pipelines in the development workspace
+   - Use Mage Pro's data preview feature to validate outputs
+   - Check logs and metrics in the observability dashboard
+   - Compare results with your Mage OSS environment
+   - Verify all database connections and external integrations work correctly
+
+9. **Deploy to production**  
+   - Navigate to the deployments page in Mage Pro
+   - The page will display a list of commits from your GitHub branch
+   - Click the "Deploy" button next to the commit you want to deploy to production
+   - Monitor pipeline runs and resource usage in real-time
+   - Set up alerts for failures or performance issues
+   - Leverage pipeline dependency views to understand cross-pipeline relationships
+
+</Steps>
+
+---
+
+## Alternative Migration Method: Manual Export/Import
+
+If you prefer not to use Git-based import, you can manually migrate your project:
+
+1. **Export from Mage OSS**  
+   - Copy your entire project directory
+   - Ensure all pipelines, blocks, and configs are included
+
+2. **Upload to Mage Pro**  
+   - Use the Git terminal in Mage Pro to push your code
+   - Or use the file browser to upload project files directly
+
+3. **Verify and configure**  
+   - Check that all pipelines are recognized
+   - Update any environment-specific configurations
+   - Set up workspace-specific variables and secrets
+   - Upload credentials and configure database connectivity (see step 5 in migration instructions)
+
+---
+
+## Tips for a Smooth Migration
+
+### Code Compatibility
+
+- **No code changes needed**: All Mage OSS pipelines work in Mage Pro without modification
+- **Block types**: All block types (data loaders, transformers, data exporters, sensors) are fully supported
+- **Dependencies**: Python dependencies defined in `requirements.txt` are automatically installed
+- **IO Configs**: Existing IO configs are automatically imported from your GitHub repository and work as-is, with optional Pro enhancements available
+- **Triggers**: Save triggers in code in Mage OSS (see [configure triggers in code guide](/orchestration/triggers/configure-triggers-in-code#configure-triggers-in-code)). When you pull code from GitHub in Mage Pro, trigger files are automatically imported and triggers are created automatically
+
+### Workspace Organization
+
+- **Start with one workspace**: Begin with a single workspace, then create additional ones as needed
+- **Use naming conventions**: Name workspaces clearly (e.g., `dev`, `staging`, `prod`)
+- **Isolate resources**: Configure different resource limits per workspace based on workload
+- **Environment variables**: Use workspace-specific variables for environment differences
+
+### Environment Variables and Credentials
+
+- **Centralize secrets**: Store all credentials in Mage Pro's secrets vault, not in code
+- **Workspace isolation**: Use workspace-specific secrets to ensure environment isolation
+- **Variable interpolation**: Leverage Mage Pro's enhanced variable interpolation for dynamic configuration
+- **Credential migration**: Export credentials from Mage OSS and import them into Mage Pro's secrets vault
+
+### Database Connectivity
+
+- **SaaS deployments**: Contact Mage Pro support early to get IP ranges for whitelisting and VPC peering options
+- **Network planning**: Plan network connectivity before migration to avoid delays
+- **Test connections**: Always test database connections from each workspace before running pipelines
+- **Security groups**: Update security groups and firewall rules to allow Mage Pro access
+- **Connection pooling**: Consider connection pooling settings for high-volume pipelines
+
+### CI/CD Best Practices
+
+- **Branch strategy**: Use clear branch naming (main, staging, development)
+- **Rollback capability**: Test rollback procedures before going live
+- **Approval workflows**: Use manual approvals for production deployments
+
+### Monitoring and Observability
+
+- **Set up alerts**: Configure alerts for pipeline failures and performance issues
+- **Monitor resources**: Use cluster health insights to optimize resource allocation
+- **Track dependencies**: Use pipeline dependency views to understand relationships
+- **Review logs**: Leverage enhanced logging and observability dashboards
+
+---
+
+## After Migration: What You Get with Mage Pro
+
+### Enhanced Developer Experience
+
+- **AI Sidekick**: Get AI-powered code suggestions, explanations, and debugging
+- **Enhanced code editor**: Smart autocomplete, live error checking, and documentation hints
+- **VSCode & Cursor integration**: Edit and sync directly with your local IDE
+- **Personalized UI themes**: Customize your workspace appearance
+
+### Enterprise Features
+
+- **Multi-environment workspaces**: Hard-separated tenant isolation with workspace-based environments
+- **CI/CD deployments**: Built-in Git-based deployment with environment promotion, approvals, and rollback
+- **Managed upgrades & rollbacks**: Coordinated releases and managed rollback capabilities
+- **Cluster health insights**: Real-time CPU and memory monitoring with cost estimates
+- **Pipeline dependency views**: Visualize how pipelines orchestrate and depend on each other
+- **Enterprise SSO**: Enhanced SAML/OAuth/Okta integration with group mapping per tenant
+- **Granular RBAC**: Fine-grained roles and permissions at workspace and project levels
+- **SCIM provisioning**: Automated user and group lifecycle management from your Identity Provider (IdP) such as Okta, Azure AD, or Google Workspace
+- **Audit logs**: Comprehensive user activity tracking and audit logs for compliance
+- **Per-workspace secret scoping**: Workspace-level secret isolation for enhanced security
+- **Per-tenant quotas/limits**: Compute and concurrency limits per workspace/tenant
+- **Database CDC**: Native Change Data Capture support for MySQL, PostgreSQL, MSSQL, and Oracle
+
+### Advanced Pipeline Capabilities
+
+- **Stateful streaming pipelines**: Run real-time pipelines with built-in state management
+- **Database CDC**: Native Change Data Capture for MySQL, PostgreSQL, MSSQL, and Oracle databases
+- **Unified IO Config Framework**: Single config structure across all pipeline types
+- **Exclusive connectors**: Access to Pro-only data sources and destinations
+- **Enhanced integrations**: Optimized Spark, Databricks, and Iceberg support
+- **More variable interpolation**: Support for env vars, secrets, and config vars
+
+### Production-Grade Infrastructure
+
+- **Autoscaling pipeline orchestration**: Automatically scale pipelines vertically and horizontally to handle workload spikes
+- **High availability**: Built-in redundancy and failover capabilities
+- **Multi-region deployment**: Deploy in US, Canada, Europe, Asia, or Australia
+- **Static CP egress IPs**: IP allowlisting support for Hybrid and Cloud deployments
+- **PrivateLink / VPC peering**: Direct private connectivity to Mage-hosted control plane (Hybrid/Cloud)
+- **SOC 2 / ISO 27001**: Vendor certifications for Pro service and software
+- **24/7 expert support**: SLA-backed incident response and expert guidance
+- **Proactive monitoring**: Health checks and post-mortems under support plans
+- **Migration assistance**: Implementation and migration credits with onboarding assistance
+- **Managed infrastructure**: Zero DevOps overhead with fully managed deployments and coordinated upgrades
+
+---
+
+## Getting Help
+
+- **Documentation**: Explore the [Mage Pro documentation](/production/mage/pro)
+- **Support**: Contact Mage Pro support for migration assistance
+- **Community**: Join the [Mage community](https://www.mage.ai/chat) for tips and best practices
+
+> Your pipelines, your logic—now with enterprise-grade infrastructure, AI assistance, and zero DevOps overhead.
+
+👉 [Start Your Migration to Mage Pro Today](https://cloud.mage.ai)

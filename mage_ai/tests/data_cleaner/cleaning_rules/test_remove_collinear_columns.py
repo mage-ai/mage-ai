@@ -1,7 +1,7 @@
 from mage_ai.data_cleaner.cleaning_rules.remove_collinear_columns import RemoveCollinearColumns
 from mage_ai.data_cleaner.shared.utils import clean_dataframe
 from mage_ai.tests.base_test import TestCase
-from pandas.util.testing import assert_frame_equal
+from pandas.testing import assert_frame_equal
 import numpy as np
 import pandas as pd
 
@@ -392,7 +392,8 @@ class RemoveCollinearColumnsTests(TestCase):
     #     expected_results = [
     #         dict(
     #             title='Remove collinear columns',
-    #             message='Delete these columns to remove redundant data and increase data quality.',
+    #             message='Delete these columns to remove redundant data and increase '
+    #                     'data quality.',
     #             status='not_applied',
     #             action_payload=dict(
     #                 action_type='remove',

@@ -1,0 +1,31 @@
+{
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "id": {
+            "type": ["string", "null"],
+            "format": "uuid"
+        },
+        "name": {
+            "type": ["string", "null"]
+        },
+        "addRowsAPIEnabled": {
+            "type": ["boolean", "null"]
+        },
+        "configuredBy": {
+            "type": ["string", "null"]
+        },
+        "isRefreshable": {
+            "type": ["boolean", "null"]
+        },
+        "isEffectiveIdentityRequired": {
+            "type": ["boolean", "null"]
+        },
+        "isEffectiveIdentityRolesRequired": {
+            "type": ["boolean", "null"]
+        },
+        "isOnPremGatewayRequired": {
+            "type": ["boolean", "null"]
+        }
+    }
+}

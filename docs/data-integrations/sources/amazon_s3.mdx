@@ -1,0 +1,27 @@
+---
+title: "Amazon S3"
+---
+
+![aws_s3_logo](https://github.com/mage-ai/mage-ai/assets/78053898/a44c1c95-5aff-4fa4-8653-8939ccf12d09)
+
+<br/>
+
+## Configuration
+
+To set up the Amazon S3 source, provide the following configuration parameters:
+
+| Key                    | Description                                                                                                                                     | Sample Value                          | Required |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- | -------- |
+| `aws_access_key_id`     | AWS access key ID.                                                                                                                              | `abc123`                              | ✅        |
+| `aws_secret_access_key` | AWS secret access key.                                                                                                                          | `xyz456`                              | ✅        |
+| `aws_region`            | Region where the S3 bucket is located.                                                                                                          | `us-west-2`                           |          |
+| `role_arn`              | (Optional) ARN of the IAM role to assume for accessing the S3 bucket.                                                                           | `arn:aws:iam::111111:role/example-role`|          |
+| `bucket`                | Name of the AWS S3 bucket to read data from.                                                                                                    | `user_generated_content`             | ✅        |
+| `file_type`             | Type of files in the bucket. Supported values: `parquet`, `csv`, `infer`. If `infer`, the type is detected based on file extension.             | `infer`                               |          |
+| `prefix`                | Path within the bucket where files are located. Do not include `s3://`, the bucket name, or the table name in this path.                        | `users/ds/20221225`                  |          |
+| `search_pattern`        | Regular expression to match files within the prefix.                                                                                            | `test_table\\/.*\\.csv`              |          |
+| `single_stream_in_prefix` | If `true`, all files in the prefix are treated as a single stream. Defaults to `false`.                                                        | `false`                               |          |
+| `table_configs`         | A list of table configurations to configure multiple streams. Each table config must include `prefix`, `search_pattern`, and `table_name`.      | `[{"prefix": "users/", "search_pattern": "test_table\\/.*\\.csv", "table_name": "test_table"}]` |          |
+| `aws_endpoint`          | (Optional) Custom S3-compatible endpoint (e.g., for MinIO).                                                                                     | `https://play.min.io`                 |          |
+
+<br/>

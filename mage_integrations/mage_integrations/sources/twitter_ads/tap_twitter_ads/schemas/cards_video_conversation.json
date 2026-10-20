@@ -1,0 +1,62 @@
+{
+  "type": ["null", "object"],
+  "additionalProperties": false,
+  "properties": {
+    "account_id": {
+      "type": ["null", "string"]
+    },
+    "name": {
+      "type": ["null", "string"]
+    },
+    "first_cta": {
+      "type": ["null", "string"]
+    },
+    "video_height": {
+      "type": ["null", "integer"]
+    },
+    "media_url": {
+      "type": ["null", "string"]
+    },
+    "thank_you_text": {
+      "type": ["null", "string"]
+    },
+    "video_owner_id": {
+      "type": ["null", "string"]
+    },
+    "media_key": {
+      "type": ["null", "string"]
+    },
+    "id": {
+      "type": ["null", "string"]
+    },
+    "video_width": {
+      "type": ["null", "integer"]
+    },
+    "first_cta_tweet": {
+      "type": ["null", "string"]
+    },
+    "created_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "card_uri": {
+      "type": ["null", "string"]
+    },
+    "title": {
+      "type": ["null", "string"]
+    },
+    "updated_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "poster_media_url": {
+      "type": ["null", "string"]
+    },
+    "deleted": {
+      "type": ["null", "boolean"]
+    },
+    "card_type": {
+      "type": ["null", "string"]
+    }
+  }
+}

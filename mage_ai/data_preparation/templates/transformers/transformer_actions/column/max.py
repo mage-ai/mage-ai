@@ -12,7 +12,7 @@ def execute_transformer_action(df: DataFrame, *args, **kwargs) -> DataFrame:
     """
     Execute Transformer Action: ActionType.MAX
 
-    Docs: https://github.com/mage-ai/mage-ai/blob/master/docs/actions/transformer_actions/README.md#aggregation-actions
+    Docs: https://docs.mage.ai/guides/transformer-blocks#aggregation-actions
     """
     action = build_transformer_action(
         df,

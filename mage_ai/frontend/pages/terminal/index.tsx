@@ -1,30 +1,28 @@
-import { useMutation } from 'react-query';
+import React from 'react';
 
-import Terminal from '@components/Terminal';
-import api from '@api';
-import { PipelineTypeEnum, PIPELINE_TYPE_TO_KERNEL_NAME } from '@interfaces/PipelineType';
-import { parseErrorFromResponse, onSuccess } from '@api/utils/response';
+import Dashboard from '@components/Dashboard';
+import PortalTerminal from '@components/Applications/PortalTerminal';
+import PrivateRoute from '@components/shared/PrivateRoute';
+import { ApplicationExpansionUUIDEnum } from '@interfaces/CommandCenterType';
+import { HEADER_HEIGHT } from '@components/ApplicationManager/index.style';
 
 function TerminalPage() {
-  const [interruptKernel] = useMutation(
-    api.interrupt.kernels.useCreate(PIPELINE_TYPE_TO_KERNEL_NAME[PipelineTypeEnum.PYTHON]),
-    {
-      onSuccess: (response: any) => onSuccess(
-        response, {
-          onErrorCallback: (response, errors) => console.log({
-            errors,
-            response,
-          }),
-        },
-      ),
-    },
-  );
-
   return (
-    <Terminal
-      interruptKernel={interruptKernel}
-    />
+    <Dashboard
+      title="Terminal"
+      uuid="terminal/index"
+    >
+      <PortalTerminal
+        containerRef={null}
+        headerOffset={HEADER_HEIGHT}
+        onMount={() => true}
+        uuid={ApplicationExpansionUUIDEnum.PortalTerminal}
+
+      />
+    </Dashboard>
   );
 }
 
-export default TerminalPage;
+TerminalPage.getInitialProps = async () => ({});
+
+export default PrivateRoute(TerminalPage);

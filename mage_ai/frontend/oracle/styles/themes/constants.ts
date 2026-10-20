@@ -5,8 +5,10 @@ export type ThemeType = {
     blueLight: string;
     contentDefaultTransparent: string;
     cyan: string;
+    cyanLight: string;
     cyanTransparent: string;
     dbt: string;
+    dbtDark: string;
     dbtLight: string;
     info: string;
     infoTransparent: string;
@@ -18,17 +20,27 @@ export type ThemeType = {
     primaryTransparent: string;
     purple: string;
     purpleLight: string;
+    rose: string;
+    roseLight: string;
+    sky: string;
+    skyLight: string;
+    teal: string;
+    tealLight: string;
     warning: string;
     warningTransparent: string;
     yellow: string;
     yellowLight: string;
   };
   background: {
+    blackTransparent: string;
+    blackTransparentDark: string;
     chartBlock: string;
     codeArea: string;
     codeTextarea: string;
     danger: string;
     dark: string;
+    dashboard: string;
+    dashboardTransparent: string;
     header: string;
     menu: string;
     muted: string;
@@ -36,6 +48,7 @@ export type ThemeType = {
     output: string;
     page: string;
     panel: string;
+    panelTransparent: string;
     popup: string;
     row: string;
     row2: string;
@@ -43,9 +56,12 @@ export type ThemeType = {
     scrollbarThumbHover: string;
     scrollbarTrack: string;
     success: string;
+    successLight: string;
     table: string;
+    tag: string;
   };
   borders: {
+    contrast: string;
     danger: string;
     dark: string;
     info: string;
@@ -125,12 +141,16 @@ export type ThemeType = {
   };
   interactive: {
     activeBorder: string;
+    blackBackgroundTransparent: string;
     dangerBorder: string;
+    defaultBackgroundTransparent: string;
     defaultBorder: string;
     disabledBorder: string;
     focusBackground: string;
     focusBorder: string;
     hoverBackground: string;
+    hoverBackgroundTransparent: string;
+    hoverBlackBackgroundTransparent: string;
     hoverBorder: string;
     linkPrimary: string;
     linkSecondary: string;
@@ -150,6 +170,7 @@ export type ThemeType = {
     grey500: string;
     purple: string;
     white: string;
+    whiteTransparent: string;
   };
   neutral: {
     n100: string;

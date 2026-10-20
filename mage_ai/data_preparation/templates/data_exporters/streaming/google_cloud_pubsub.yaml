@@ -1,0 +1,5 @@
+connector_type: google_cloud_pubsub
+project_id: my-project-id
+topic_id: my-topic-id
+pubsub_emulator_host: null  # "host.docker.internal:8085"
+path_to_credentials_json_file: "./google_credentials.json"

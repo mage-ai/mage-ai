@@ -27,7 +27,9 @@ export const PaddingContainerStyle = styled.div<{ noPadding?: boolean }>`
 `;
 
 export const TableStyle = styled.table<any>`
-  
+  ${props => props.width && `
+    width: ${props.width}px;
+  `}
 `;
 
 export const CellStyle = styled.td<any>`

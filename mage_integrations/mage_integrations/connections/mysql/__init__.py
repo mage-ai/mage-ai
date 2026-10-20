@@ -1,7 +1,13 @@
-from mage_integrations.connections.sql.base import Connection
+import enum
+import io
+import os
+from typing import Dict
+
+import paramiko
 from mysql.connector import connect
 from sshtunnel import SSHTunnelForwarder
-import enum
+
+from mage_integrations.connections.sql.base import Connection
 
 
 class ConnectionMethod(str, enum.Enum):
@@ -18,6 +24,7 @@ class MySQL(Connection):
         username: str,
         port: int = None,
         connection_method: ConnectionMethod = ConnectionMethod.DIRECT,
+        conn_kwargs: Dict = None,
         ssh_host: str = None,
         ssh_port: int = 22,
         ssh_username: str = None,
@@ -37,6 +44,7 @@ class MySQL(Connection):
         self.ssh_username = ssh_username
         self.ssh_password = ssh_password
         self.ssh_pkey = ssh_pkey
+        self.conn_kwargs = conn_kwargs or dict()
 
         self.ssh_tunnel = None
 
@@ -46,7 +54,12 @@ class MySQL(Connection):
         if self.connection_method == ConnectionMethod.SSH_TUNNEL:
             ssh_setting = dict(ssh_username=self.ssh_username)
             if self.ssh_pkey is not None:
-                ssh_setting['ssh_pkey'] = self.ssh_pkey
+                if os.path.exists(self.ssh_pkey):
+                    ssh_setting['ssh_pkey'] = self.ssh_pkey
+                else:
+                    ssh_setting['ssh_pkey'] = paramiko.RSAKey.from_private_key(
+                        io.StringIO(self.ssh_pkey),
+                    )
             else:
                 ssh_setting['ssh_password'] = self.ssh_password
             self.ssh_tunnel = SSHTunnelForwarder(
@@ -66,6 +79,7 @@ class MySQL(Connection):
             password=self.password,
             port=port,
             user=self.username,
+            **self.conn_kwargs,
         )
 
     def close_connection(self, connection):

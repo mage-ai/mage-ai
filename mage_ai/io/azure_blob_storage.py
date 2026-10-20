@@ -5,12 +5,13 @@ from mage_ai.io.base import BaseFile, FileFormat, QUERY_ROW_LIMIT
 from mage_ai.io.config import BaseConfigLoader, ConfigKey
 from mage_ai.shared.hash import extract, merge_dict
 from pandas import DataFrame
+from typing import Union
 
 
 class AzureBlobStorage(BaseFile):
     """
-    Handles data transfer between a Azure Blob Storage container and the Mage app. Supports loading files
-    of any of the following types:
+    Handles data transfer between an Azure Blob Storage container and the Mage app. Supports
+    loading files of any of the following types:
     - ".csv"
     - ".json"
     - ".parquet"
@@ -23,7 +24,7 @@ class AzureBlobStorage(BaseFile):
 
     def __init__(
         self,
-        verbose=False,
+        verbose: bool = False,
         **kwargs,
     ) -> None:
         """
@@ -49,13 +50,13 @@ class AzureBlobStorage(BaseFile):
         self,
         container_name: str,
         blob_path: str,
-        format: FileFormat = None,
+        format: Union[FileFormat, str, None] = None,
         limit: int = QUERY_ROW_LIMIT,
         **kwargs,
     ) -> DataFrame:
         """
         Loads data from Azure Blob Storage into a Pandas data frame. This function will load at
-        maximum 100,000 rows of data from the specified file.
+        maximum 10,000,000 rows of data from the specified file.
 
         Returns:
             DataFrame: The data frame constructed from the file in the Azure Blob Storage container.
@@ -80,12 +81,17 @@ class AzureBlobStorage(BaseFile):
         df: DataFrame,
         container_name: str,
         blob_path: str,
-        format: FileFormat = None,
+        format: Union[FileFormat, str, None] = None,
         **kwargs,
     ) -> None:
         """
         Exports data frame to an Azure Blob Storage container.
+
+        Pass upload_kwargs as dict to specify additional keyword
+        arguments to pass to the upload_blob
         """
+
+        upload_kwargs = kwargs.pop('upload_kwargs', None)
         if format is None:
             format = self._get_file_format(blob_path)
 
@@ -99,7 +105,10 @@ class AzureBlobStorage(BaseFile):
             buffer = BytesIO()
             self._write(df, format, buffer, **kwargs)
             buffer.seek(0)
-            blob_client.upload_blob(buffer.read())
+            if upload_kwargs and isinstance(upload_kwargs, dict):
+                blob_client.upload_blob(buffer.read(), **upload_kwargs)
+            else:
+                blob_client.upload_blob(buffer.read())
 
     def exists(
         self,

@@ -1,0 +1,47 @@
+{
+  "type": ["null", "object"],
+  "properties": {
+    "_sdc_repository": {
+      "type": ["null", "string"]
+    },
+    "id": {
+      "type": ["null", "number"]
+    },
+    "node_id": {
+      "type": ["null", "string"]
+    },
+    "url": {
+      "type": ["null", "string"]
+    },
+    "html_url": {
+      "type": ["null", "string"]
+    },
+    "permissions": {
+      "$ref": "shared/pull_permissions.json#/"
+    },
+    "name": {
+      "type": ["null", "string"]
+    },
+    "slug": {
+      "type": ["null", "string"]
+    },
+    "description": {
+      "type": ["null", "string"]
+    },
+    "privacy": {
+      "type": ["null", "string"]
+    },
+    "permission": {
+      "type": ["null", "string"]
+    },
+    "members_url": {
+      "type": ["null", "string"]
+    },
+    "repositories_url": {
+      "type": ["null", "string"]
+    },
+    "parent": {
+      "type": ["null", "object", "string"]
+    }
+  }
+}

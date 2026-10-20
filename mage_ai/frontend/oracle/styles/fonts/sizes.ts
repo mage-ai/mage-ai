@@ -64,6 +64,6 @@ export const SMALL = `
 `;
 
 export const XSMALL = `
-  font-size: 12px;
+  font-size: 10px;
   line-height: 12px;
 `;

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Meta, Story } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 
 import ThemeBlock from '../../ThemeBlock';
 import { UNIT } from '@oracle/styles/units/spacing';
@@ -12,13 +12,13 @@ export default {
 } as Meta;
 
 const TemplateWithTheme = ({ ...props }) => (
-  <ThemeBlock>
+  <ThemeBlock sideBySide>
     {/*@ts-ignore*/}
     <PieChart {...props} />
   </ThemeBlock>
 );
 
-const Template: Story<PieChartProps> =
+const Template: StoryFn<PieChartProps> =
   (args) => <TemplateWithTheme {...args} />;
 
 export const Regular = Template.bind({});

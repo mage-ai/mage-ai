@@ -1,0 +1,61 @@
+{
+  "type": ["null", "object", "string"],
+  "properties": {
+    "id": {
+      "type": ["null", "integer"]
+    },
+    "slug": {
+      "type": ["null", "string"]
+    },
+    "node_id": {
+      "type": ["null", "string"]
+    },
+    "owner": {
+      "$ref": "shared/user.json#/"
+    },
+    "name": {
+      "type": ["null", "string"]
+    },
+    "description": {
+      "type": ["null", "string"]
+    },
+    "external_url": {
+      "type": ["null", "string"]
+    },
+    "html_url": {
+      "type": ["null", "string"]
+    },
+    "created_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "permissions": {
+      "$ref": "shared/issue_permissions.json#/"
+    },
+    "events": {
+      "type": ["null", "array"],
+      "items": {
+        "type": ["null", "string"]
+      }
+    },
+    "installations_count": {
+      "type": ["null", "integer"]
+    },
+    "client_id": {
+      "type": ["null", "string"]
+    },
+    "client_secret": {
+      "type": ["null", "string"]
+    },
+    "webhook_secret": {
+      "type": ["null", "string"]
+    },
+    "pem": {
+      "type": ["null", "string"]
+    }
+  }
+}

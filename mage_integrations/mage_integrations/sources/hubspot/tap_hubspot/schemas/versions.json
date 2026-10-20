@@ -1,0 +1,30 @@
+{
+  "type": "array",
+  "items": {
+    "type": ["null", "object"],
+    "properties": {
+      "name": {
+        "type": ["null", "string"]
+      },
+      "value": {
+        "type": ["null", "string"]
+      },
+      "timestamp": {
+        "type": ["null", "string"],
+        "format": "date-time"
+      },
+      "source": {
+        "type": ["null", "string"]
+      },
+      "sourceId": {
+        "type": ["null", "string"]
+      },
+      "sourceVid": {
+        "type": ["null", "array"],
+        "items": {
+          "type": ["null", "string"]
+        }
+      }
+    }  
+  }
+}

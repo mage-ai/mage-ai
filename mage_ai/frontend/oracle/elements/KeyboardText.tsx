@@ -38,7 +38,7 @@ const SHARED_STYLES = css<{
   `}
 
   ${props => !props.borderless && `
-    box-shadow: ${(props.theme.shadow || dark.shadow).tiny};
+    box-shadow: ${(props.theme.shadow || dark.shadow).small};
     padding-bottom: 3px;
     padding-top: 3px;
   `}
@@ -83,10 +83,10 @@ function KeyboardText({
   if (!borderless) {
     if (disabled) {
       // @ts-ignore
-      style.borderColor = (themeContext?.monotone || dark.monotone)?.grey400;
+      style.borderColor = (themeContext?.monotone || dark.monotone)?.muted;
     } else {
       // @ts-ignore
-      style.borderColor = (themeContext?.content || dark.content)?.active;
+      style.borderColor = (themeContext || dark)?.monotone?.grey400;
     }
     style.borderRadius = BORDER_RADIUS_SMALL;
     style.borderStyle = 'solid';
@@ -97,9 +97,11 @@ function KeyboardText({
   return (
     <Text
       center
+      // default={!(disabled || mutedDisabled)}
       inline
       monospace={monospace}
       muted={disabled || mutedDisabled}
+      noWrapping
       // @ts-ignore
       style={style}
       xsmall
@@ -110,7 +112,7 @@ function KeyboardText({
         mutedDisabled={mutedDisabled}
         spacingLeft={spacingLeft}
       >
-        {keyText}
+        <div style={{ position: 'relative', top: 1 }}>{keyText}</div>
       </ElStyle>
     </Text>
   );

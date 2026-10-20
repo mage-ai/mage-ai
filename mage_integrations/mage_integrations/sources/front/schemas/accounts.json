@@ -1,0 +1,37 @@
+{
+  "type": ["null", "object"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": ["null", "string"]
+    },
+    "name": {
+      "type": ["null", "string"]
+    },
+    "logo_url": {
+      "type": ["null", "string"]
+    },
+    "description": {
+      "type": ["null", "string"]
+    },
+    "domains": {
+      "type": ["null", "array"],
+      "items": {
+        "type": ["null", "string"]
+      }
+    },
+    "external_id": {
+      "type": ["null", "string"]
+    },
+    "custom_fields": {
+      "type": ["null", "object"],
+      "additionalProperties": true
+    },
+    "created_at": {
+      "type": ["null", "number"]
+    },
+    "updated_at": {
+      "type": ["null", "number"]
+    }
+  }
+}

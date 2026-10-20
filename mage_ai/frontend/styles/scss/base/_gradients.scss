@@ -1,0 +1,26 @@
+@use '../abstracts/helpers' as *;
+
+@mixin gradient-colors() {
+  @each $value1 in $base-color-names {
+    @each $value2 in $base-color-names {
+      @each $direction in $directions {
+        $clean-direction: inspect($direction);
+        $clean-direction: str-replace($clean-direction, ' ', '-');
+
+        &.gradient-background-#{$clean-direction}-#{$value1}-#{$value2} {
+          background: linear-gradient($direction, var(--colors-#{$value1}), var(--colors-#{$value2}));
+          padding: var(--borders-outline-width); // Space for the border
+        }
+
+        &.gradient-border-#{$clean-direction}-#{$value1}-#{$value2} {
+          border-image: linear-gradient(
+            $direction,
+            var(--colors-#{$value1}),
+            var(--colors-#{$value2})
+          ) 1;
+          border-image-slice: 1;
+        }
+      }
+    }
+  }
+}

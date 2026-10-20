@@ -1,6 +1,8 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 
+import PrivateRoute from '@components/shared/PrivateRoute';
+
 function PipelineDetail({
   pipeline,
 }) {
@@ -8,7 +10,7 @@ function PipelineDetail({
 
   useEffect(() => {
     router.replace('/pipelines/[pipeline]/triggers', `/pipelines/${pipeline.uuid}/triggers`);
-  }, []);
+  }, [pipeline]);
 }
 
 PipelineDetail.getInitialProps = async (ctx: any) => {
@@ -21,4 +23,4 @@ PipelineDetail.getInitialProps = async (ctx: any) => {
   };
 };
 
-export default PipelineDetail;
+export default PrivateRoute(PipelineDetail);

@@ -1,0 +1,123 @@
+{
+  "type": ["null", "object"],
+  "additionalProperties": false,
+  "properties": {
+    "country_breakdown_percentage": {
+      "type": ["null", "object"],
+      "additionalProperties": true
+    },
+    "country_code": {
+      "type": ["null", "string"]
+    },
+    "device_breakdown_percentage": {
+      "type": ["null", "object"],
+      "additionalProperties": false,
+      "properties": {
+        "ANDROID": {
+          "type": ["null", "number"],
+          "multipleOf": 1e-8
+        },
+        "DESKTOP": {
+          "type": ["null", "number"],
+          "multipleOf": 1e-8
+        },
+        "IOS": {
+          "type": ["null", "number"],
+          "multipleOf": 1e-8
+        },
+        "OTHER_MOBILE": {
+          "type": ["null", "number"],
+          "multipleOf": 1e-8
+        }
+      }
+    },
+    "end_time": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "event_type": {
+      "type": ["null", "string"]
+    },
+    "gender_breakdown_percentage": {
+      "type": ["null", "object"],
+      "additionalProperties": false,
+      "properties": {
+        "female": {
+          "type": ["null", "number"],
+          "multipleOf": 1e-8
+        },
+        "male": {
+          "type": ["null", "number"],
+          "multipleOf": 1e-8
+        }
+      }
+    },
+    "is_global": {
+      "type": ["null", "boolean"]
+    },
+    "name": {
+      "type": ["null", "string"]
+    },
+    "reach": {
+      "type": ["null", "object"],
+      "additionalProperties": false,
+      "properties": {
+        "total_impressions": {
+          "type": ["null", "integer"]
+        },
+        "total_number_of_tweets": {
+          "type": ["null", "integer"]
+        },
+        "total_reach": {
+          "type": ["null", "integer"]
+        }
+      }
+    },
+    "start_time": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "targeting_value": {
+      "type": ["null", "string"]
+    },
+    "top_hashtags": {
+      "anyOf": [
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "top_tweets": {
+      "anyOf": [
+        {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "top_users": {
+      "anyOf": [
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    }
+  }
+}

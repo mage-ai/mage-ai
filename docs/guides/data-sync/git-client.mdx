@@ -1,0 +1,722 @@
+---
+title: "Using GitClient in Mage blocks"
+sidebarTitle: "GitClient"
+icon: "code-commit"
+description: "Programmatically perform Git operations (add, commit, push, pull) directly within your Mage pipeline blocks using the GitClient class."
+---
+
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="git-client" />
+
+The `GitClient` class provides a simple, Pythonic interface for performing Git operations within your Mage pipeline blocks. This is useful for automating version control workflows, such as:
+
+- Automatically committing and pushing pipeline changes after successful runs
+- Syncing code from remote repositories before execution
+- Creating automated deployment pipelines
+
+## Prerequisites
+
+Before using `GitClient`, ensure you have configured Git settings in Mage through one of these methods:
+
+1. **Git Sync Settings** (legacy): Configure via Settings → Workspace → Sync data, or see the [Git Sync guide](/development/git/configure)
+2. **Deployment Settings** (Mage Pro): Configure via the Deploy app at `/apps/deploy`
+
+## Quick Start
+
+### Basic Usage
+
+```python
+from mage_ai.deployments.git_client import GitClient
+
+# Initialize the client (uses legacy git sync settings by default)
+git = GitClient()
+
+# Add, commit, and push all changes in one operation
+result = git.add_commit_push('Auto-commit from Mage pipeline')
+
+if result.success:
+    print(f"✓ Pushed to {result.remote}/{result.branch}")
+    print(f"  Commit: {result.commit_hash}")
+else:
+    print(f"✗ Failed: {result.error}")
+```
+
+### Using Deployment Settings (Mage Pro)
+
+```python
+from mage_ai.deployments.git_client import GitClient
+
+# Use deployment settings instead of legacy git sync
+git = GitClient(use_deployment_settings=True)
+result = git.add_commit_push('Deploy changes via Mage Pro')
+```
+
+## Using GitClient in Pipeline Blocks
+
+### Data Exporter Block Example
+
+The most common use case is pushing changes at the end of a pipeline:
+
+```python
+from mage_ai.deployments.git_client import GitClient
+
+if 'data_exporter' not in globals():
+    from mage_ai.data_preparation.decorators import data_exporter
+
+
+@data_exporter
+def export_data(*args, **kwargs):
+    """
+    Push pipeline changes to Git after processing data.
+    """    
+    # Initialize GitClient
+    git = GitClient()
+    
+    # Push all changes
+    result = git.add_commit_push(
+        message='Pipeline run completed - auto commit',
+        files='.',  # Stage all files
+        add_flags=['-A'],  # Include deletions
+    )
+    
+    if result.success:
+        print(f"✓ Successfully pushed to {result.remote}/{result.branch}")
+    else:
+        print(f"✗ Push failed: {result.error}")
+    
+    return {
+        'git_result': result.to_dict(),
+    }
+```
+
+### Data Loader Block Example
+
+Pull latest changes before processing:
+
+```python
+from mage_ai.deployments.git_client import GitClient
+
+if 'data_loader' not in globals():
+    from mage_ai.data_preparation.decorators import data_loader
+
+
+@data_loader
+def load_data(*args, **kwargs):
+    """
+    Pull latest changes from remote before loading data.
+    """
+    git = GitClient()
+    
+    # Pull latest changes
+    result = git.pull()
+    
+    if result.success:
+        print(f"✓ Pulled latest from {result.remote}/{result.branch}")
+    else:
+        print(f"⚠ Pull failed: {result.error}")
+    
+    # Your data loading logic here
+    return {'status': 'loaded'}
+```
+
+## GitClient Methods
+
+### Core Operations
+
+<AccordionGroup>
+
+<Accordion title="add(files, flags)">
+
+Stage files for commit.
+
+**Parameters:**
+- `files` (str | List[str]): File path(s) to stage. Use `'.'` for all files.
+- `flags` (List[str], optional): Git add flags (e.g., `['-A']` to include deletions).
+
+**Returns:** `GitClient` (for method chaining)
+
+```python
+git.add('.')  # Stage all files
+git.add(['file1.py', 'file2.py'])  # Stage specific files
+git.add('.', flags=['-A'])  # Stage all including deletions
+```
+
+</Accordion>
+
+<Accordion title="commit(message, files)">
+
+Commit staged changes.
+
+**Parameters:**
+- `message` (str): The commit message.
+- `files` (List[str], optional): Files to add before committing.
+
+**Returns:** `str` - The commit hash
+
+```python
+commit_hash = git.commit('Update pipeline configuration')
+```
+
+</Accordion>
+
+<Accordion title="push(remote_name, branch_name, remote_branch_name)">
+
+Push commits to the remote repository.
+
+**Parameters:**
+- `remote_name` (str, optional): Remote name. Defaults to configured remote.
+- `branch_name` (str, optional): Local branch name. Defaults to current branch.
+- `remote_branch_name` (str, optional): Remote branch name if different from local.
+
+**Returns:** `GitOperationResult`
+
+```python
+# Push to default remote/branch
+result = git.push()
+
+# Push to specific remote and branch
+result = git.push(remote_name='origin', branch_name='main')
+
+# Push local 'develop' to remote 'staging'
+result = git.push(
+    remote_name='origin',
+    branch_name='develop',
+    remote_branch_name='staging',
+)
+```
+
+</Accordion>
+
+<Accordion title="pull(remote_name, branch_name)">
+
+Pull changes from the remote repository.
+
+**Parameters:**
+- `remote_name` (str, optional): Remote name. Defaults to configured remote.
+- `branch_name` (str, optional): Branch name. Defaults to current branch.
+
+**Returns:** `GitOperationResult`
+
+```python
+result = git.pull()
+result = git.pull(remote_name='origin', branch_name='main')
+```
+
+</Accordion>
+
+<Accordion title="fetch()">
+
+Fetch changes from the remote without merging.
+
+**Returns:** `GitOperationResult`
+
+```python
+result = git.fetch()
+```
+
+</Accordion>
+
+<Accordion title="clone(sync_submodules)">
+
+Clone the remote repository (replaces local content).
+
+**Parameters:**
+- `sync_submodules` (bool): Whether to also sync git submodules.
+
+**Returns:** `GitOperationResult`
+
+```python
+result = git.clone(sync_submodules=True)
+```
+
+</Accordion>
+
+</AccordionGroup>
+
+### Convenience Methods
+
+<AccordionGroup>
+
+<Accordion title="add_commit_push(message, files, add_flags, remote_name, branch_name, remote_branch_name)">
+
+Add, commit, and push changes in one operation. This is the recommended method for most use cases.
+
+**Parameters:**
+- `message` (str): The commit message.
+- `files` (str | List[str]): File path(s) to stage. Default: `'.'`
+- `add_flags` (List[str], optional): Git add flags (e.g., `['-A']`).
+- `remote_name` (str, optional): Remote name.
+- `branch_name` (str, optional): Local branch name.
+- `remote_branch_name` (str, optional): Remote branch name if different.
+
+**Returns:** `GitOperationResult`
+
+```python
+# Simple push of all changes
+result = git.add_commit_push('Update from pipeline')
+
+# Push specific files
+result = git.add_commit_push(
+    message='Update config',
+    files=['pipelines/', 'data_loaders/'],
+)
+
+# Push including deletions
+result = git.add_commit_push(
+    message='Clean up',
+    files='.',
+    add_flags=['-A'],
+)
+
+# Push to a different remote branch
+result = git.add_commit_push(
+    message='Deploy to staging',
+    branch_name='main',
+    remote_branch_name='staging',
+)
+```
+
+</Accordion>
+
+<Accordion title="sync(branch)">
+
+Sync local repository with remote (fetch + reset --hard). Discards local changes.
+
+**Parameters:**
+- `branch` (str, optional): Branch to sync. Defaults to current branch.
+
+**Returns:** `GitOperationResult`
+
+```python
+result = git.sync()  # Reset to match remote
+```
+
+</Accordion>
+
+</AccordionGroup>
+
+### Branch Operations
+
+<AccordionGroup>
+
+<Accordion title="switch_branch(branch, remote)">
+
+Switch to a different branch.
+
+```python
+result = git.switch_branch('feature-branch')
+```
+
+</Accordion>
+
+<Accordion title="merge_branch(branch, message)">
+
+Merge another branch into the current branch.
+
+```python
+result = git.merge_branch('feature-branch', message='Merge feature')
+```
+
+</Accordion>
+
+<Accordion title="delete_branch(branch)">
+
+Delete a local branch.
+
+```python
+result = git.delete_branch('old-feature')
+```
+
+</Accordion>
+
+</AccordionGroup>
+
+### Status Properties
+
+<AccordionGroup>
+
+<Accordion title="status">
+
+Get comprehensive git status information.
+
+```python
+status = git.status
+print(status)
+# {
+#     'branch': 'main',
+#     'remote': 'origin',
+#     'remote_url': 'git@github.com:user/repo.git',
+#     'modified_files': ['file1.py', 'file2.py'],
+#     'is_dirty': True,
+#     'status': '...'
+# }
+```
+
+</Accordion>
+
+<Accordion title="current_branch">
+
+Get the current branch name.
+
+```python
+branch = git.current_branch  # 'main'
+```
+
+</Accordion>
+
+<Accordion title="is_dirty">
+
+Check if there are uncommitted changes.
+
+```python
+if git.is_dirty:
+    print("There are uncommitted changes")
+```
+
+</Accordion>
+
+<Accordion title="modified_files">
+
+Get list of modified files.
+
+```python
+files = git.modified_files  # ['file1.py', 'file2.py']
+```
+
+</Accordion>
+
+<Accordion title="branches">
+
+Get list of local branches.
+
+```python
+branches = git.branches  # ['main', 'develop', 'feature-x']
+```
+
+</Accordion>
+
+<Accordion title="remotes">
+
+Get list of configured remotes.
+
+```python
+remotes = git.remotes
+# [{'name': 'origin', 'urls': ['git@github.com:user/repo.git']}]
+```
+
+</Accordion>
+
+<Accordion title="unpushed_commits_count">
+
+Get number of commits not yet pushed to remote.
+
+```python
+count = git.unpushed_commits_count  # 3
+```
+
+</Accordion>
+
+</AccordionGroup>
+
+## GitOperationResult
+
+All Git operations return a `GitOperationResult` object with the following attributes:
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `success` | bool | Whether the operation succeeded |
+| `message` | str | Success or status message |
+| `branch` | str | The branch name involved |
+| `remote` | str | The remote name involved |
+| `commit_hash` | str | The commit hash (for commit/push operations) |
+| `error` | str | Error message if operation failed |
+
+```python
+result = git.push()
+
+if result.success:
+    print(f"Pushed to {result.remote}/{result.branch}")
+    print(f"Commit: {result.commit_hash}")
+else:
+    print(f"Error: {result.error}")
+
+# Convert to dictionary
+result_dict = result.to_dict()
+```
+
+## Method Chaining
+
+`GitClient` supports method chaining for fluent API usage:
+
+```python
+git = GitClient()
+
+# Chain add and commit, then push
+git.add('.').commit('Update files')
+result = git.push()
+```
+
+## Advanced Examples
+
+### Conditional Push Based on Changes
+
+```python
+from mage_ai.deployments.git_client import GitClient
+
+@data_exporter
+def export_data(data, *args, **kwargs):
+    git = GitClient()
+    
+    # Only push if there are actual changes
+    if git.is_dirty:
+        print(f"Found {len(git.modified_files)} modified files")
+        result = git.add_commit_push('Auto-commit changes')
+        return {'pushed': result.success, 'commit': result.commit_hash}
+    else:
+        print("No changes to commit")
+        return {'pushed': False, 'message': 'No changes'}
+```
+
+### Push to Multiple Branches
+
+```python
+from mage_ai.deployments.git_client import GitClient
+
+@data_exporter
+def deploy_to_environments(data, *args, **kwargs):
+    git = GitClient()
+    
+    # Push to staging
+    staging_result = git.add_commit_push(
+        message='Deploy to staging',
+        remote_branch_name='staging',
+    )
+    
+    # Push to production (same commit)
+    if staging_result.success:
+        prod_result = git.push(remote_branch_name='production')
+        return {
+            'staging': staging_result.to_dict(),
+            'production': prod_result.to_dict(),
+        }
+    
+    return {'error': staging_result.error}
+```
+
+### Pre-run Sync
+
+```python
+from mage_ai.deployments.git_client import GitClient
+
+@data_loader
+def load_with_sync(*args, **kwargs):
+    git = GitClient()
+    
+    # Fetch latest and check for updates
+    git.fetch()
+    
+    if git.unpushed_commits_count < 0:  # We're behind
+        print("Local is behind remote, syncing...")
+        git.sync()
+    
+    # Now load your data
+    return load_data_from_synced_repo()
+```
+
+## Using the Built-in Git Push Template
+
+Mage provides a built-in data exporter template for Git push operations. To add it to your pipeline:
+
+1. Click **Blocks** in the top navigation
+2. Select **Exporter**
+3. Navigate to **Version control** → **Git push**
+
+<Frame>
+    <img alt="Git push template navigation" src="https://github.com/mage-ai/assets/blob/main/version-control/git-push-template-nav.png?raw=true" />
+</Frame>
+
+The template provides a ready-to-use block with configurable options:
+
+```python
+# Parameters available in the template:
+commit_message: str  # Commit message
+files: str | List[str]  # Files to stage (default: '.')
+include_deletions: bool  # Include deleted files (default: True)
+remote_name: str  # Remote name (optional)
+branch_name: str  # Branch name (optional)
+use_deployment_settings: bool  # Use Mage Pro settings (default: False)
+```
+
+## Setting Up Automated Git Push Jobs
+
+You can automate Git push operations by creating a pipeline with a Git push block and configuring a trigger to run it on a schedule or in response to events.
+
+### Step 1: Create a Git Push Pipeline
+
+1. Create a new pipeline (e.g., `auto_git_push`)
+2. Add a **Data Exporter** block using the Git push template:
+   - Click **Blocks** → **Exporter** → **Version control** → **Git push**
+3. Configure the block with your desired settings:
+
+```python
+from typing import Dict, List, Optional, Union
+from mage_ai.deployments.git_client import GitClient
+
+if 'data_exporter' not in globals():
+    from mage_ai.data_preparation.decorators import data_exporter
+
+
+@data_exporter
+def export_to_git(*args, **kwargs) -> Dict:
+    """
+    Push changes to a git remote repository.
+
+    Uses the git settings configured via git settings (/settings/workspace/sync-data)
+    or deployment settings (/apps/deploy).
+
+    Docs: https://docs.mage.ai/guides/data-sync/git-client
+    """
+
+    # Get configuration from kwargs
+    commit_message: str = kwargs.get(
+        'commit_message',
+        'Auto-commit from Mage pipeline'
+    )
+    files: Union[str, List[str]] = kwargs.get('files', '.')
+    include_deletions: bool = kwargs.get('include_deletions', True)
+    remote_name: Optional[str] = kwargs.get('remote_name')
+    branch_name: Optional[str] = kwargs.get('branch_name')
+    use_deployment_settings: bool = kwargs.get('use_deployment_settings', False)
+
+    # Initialize git client
+    git = GitClient(use_deployment_settings=use_deployment_settings)
+
+    # Set add flags
+    add_flags = ['-A'] if include_deletions else None
+
+    # Add, commit, and push
+    result = git.add_commit_push(
+        message=commit_message,
+        files=files,
+        add_flags=add_flags,
+        remote_name=remote_name,
+        branch_name=branch_name,
+    )
+
+    # Print result
+    if result.success:
+        print(f"✓ Successfully pushed to {result.remote}/{result.branch}")
+        if result.commit_hash:
+            print(f"  Commit: {result.commit_hash}")
+    else:
+        print(f"✗ Push failed: {result.error}")
+
+    # Return the result and pass through the input data
+    return {
+        'result': result.to_dict(),
+    }
+```
+
+### Step 2: Create a Trigger
+
+Navigate to your pipeline's **Triggers** tab and create a new trigger:
+
+<Tabs>
+<Tab title="Schedule Trigger">
+
+For periodic backups (e.g., daily at midnight):
+
+1. Click **+ New trigger**
+2. Select **Schedule** as the trigger type
+3. Configure the schedule:
+   - **Name**: `daily_git_backup`
+   - **Frequency**: Daily (or use Custom with cron: `0 0 * * *`)
+   - **Start date**: Set your desired start date
+4. Click **Save changes**
+
+**Example cron patterns:**
+
+| Pattern | Description |
+|---------|-------------|
+| `0 * * * *` | Every hour |
+| `0 0 * * *` | Daily at midnight |
+| `0 9,18 * * 1-5` | Weekdays at 9 AM and 6 PM |
+| `*/30 * * * *` | Every 30 minutes |
+
+</Tab>
+<Tab title="API Trigger">
+
+For on-demand pushes from external systems:
+
+1. Click **+ New trigger**
+2. Select **API** as the trigger type
+3. Configure:
+   - **Name**: `git_push_api`
+4. Click **Save changes**
+5. Copy the API endpoint URL
+
+**Trigger the pipeline via API:**
+
+```bash
+curl -X POST "https://your-mage-instance.com/api/pipeline_schedules/{trigger_id}/pipeline_runs/{token}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "pipeline_run": {
+      "variables": {
+        "commit_message": "Triggered via API"
+      }
+    }
+  }'
+```
+
+</Tab>
+</Tabs>
+
+<Info>
+For more details on trigger configuration, see the [Pipeline Triggers documentation](/orchestration/triggers/triggering-pipelines).
+</Info>
+
+## Troubleshooting
+
+<AccordionGroup>
+
+<Accordion title="Authentication errors">
+
+If you encounter authentication errors:
+
+1. Verify your Git settings are configured correctly
+2. For SSH: Ensure your SSH keys are properly set up
+3. For HTTPS: Verify your access token has the correct permissions
+4. Check that the remote URL is accessible from your Mage instance
+
+</Accordion>
+
+<Accordion title="Permission denied">
+
+If you see "Permission denied" errors:
+
+1. Check that your user has write access to the repository
+2. Verify the branch is not protected (or you have permission to push to protected branches)
+3. Ensure your OAuth token hasn't expired
+
+</Accordion>
+
+<Accordion title="No changes to commit">
+
+If `add_commit_push` reports no changes:
+
+1. Check `git.status` to see the current state
+2. Verify files are not in `.gitignore`
+3. Use `git.modified_files` to see what files Git detects as changed
+
+</Accordion>
+
+</AccordionGroup>
+
+## Related Resources
+
+- [Git Sync Configuration](/development/git/configure) - Configuring Git sync settings
+- [Mage Pro Deployment Settings](/guides/data-sync/version-control-guide#1-deployments-app) - Configure deployment settings for `use_deployment_settings=True`
+

@@ -2,6 +2,8 @@ import { parse, stringify } from 'yaml';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 
+import Accordion from '@oracle/components/Accordion';
+import AccordionPanel from '@oracle/components/Accordion/AccordionPanel';
 import AddNewBlocks from '@components/PipelineDetail/AddNewBlocks';
 import Button from '@oracle/elements/Button';
 import BlockType, {
@@ -10,6 +12,7 @@ import BlockType, {
   BlockTypeEnum,
 } from '@interfaces/BlockType';
 import CopyToClipboard from '@oracle/components/CopyToClipboard';
+import ErrorsType from '@interfaces/ErrorsType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import IntegrationSourceType, {
@@ -23,6 +26,7 @@ import IntegrationSourceType, {
   UniqueConflictMethodEnum,
 } from '@interfaces/IntegrationSourceType';
 import Link from '@oracle/elements/Link';
+import Markdown from '@oracle/components/Markdown';
 import PipelineType from '@interfaces/PipelineType';
 import PipelineVariableType from '@interfaces/PipelineVariableType';
 import SchemaSettings from './SchemaSettings';
@@ -37,13 +41,12 @@ import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
 import { ChevronDown, ChevronUp } from '@oracle/icons';
-import { SectionStyle } from './index.style';
+import { DocsStyle, SectionStyle } from './index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { ViewKeyEnum } from '@components/Sidekick/constants';
-import { cleanName } from '@utils/string';
 import { find, indexBy } from '@utils/array';
 import { getStreamAndStreamsFromCatalog } from './utils';
-import { getUpstreamBlockUuids } from '@components/CodeBlock/utils';
+import { isEmptyObject } from '@utils/hash';
 import { onSuccess } from '@api/utils/response';
 import { useModal } from '@context/Modal';
 
@@ -56,19 +59,18 @@ type IntegrationPipelineProps = {
   ) => Promise<any>;
   blocks: BlockType[];
   codeBlocks?: any;
+  fetchFileTree?: () => void;
   fetchPipeline: () => void;
+  fetchSampleData: () => void;
   globalVariables: PipelineVariableType[];
-  onChangeCodeBlock: (uuid: string, value: string) => void;
+  onChangeCodeBlock: (type: string, uuid: string, value: string) => void;
   openSidekickView: (newView: ViewKeyEnum, pushHistory?: boolean) => void;
   pipeline: PipelineType;
   savePipelineContent: (payload?: {
     block?: BlockType;
     pipeline?: PipelineType;
   }) => Promise<any>;
-  setErrors: (opts: {
-    errors: any;
-    response: any;
-  }) => void;
+  setErrors: (errors: ErrorsType) => void;
   setIntegrationStreams: (streams: string[]) => void;
   setOutputBlocks: (func: (prevOutputBlocks: BlockType[]) => BlockType[]) => void;
   setSelectedBlock: (block: BlockType) => void;
@@ -80,7 +82,9 @@ function IntegrationPipeline({
   addNewBlockAtIndex,
   blocks,
   codeBlocks,
+  fetchFileTree,
   fetchPipeline,
+  fetchSampleData,
   globalVariables,
   onChangeCodeBlock,
   openSidekickView,
@@ -96,8 +100,12 @@ function IntegrationPipeline({
   const [destinationVisible, setDestinationVisible] = useState(true);
   const [sourceVisible, setSourceVisible] = useState(true);
   const [transformerVisible, setTransformerVisible] = useState(true);
+  const [integrationSourceDocs, setIntegrationSourceDocs] =
+    useState<string>('');
 
-  const { data: dataIntegrationSources } = api.integration_sources.list();
+  const { data: dataIntegrationSources } = api.integration_sources.list({}, {
+    revalidateOnFocus: false,
+  });
   const integrationSources: IntegrationSourceType[] =
     useMemo(() => dataIntegrationSources?.integration_sources || [], [
       dataIntegrationSources,
@@ -105,7 +113,9 @@ function IntegrationPipeline({
   const integrationSourcesByUUID =
     useMemo(() => indexBy(integrationSources, ({ uuid }) => uuid), [integrationSources]);
 
-  const { data: dataIntegrationDestinations } = api.integration_destinations.list();
+  const { data: dataIntegrationDestinations } = api.integration_destinations.list({}, {
+    revalidateOnFocus: false,
+  });
   const integrationDestinations: IntegrationSourceType[] =
     useMemo(() => dataIntegrationDestinations?.integration_destinations || [], [
       dataIntegrationDestinations,
@@ -122,6 +132,13 @@ function IntegrationPipeline({
 
     return parse(dataLoaderBlock.content);
   }, [dataLoaderBlock]);
+
+  useEffect(() => {
+    if (dataLoaderBlockContent?.source) {
+      setIntegrationSourceDocs(integrationSourcesByUUID[dataLoaderBlockContent.source]?.docs);
+    }
+  }, [integrationSourcesByUUID, dataLoaderBlockContent]);
+
   const dataLoaderEditor = useMemo(() => (
     <SourceConfig
       api="integration_sources"
@@ -133,6 +150,8 @@ function IntegrationPipeline({
   ), [
     dataLoaderBlock,
     dataLoaderBlockContent,
+    onChangeCodeBlock,
+    pipeline,
   ]);
 
   const dataExporterBlock: BlockType =
@@ -155,17 +174,23 @@ function IntegrationPipeline({
   ), [
     dataExporterBlock,
     dataExporterBlockContent,
+    onChangeCodeBlock,
+    pipeline,
   ]);
+  const transformerBlock: BlockType =
+    useMemo(() => find(blocks, ({ type }) => BlockTypeEnum.TRANSFORMER === type), [blocks]);
 
-  const catalog: CatalogType = useMemo(() => dataLoaderBlockContent?.catalog, [
-    dataLoaderBlockContent,
-  ]);
+  const catalog: CatalogType =
+    useMemo(() => (!isEmptyObject(dataLoaderBlockContent?.catalog)
+      ? dataLoaderBlockContent?.catalog
+      : pipeline?.data_integration?.catalog
+    ), [
+      dataLoaderBlockContent,
+      pipeline?.data_integration?.catalog,
+    ]);
   const autoAddNewFields = (catalog?.streams || []).every(({ auto_add_new_fields }) => auto_add_new_fields);
-
-  const updateSelectedStream = useCallback(
-    () => setSelectedStream(catalog?.streams?.[0]?.tap_stream_id),
-    [catalog],
-  );
+  const disableColumnTypeCheck =
+    (catalog?.streams || []).every(({ disable_column_type_check: v }) => v);
 
   const catalogPrev = usePrevious(catalog);
   useEffect(() => {
@@ -174,7 +199,9 @@ function IntegrationPipeline({
         setSelectedOutputBlock(dataLoaderBlock);
         return [dataLoaderBlock];
       });
-      setIntegrationStreams(catalog?.streams?.map(({ tap_stream_id }) => tap_stream_id));
+      // @ts-ignore
+      setIntegrationStreams(prevStreams =>
+        prevStreams || catalog?.streams?.map(({ tap_stream_id }) => tap_stream_id));
     }
   }, [catalog]);
 
@@ -185,26 +212,34 @@ function IntegrationPipeline({
       onSuccess: (response: any) => onSuccess(
         response,
         {
-          callback: (res) => {
-            if (res['success']) {
-              updateSelectedStream();
-              openSidekickView(ViewKeyEnum.DATA);
+          callback: ({
+            integration_source: integrationSource,
+          }) => {
+            if (integrationSource['success']) {
+              const streams = integrationSource?.['streams'] || [];
+
               setOutputBlocks(() => {
                 setSelectedOutputBlock(dataLoaderBlock);
                 return [dataLoaderBlock];
               });
+              if (streams.length > 0) {
+                setSelectedStream(streams[0]);
+              }
+              // @ts-ignore
+              setIntegrationStreams(prevStreams => {
+                const updatedStreams = (prevStreams || []).concat(streams);
+                return Array.from(new Set(updatedStreams)).sort();
+              });
+              openSidekickView(ViewKeyEnum.DATA);
+              fetchSampleData();
             } else {
-              setSourceSampleDataError(res['error']);
+              setSourceSampleDataError(integrationSource?.['error_message']);
             }
           },
-          onErrorCallBack: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
-          },
+          onErrorCallback: (response, errors) => setErrors({
+            errors,
+            response,
+          }),
         },
       ),
     },
@@ -227,14 +262,17 @@ function IntegrationPipeline({
               selected_streams: selectedStreamIDs,
               streams: streamsInit,
             } = integrationSource;
-            const streams = streamsInit.filter(({
+
+            const streamsPrevious = (catalog?.streams || []).filter(({
               tap_stream_id: streamID,
             }) => selectedStreamIDs.includes(streamID));
-            const catalogData = {
-              streams,
-            };
+            const streamsPreviousIDs =
+              streamsPrevious.map(({ tap_stream_id: streamID }) => streamID);
+            const streamsNew = streamsInit.filter(({
+              tap_stream_id: streamID,
+            }) => selectedStreamIDs.includes(streamID) && !streamsPreviousIDs.includes(streamID));
 
-            streams.forEach((stream: StreamType) => {
+            streamsNew.forEach((stream: StreamType) => {
               stream.metadata.forEach((md, idx: number) => {
                 const {
                   metadata,
@@ -247,7 +285,7 @@ function IntegrationPipeline({
                     stream.unique_conflict_method = UniqueConflictMethodEnum.UPDATE;
                   }
                   if (!stream.destination_table) {
-                    stream.destination_table = cleanName(stream.tap_stream_id);
+                    stream.destination_table = stream?.tap_stream_id?.replace(/\W+/g, '_');
                   }
 
                   stream.metadata[idx] = {
@@ -261,22 +299,32 @@ function IntegrationPipeline({
               });
             });
 
-            setOutputBlocks(() => []);
+            const catalogData = {
+              streams: streamsPrevious.concat(streamsNew),
+            };
+
             setIntegrationStreams(streams.map(({ tap_stream_id }) => tap_stream_id));
 
-            onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
-              ...dataLoaderBlockContent,
-              catalog: catalogData,
-            }));
+            const dataLoaderBlockContentCatalog = dataLoaderBlockContent?.catalog;
+            if (!isEmptyObject(dataLoaderBlockContentCatalog)) {
+              onChangeCodeBlock(dataLoaderBlock.type, dataLoaderBlock.uuid, stringify({
+                ...dataLoaderBlockContent,
+                catalog: {},
+              }));
+            }
+            const payload = {
+              pipeline: {
+                ...pipeline,
+                data_integration: {
+                  ...(pipeline?.data_integration || {}),
+                  catalog: catalogData,
+                },
+              },
+            };
 
-            savePipelineContent().then(() => {
-              return fetchPipeline();
-            }).then(() => {
-              // @ts-ignore
-              loadSampleData({
-                action: 'sample_data',
-                pipeline_uuid: pipeline?.uuid,
-              });
+            savePipelineContent(payload).then(() => {
+              fetchPipeline();
+              fetchFileTree?.();
             });
           },
           onErrorCallback: (response, errors) => setErrors({
@@ -320,42 +368,75 @@ function IntegrationPipeline({
       stream,
       streams,
     } = getStreamAndStreamsFromCatalog(catalog, streamUUID);
+    const catalogUpdate = {
+      ...catalog,
+      streams: streams.concat(streamDataTransformer(stream)),
+    };
 
-    onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
-      ...dataLoaderBlockContent,
-      catalog: {
-        ...catalog,
-        streams: streams.concat(streamDataTransformer(stream)),
+    const dataLoaderBlockContentCatalog = dataLoaderBlockContent?.catalog;
+    if (!isEmptyObject(dataLoaderBlockContentCatalog)) {
+      onChangeCodeBlock(dataLoaderBlock.type, dataLoaderBlock.uuid, stringify({
+        ...dataLoaderBlockContent,
+        catalog: {},
+      }));
+    }
+    const payload = {
+      pipeline: {
+        ...pipeline,
+        data_integration: {
+          ...(pipeline?.data_integration || {}),
+          catalog: catalogUpdate,
+        },
       },
-    }));
+    };
 
-    savePipelineContent().then(() => fetchPipeline());
+    savePipelineContent(payload).then(() => fetchPipeline());
   }, [
     catalog,
     dataLoaderBlock,
     dataLoaderBlockContent,
     fetchPipeline,
     onChangeCodeBlock,
+    pipeline,
     savePipelineContent,
   ]);
   const updateAllStreams = useCallback((
     streamDataTransformer: (stream: StreamType) => StreamType,
   ) => {
-    onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
-      ...dataLoaderBlockContent,
-      catalog: {
-        ...catalog,
-        streams: catalog.streams.map(stream => streamDataTransformer(stream)),
-      },
-    }));
+    if (!catalog?.streams) {
+      return;
+    }
 
-    savePipelineContent().then(() => fetchPipeline());
+    const catalogUpdate = {
+      ...catalog,
+      streams: catalog.streams.map(stream => streamDataTransformer(stream)),
+    };
+
+    const dataLoaderBlockContentCatalog = dataLoaderBlockContent?.catalog;
+    if (!isEmptyObject(dataLoaderBlockContentCatalog)) {
+      onChangeCodeBlock(dataLoaderBlock.type, dataLoaderBlock.uuid, stringify({
+        ...dataLoaderBlockContent,
+        catalog: {},
+      }));
+    }
+    const payload = {
+      pipeline: {
+        ...pipeline,
+        data_integration: {
+          ...(pipeline?.data_integration || {}),
+          catalog: catalogUpdate,
+        },
+      },
+    };
+
+    savePipelineContent(payload).then(() => fetchPipeline());
   }, [
     catalog,
     dataLoaderBlock,
     dataLoaderBlockContent,
     fetchPipeline,
     onChangeCodeBlock,
+    pipeline,
     savePipelineContent,
   ]);
 
@@ -373,26 +454,29 @@ function IntegrationPipeline({
     updateStream,
   ]);
 
-  const updateMetadataForColumn = useCallback((
+  const updateMetadataForColumns = useCallback((
     streamUUID: string,
-    columnName: string,
+    columnNames: string[],
     data: PropertyMetadataType,
   ) => {
     updateStream(streamUUID, (stream: StreamType) => {
       const {
         metadata: streamMetadata,
       } = stream;
-      const index = streamMetadata.findIndex(({
-        breadcrumb = [],
-      }) => breadcrumb.length === 2 && breadcrumb[0] === 'properties' && breadcrumb[1] === columnName);
 
-      if (index >= 0) {
-        const metadataForColumn = streamMetadata[index].metadata;
-        stream.metadata[index].metadata = {
-          ...metadataForColumn,
-          ...data,
-        };
-      }
+      columnNames.forEach((columnName: string) => {
+        const index = streamMetadata.findIndex(({
+          breadcrumb = [],
+        }) => breadcrumb.length === 2 && breadcrumb[0] === 'properties' && breadcrumb[1] === columnName);
+
+        if (index >= 0) {
+          const metadataForColumn = streamMetadata[index].metadata;
+          stream.metadata[index].metadata = {
+            ...metadataForColumn,
+            ...data,
+          };
+        }
+      });
 
       return stream;
     });
@@ -401,21 +485,20 @@ function IntegrationPipeline({
   ]);
 
   const [updateDestinationBlock] = useMutation(
-    api.blocks.pipelines.useUpdate(pipeline?.uuid, dataExporterBlock?.uuid),
+    api.blocks.pipelines.useUpdate(
+      encodeURIComponent(pipeline?.uuid),
+      encodeURIComponent(dataExporterBlock?.uuid),
+    ),
     {
       onSuccess: (response: any) => onSuccess(
         response, {
           callback: () => {
             fetchPipeline?.();
           },
-          onErrorCallback: ({
-            error: {
-              errors,
-              message,
-            },
-          }) => {
-            console.log(errors, message);
-          },
+          onErrorCallback: (response, errors) => setErrors?.({
+            errors,
+            response,
+          }),
         },
       ),
     },
@@ -484,6 +567,7 @@ function IntegrationPipeline({
         For more information, check out the <Link
           href={href}
           openNewWindow
+          primary
         >
           documentation
         </Link>.
@@ -503,7 +587,7 @@ function IntegrationPipeline({
       catalog={catalog}
       isLoading={isLoadingFetchIntegrationSource}
       onActionCallback={(selectedStreams: {
-        [key: string]: boolean;
+        [key: string]: StreamType;
       }) => {
         const ids =
           Object.entries(selectedStreams).reduce((acc, [k, v]) => v ? acc.concat(k) : acc, []);
@@ -517,11 +601,22 @@ function IntegrationPipeline({
           });
           hideModal();
         } else {
-          onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
-            ...dataLoaderBlockContent,
-            catalog: {},
-          }));
-          savePipelineContent().then(() => fetchPipeline());
+          const dataLoaderBlockContentCatalog = dataLoaderBlockContent?.catalog;
+          if (!isEmptyObject(dataLoaderBlockContentCatalog)) {
+            onChangeCodeBlock(dataLoaderBlock.type, dataLoaderBlock.uuid, stringify({
+              ...dataLoaderBlockContent,
+              catalog: {},
+            }));
+          }
+          savePipelineContent({
+            pipeline: {
+              ...pipeline,
+              data_integration: {
+                ...(pipeline?.data_integration || {}),
+                catalog: null,
+              },
+            },
+          }).then(() => fetchPipeline());
           hideModal();
         }
       }}
@@ -579,57 +674,68 @@ function IntegrationPipeline({
                 Select source
               </Headline>
 
-              <Select
-                onChange={(e) => {
-                  const sourceUUID = e.target.value;
-                  if (!sourceUUID) {
-                    return;
-                  }
+              {integrationSources?.length > 0
+                ?
+                  <Select
+                    onChange={(e) => {
+                      const sourceUUID = e.target.value;
+                      if (!sourceUUID) {
+                        return;
+                      }
+                      setIntegrationSourceDocs(integrationSourcesByUUID[sourceUUID]?.docs);
+                      const config = integrationSourcesByUUID[sourceUUID]?.templates?.config;
+                      if (config) {
+                        Object.keys(config).forEach((key: string) => {
+                          config[key] = config[key] || null;
+                        });
+                      }
 
-                  const config = integrationSourcesByUUID[sourceUUID]?.templates?.config;
-                  if (config) {
-                    Object.keys(config).forEach((key: string) => {
-                      config[key] = config[key] || null;
-                    });
-                  }
+                      if (dataLoaderBlock) {
+                        onChangeCodeBlock(dataLoaderBlock.type, dataLoaderBlock.uuid, stringify({
+                          ...dataLoaderBlockContent,
+                          catalog: {},
+                          config,
+                          source: sourceUUID,
+                        }));
+                      } else {
+                        addNewBlockAtIndex({
+                          content: stringify({
+                            config,
+                            source: sourceUUID,
+                          }),
+                          language: BlockLanguageEnum.YAML,
+                          type: BlockTypeEnum.DATA_LOADER,
+                        }, 0, setSelectedBlock);
+                      }
 
-                  if (dataLoaderBlock) {
-                    onChangeCodeBlock(dataLoaderBlock.uuid, stringify({
-                      ...dataLoaderBlockContent,
-                      catalog: {},
-                      config,
-                      source: sourceUUID,
-                    }));
-                  } else {
-                    addNewBlockAtIndex({
-                      content: stringify({
-                        source: sourceUUID,
-                        config,
-                      }),
-                      language: BlockLanguageEnum.YAML,
-                      type: BlockTypeEnum.DATA_LOADER,
-                    }, 0, setSelectedBlock);
-                  }
+                      setIntegrationSourceStream(null);
 
-                  setIntegrationSourceStream(null);
-
-                  savePipelineContent().then(() => {
-                    fetchPipeline();
-                  });
-                }}
-                primary
-                value={dataLoaderBlockContent?.source}
-              >
-                <option value="" />
-                {integrationSources.map(({ name, uuid }) => (
-                  <option
-                    key={uuid}
-                    value={uuid}
+                      savePipelineContent().then(() => {
+                        fetchPipeline();
+                      });
+                    }}
+                    primary
+                    value={dataLoaderBlockContent?.source}
                   >
-                    {name}
-                  </option>
-                ))}
-              </Select>
+                    <option value="" />
+                    {integrationSources.map(({ name, uuid }) => (
+                      <option
+                        key={uuid}
+                        value={uuid}
+                      >
+                        {name}
+                      </option>
+                    ))}
+                  </Select>
+                :
+                  <FlexContainer alignItems="center">
+                    <Spinner inverted />
+                    <Spacing ml={1} />
+                    <Headline level={5} primary>
+                      Loading sources...
+                    </Headline>
+                  </FlexContainer>
+              }
             </Spacing>
 
             {dataLoaderBlock && (
@@ -639,19 +745,19 @@ function IntegrationPipeline({
                     Configuration
                   </Headline>
 
-                  {dataLoaderBlockContent?.source && (
+                  {dataLoaderBlockContent?.source && integrationSourceDocs && (
                     <Spacing mb={2}>
-                      <Text default>
-                        For more information on how to configure this source,
-                        read the <Link
-                          href={`https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/sources/${dataLoaderBlockContent.source}/README.md`}
-                          openNewWindow
-                        >
-                          {dataLoaderBlockContent.source} documentation
-                        </Link>
-                      </Text>
+                      <Accordion>
+                        <AccordionPanel title={`Documentation: ${dataLoaderBlockContent.source}`}>
+                          <DocsStyle>
+                            <Markdown>
+                              { integrationSourceDocs.replace(/\<br \/\>/g, '\n\n') }
+                            </Markdown>
+                          </DocsStyle>
+                        </AccordionPanel>
+                      </Accordion>
 
-                      {buildVariablesTable('https://github.com/mage-ai/mage-ai/blob/master/docs/guides/pipelines/DataIntegrationPipeline.md#configure-source')}
+                      {buildVariablesTable('https://docs.mage.ai/guides/data-integration-pipeline#configure-source')}
                     </Spacing>
                   )}
 
@@ -678,16 +784,6 @@ function IntegrationPipeline({
                   </Button>
                 </div>
 
-                {isLoadingLoadSampleData && (
-                  <Spacing mt={1}>
-                    <FlexContainer>
-                      <Spinner color="white" small/>
-                      <Spacing ml={1} />
-                      <Text small> Loading source data preview </Text>
-                    </FlexContainer>
-                  </Spacing>
-                )}
-
                 {sourceSampleDataError && (
                   <Text warning>
                     {sourceSampleDataError}
@@ -708,9 +804,21 @@ function IntegrationPipeline({
               <SchemaSettings
                 catalog={catalog}
                 destination={dataExporterBlockContent?.destination}
+                isLoadingLoadSampleData={isLoadingLoadSampleData}
+                // @ts-ignore
+                loadSampleData={stream => loadSampleData({
+                  integration_source: {
+                    action_type: 'sample_data',
+                    pipeline_uuid: pipeline?.uuid,
+                    streams: [stream],
+                  },
+                })}
+                pipeline={pipeline}
+                setErrors={setErrors}
                 setSelectedStream={setSelectedStream}
                 source={dataLoaderBlockContent?.source}
-                updateMetadataForColumn={updateMetadataForColumn}
+                updateAllStreams={updateAllStreams}
+                updateMetadataForColumns={updateMetadataForColumns}
                 updateSchemaProperty={updateSchemaProperty}
                 updateStream={updateStream}
               />
@@ -769,11 +877,9 @@ function IntegrationPipeline({
                   const content = newBlock.content;
                   const configuration = newBlock.configuration;
 
-                  const currentBlock = blocks[blocks.length - 2];
-
-                  let upstreamBlocks = [dataLoaderBlock.uuid];
-                  if (currentBlock) {
-                    upstreamBlocks = getUpstreamBlockUuids(currentBlock, newBlock);
+                  const upstreamBlocks = [];
+                  if (dataLoaderBlock) {
+                    upstreamBlocks.push(dataLoaderBlock.uuid);
                   }
 
                   const ret = addNewBlockAtIndex({
@@ -798,14 +904,15 @@ function IntegrationPipeline({
 
                   return ret;
                 }}
-                // blockIdx={blockIdx}
                 compact
+                hideCustom
                 hideDataExporter
                 hideDataLoader
                 hideDbt
-                hideRecommendations
+                hideMarkdown
                 hideScratchpad
                 hideSensor
+                hideTransformer={!!transformerBlock}
                 hideTransformerDataSources
                 pipeline={pipeline}
               />
@@ -858,56 +965,79 @@ function IntegrationPipeline({
               Select destination
             </Headline>
 
-            <Select
-              onChange={(e) => {
-                const destinationUUID = e.target.value;
-                if (!destinationUUID) {
-                  return;
-                }
+            {integrationDestinations?.length > 0
+              ?
+                <Select
+                  onChange={(e) => {
+                    const destinationUUID = e.target.value;
+                    if (!destinationUUID) {
+                      return;
+                    }
 
-                if (dataExporterBlock) {
-                  onChangeCodeBlock(dataExporterBlock.uuid, stringify({
-                    ...dataExporterBlockContent,
-                    destination: destinationUUID,
-                  }));
-                } else {
-                  const config = integrationDestinationsByUUID[destinationUUID]?.templates?.config;
-                  if (config) {
-                    Object.keys(config).forEach((key: string) => {
-                      config[key] = config[key] || null;
+                    if (dataExporterBlock) {
+                      onChangeCodeBlock(dataExporterBlock.type, dataExporterBlock.uuid, stringify({
+                        ...dataExporterBlockContent,
+                        destination: destinationUUID,
+                      }));
+                    } else {
+                      const config = integrationDestinationsByUUID[destinationUUID]?.templates?.config;
+                      if (config) {
+                        Object.keys(config).forEach((key: string) => {
+                          config[key] = config[key] || null;
+                        });
+
+                        if (config.hasOwnProperty('table')) {
+                          delete config.table;
+                        }
+                      }
+
+                      const upstreamBlocks = [];
+                      if (blocks?.length >= 2) {
+                        const b = blocks.find(({ uuid }) => dataLoaderBlock?.uuid !== uuid);
+                        if (b) {
+                          upstreamBlocks.push(b.uuid);
+                        }
+                      } else if (dataLoaderBlock) {
+                        upstreamBlocks.push(dataLoaderBlock.uuid);
+                      }
+
+                      addNewBlockAtIndex({
+                        content: stringify({
+                          config,
+                          destination: destinationUUID,
+                        }),
+                        language: BlockLanguageEnum.YAML,
+                        type: BlockTypeEnum.DATA_EXPORTER,
+                        upstream_blocks: upstreamBlocks,
+                      }, 1, setSelectedBlock);
+                    }
+
+                    savePipelineContent().then(() => {
+                      fetchPipeline();
                     });
-                  }
-
-                  addNewBlockAtIndex({
-                    content: stringify({
-                      destination: destinationUUID,
-                      config,
-                    }),
-                    language: BlockLanguageEnum.YAML,
-                    type: BlockTypeEnum.DATA_EXPORTER,
-                    upstream_blocks: [
-                      blocks[blocks.length - 1].uuid,
-                    ],
-                  }, 1, setSelectedBlock);
-                }
-
-                savePipelineContent().then(() => {
-                  fetchPipeline();
-                });
-              }}
-              primary
-              value={dataExporterBlockContent?.destination}
-            >
-              <option value="" />
-              {integrationDestinations.map(({ name, uuid }) => (
-                <option
-                  key={uuid}
-                  value={uuid}
+                  }}
+                  primary
+                  value={dataExporterBlockContent?.destination}
                 >
-                  {name}
-                </option>
-              ))}
-            </Select>
+                  <option value="" />
+                  {integrationDestinations.map(({ name, uuid }) => (
+                    <option
+                      key={uuid}
+                      value={uuid}
+                    >
+                      {name}
+                    </option>
+                  ))}
+                </Select>
+              :
+                <FlexContainer alignItems="center">
+                  <Spinner inverted />
+                  <Spacing ml={1} />
+                  <Headline level={5} primary>
+                    Loading destinations...
+                  </Headline>
+                </FlexContainer>
+            }
           </Spacing>
 
           {dataExporterBlock && (
@@ -924,6 +1054,7 @@ function IntegrationPipeline({
                       read the <Link
                         href={`https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/destinations/${dataExporterBlockContent.destination}/README.md`}
                         openNewWindow
+                        primary
                       >
                         {dataExporterBlockContent.destination} documentation
                       </Link>.
@@ -942,34 +1073,63 @@ function IntegrationPipeline({
                       </Text> in a previous section.
                     </Text>
 
-                    {buildVariablesTable('https://github.com/mage-ai/mage-ai/blob/master/docs/guides/pipelines/DataIntegrationPipeline.md#configure-destination')}
-                  </Spacing>
-
-                  <Spacing mb={3}>
-                    <FlexContainer alignItems="center" justifyContent="space-between">
-                      <Spacing mb={1}>
-                        <Text bold large>
-                          Automatically add new fields
-                        </Text>
-                        <Text default>
-                          Turn the toggle on if you want new table columns in each data source stream
-                          to be automatically added and synced with the data destination.
-                        </Text>
-                      </Spacing>
-
-                      <ToggleSwitch
-                        checked={!!autoAddNewFields}
-                        onCheck={() => updateAllStreams((stream: StreamType) => ({
-                          ...stream,
-                          auto_add_new_fields: !autoAddNewFields,
-                        }))}
-                      />
-                    </FlexContainer>
+                    {buildVariablesTable('https://docs.mage.ai/guides/data-integration-pipeline#configure-destination')}
                   </Spacing>
                 </>
               )}
 
               {dataExporterEditor}
+
+              <Spacing mt={3}>
+                <FlexContainer alignItems="center" justifyContent="space-between">
+                  <Spacing mr={2}>
+                    <Text bold large>
+                      Automatically add new fields
+                    </Text>
+                    <Text default>
+                      Turn the toggle on if you want new table columns in each data source stream
+                      to be automatically added and synced with the data destination.
+                    </Text>
+                  </Spacing>
+
+                  <ToggleSwitch
+                    checked={!!autoAddNewFields}
+                    disabled={!catalog?.streams}
+                    onCheck={() => updateAllStreams((stream: StreamType) => ({
+                      ...stream,
+                      auto_add_new_fields: !autoAddNewFields,
+                    }))}
+                  />
+                </FlexContainer>
+              </Spacing>
+
+              <Spacing mt={3}>
+                <FlexContainer alignItems="center" justifyContent="space-between">
+                  <Spacing mr={2}>
+                    <Text bold large>
+                      Disable column type check
+                    </Text>
+                    <Text default>
+                      By default, the value for each column is validated according to the schema
+                      property for that column.
+                      <br />
+                      If a value in a column doesn’t match its type,
+                      an error will be raised and the process will be stopped.
+                      <br />
+                      Turn this toggle on if you want to disable this strict type checking.
+                    </Text>
+                  </Spacing>
+
+                  <ToggleSwitch
+                    checked={!!disableColumnTypeCheck}
+                    disabled={!catalog?.streams}
+                    onCheck={() => updateAllStreams((stream: StreamType) => ({
+                      ...stream,
+                      disable_column_type_check: !disableColumnTypeCheck,
+                    }))}
+                  />
+                </FlexContainer>
+              </Spacing>
             </Spacing>
           )}
         </SectionStyle>

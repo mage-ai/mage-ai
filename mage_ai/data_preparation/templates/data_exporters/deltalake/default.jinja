@@ -1,0 +1,30 @@
+{% extends "data_exporters/default.jinja" %}
+{% block imports %}
+from deltalake.writer import write_deltalake
+{{ super() -}}
+{% endblock %}
+
+
+{% block content %}
+@data_exporter
+def export_data(df, *args, **kwargs):
+    """
+    Export data to a Delta Table
+
+    Docs: https://delta-io.github.io/delta-rs/python/usage.html#writing-delta-tables
+    """
+    {% block storage_options %}
+    {% endblock %}
+
+    {% block uri %}
+    {% endblock %}
+
+    write_deltalake(
+        uri,
+        data=df,
+        mode='append',          # append or overwrite
+        overwrite_schema=False, # set True to alter the schema when overwriting
+        partition_by=[],
+        storage_options=storage_options,
+    )
+{% endblock %}

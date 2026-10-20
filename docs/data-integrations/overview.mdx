@@ -1,0 +1,189 @@
+---
+title: "Overview"
+description: "Data integration is the process of synchronizing data between two systems."
+"og:image": "https://www.radicalcompliance.com/wp-content/uploads/2021/02/data-meme.gif"
+---
+
+<Frame>
+<img
+  alt="Data integrations"
+  src="https://www.radicalcompliance.com/wp-content/uploads/2021/02/data-meme.gif"
+/>
+</Frame>
+
+## Requirements
+
+<Warning>
+Data integrations are only supported when running Mage using [Docker](/getting-started/setup#using-docker).
+</Warning>
+
+## Use cases
+
+### Syncing external data → internal systems
+
+If you have data in 3rd party systems (e.g other SaaS tools) and you want that
+data available in your database, data warehouse, or data lake, you can use Mage
+to sync data between those systems.
+
+### Syncing internal data → external systems (reverse)
+
+Your internal database or data warehouse may contain application data generated
+by your users or customers. This data can be valuable if used in conjunction
+with 3rd party SaaS tools.
+
+You can use Mage to sync data from your internal systems, and have that data
+appear in various 3rd party SaaS tools.
+
+---
+
+## How to build a data integration pipeline
+
+[Documentation here](/guides/data-integration-pipeline)
+
+---
+
+## Sources
+
+A source is a system that you want to load data from and synchronize it into
+another system. A source can be a 3rd party API, SaaS, database, data warehouse,
+or a data lake.
+
+Read more about Sources:
+
+- [Technical documentation](/data-integrations/sources/overview)
+- [Add a new source](/contributing/data-integrations/add-new-source)
+
+### Available sources
+
+- [Airtable](/data-integrations/sources/airtable)
+- [Amazon S3](/data-integrations/sources/amazon_s3)
+- [Amplitude](/data-integrations/sources/amplitude)
+- [API](/data-integrations/sources/api)
+- [Azure Blob Storage](/data-integrations/sources/azure_blob_storage)
+- [BigQuery](/data-integrations/sources/bigquery)
+- [Chargebee](/data-integrations/sources/chargebee)
+- [Commercetools](/data-integrations/sources/commercetools)
+- [Couchbase](/data-integrations/sources/couchbase)
+- [Datadog](/data-integrations/sources/datadog)
+- [Dremio](/data-integrations/sources/dremio)
+- [DynamoDB](/data-integrations/sources/dynamodb)
+- [Facebook Ads](/data-integrations/sources/facebook_ads)
+- [Freshdesk](/data-integrations/sources/freshdesk)
+- [Front](/data-integrations/sources/front)
+- [Google Ads](/data-integrations/sources/google_ads)
+- [Google Analytics](/data-integrations/sources/google_analytics)
+- [Google Cloud Storage](/data-integrations/sources/google_cloud_storage)
+- [Google Search Console](/data-integrations/sources/google_search_console)
+- [Google Sheets](/data-integrations/sources/google_sheets)
+- [HubSpot](/data-integrations/sources/hubspot)
+- [Intercom](/data-integrations/sources/intercom)
+- [Knowi](/data-integrations/sources/knowi)
+- [LinkedIn Ads](/data-integrations/sources/linkedin_ads)
+- [Microsoft SQL Server](/data-integrations/sources/mssql)
+- [Mode](/data-integrations/sources/mode)
+- [Monday](/data-integrations/sources/monday)
+- [MongoDB](/data-integrations/sources/mongodb)
+- [MySQL](/data-integrations/sources/mysql)
+- [OracleDB](/data-integrations/sources/oracledb)
+- [Outreach](/data-integrations/sources/outreach)
+- [Paystack](/data-integrations/sources/paystack)
+- [Pipedrive](/data-integrations/sources/pipedrive)
+- [PostgreSQL](/data-integrations/sources/postgresql)
+- [Postmark](/data-integrations/sources/postmark)
+- [PowerBI](/data-integrations/sources/powerbi)
+- [Redshift (Amazon Web Services)](/data-integrations/sources/redshift)
+- [Salesforce](/data-integrations/sources/salesforce)
+- [SFTP](/data-integrations/sources/sftp)
+- [Snowflake](/data-integrations/sources/snowflake)
+- [Stripe](/data-integrations/sources/stripe)
+- [Tableau](/data-integrations/sources/tableau)
+- [Twitter Ads](/data-integrations/sources/twitter_ads)
+- [Zendesk](/data-integrations/sources/zendesk)
+- _Shopify (coming soon)_
+
+### Sources available in Mage Pro
+
+- [Facebook Pages](/data-integrations/sources/facebook_pages)
+- [Google Campaign Manager 360](/data-integrations/sources/google_campaign_manager_360)
+- [Google Display & Video 360](/data-integrations/sources/google_display_video_360)
+- [Instagram](/data-integrations/sources/instagram)
+- [Microsoft Ads](/data-integrations/sources/microsoft_ads)
+- [QuickBooks](/data-integrations/sources/quickbooks)
+- [Salesforce Marketing Cloud](/data-integrations/sources/salesforce_marketing_cloud)
+- [TikTok Ads](/data-integrations/sources/tiktok_ads)
+- [Instagram](/data-integrations/sources/instagram)
+- [QuickBooks](/data-integrations/sources/quickbooks)
+- [Xero](/data-integrations/sources/xero)
+- [Youtube Analytics](/data-integrations/sources/youtube_analytics)
+
+Mage adheres to the data engineering standard for data integrations called the
+[Singer Spec](https://github.com/singer-io/getting-started/blob/master/docs/SPEC.md).
+
+All sources (aka taps) that has been developed by the open-source community can
+be adapted to use in Mage. Here is a
+[short list of available ones](https://www.singer.io/#taps).
+
+<Info>
+Don’t see a source you need?
+
+Check out the next section on <b>Add a new source</b> or tell us on slack and we
+can help you build it.
+
+</Info>
+
+[Join us on Slack](https://www.mage.ai/chat)
+
+---
+
+## Destinations
+
+A destination is a system that you want to export data into. A destination can
+be a 3rd party API, SaaS, database, data warehouse, or a data lake.
+
+Read more about destinations:
+
+- [Technical documentation](/data-integrations/destinations/overview)
+- [Add a new destination](/contributing/data-integrations/add-new-destination)
+
+### Available destinations
+
+- [Amazon Web Services (AWS) Redshift](/data-integrations/destinations/redshift)
+- [Amazon Web Services (AWS) S3](/data-integrations/destinations/amazon_s3)
+- [BigQuery](/data-integrations/destinations/bigquery)
+- [Clickhouse](/data-integrations/destinations/clickhouse)
+- [Delta Lake (S3)](/data-integrations/destinations/delta_lake_s3)
+- [Delta Lake (Azure)](/data-integrations/destinations/delta_lake_azure)
+- [Elasticsearch](/data-integrations/destinations/elasticsearch)
+- [Google Cloud Storage](/data-integrations/destinations/google_cloud_storage)
+- [Kafka](/data-integrations/destinations/kafka)
+- [Microsoft SQL Server](/data-integrations/destinations/mssql)
+- [MongoDB](/data-integrations/destinations/mongodb)
+- [MySQL](/data-integrations/destinations/mysql)
+- [Opensearch](/data-integrations/destinations/opensearch)
+- [OracleDB](/data-integrations/destinations/oracledb)
+- [PostgreSQL](/data-integrations/destinations/postgresql)
+- [Salesforce](/data-integrations/destinations/salesforce)
+- [Snowflake](/data-integrations/destinations/snowflake)
+- [Trino](/data-integrations/destinations/trino)
+- _Azure Blob Storage (coming soon)_
+- _HubSpot (coming soon)_
+
+### Destinations available in Mage Pro
+
+- [Databricks](/data-integrations/destinations/databricks)
+- [DuckDB](/data-integrations/destinations/duckdb)
+- [Iceberg S3](/data-integrations/destinations/iceberg_s3)
+
+Mage adheres to the data engineering standard for data integrations called the
+[Singer Spec](https://github.com/singer-io/getting-started/blob/master/docs/SPEC.md).
+
+All destinations (aka targets) that has been developed by the open-source
+community can be adapted to use in Mage. Here is a
+[short list of available ones](https://www.singer.io/#targets).
+
+> Don’t see a destination you need?
+>
+> Check out the next section on <b>Add a new destination</b> or tell us on
+> [Slack](https://www.mage.ai/chat). and we can help you build it.
+
+[Join us on Slack](https://www.mage.ai/chat)

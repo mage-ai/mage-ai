@@ -1,0 +1,23 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": [
+        "integer"
+      ]
+    },
+    "dutyType": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "symbolicName": {
+      "type": [
+        "null",
+        "string"
+      ]
+    }
+  }
+}

@@ -1,7 +1,12 @@
 import json
+from typing import Dict
+
+import yaml
+
+from mage_ai.shared.security import filter_out_config_values
 
 
-def parse_logs_and_json(input_string: str) -> str:
+def parse_logs_and_json(input_string: str, config: Dict = None) -> str:
     logs = []
     lines = []
 
@@ -18,6 +23,30 @@ def parse_logs_and_json(input_string: str) -> str:
             lines.append(line)
 
     for log in logs:
-        print(log)
+        print(filter_out_config_values(log, config))
 
     return ''.join(lines)
+
+
+class NoDatesSafeLoader(yaml.FullLoader):
+    @classmethod
+    def remove_implicit_resolver(cls, tag_to_remove):
+        """
+        Remove implicit resolvers for a particular tag
+
+        Takes care not to modify resolvers in super classes.
+
+        We want to load datetimes as strings, not dates, because we
+        go on to serialise as json which doesn't have the advanced types
+        of yaml, and leads to incompatibilities down the track.
+        """
+        if 'yaml_implicit_resolvers' not in cls.__dict__:
+            cls.yaml_implicit_resolvers = cls.yaml_implicit_resolvers.copy()
+
+        for first_letter, mappings in cls.yaml_implicit_resolvers.items():
+            cls.yaml_implicit_resolvers[first_letter] = [(tag, regexp)
+                                                         for tag, regexp in mappings
+                                                         if tag != tag_to_remove]
+
+
+NoDatesSafeLoader.remove_implicit_resolver('tag:yaml.org,2002:timestamp')

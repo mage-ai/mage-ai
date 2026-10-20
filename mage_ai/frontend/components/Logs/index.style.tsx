@@ -36,9 +36,9 @@ function getColor({
   } else if (debug) {
     return YELLOW_LIGHT;
   } else if (error) {
-    return RED;
-  } else if (exception) {
     return PINK;
+  } else if (exception) {
+    return RED;
   } else if (info) {
     return BLUE_HIGHLIGHT;
   } else if (log) {

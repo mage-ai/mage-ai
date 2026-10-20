@@ -1,7 +1,5 @@
-from mage_ai.orchestration.db.models import PipelineRun
+from mage_ai.orchestration.db.models.schedules import PipelineRun
 import multiprocessing
-import os
-import signal
 
 
 class ExecutionProcessManager:
@@ -15,22 +13,12 @@ class ExecutionProcessManager:
             and self.pipeline_processes[pipeline_run_id].is_alive()
         )
 
-    def set_block_process(
-        self,
-        pipeline_run_id: int,
-        block_run_id: int,
-        proc: multiprocessing.Process,
-    ):
-        if pipeline_run_id not in self.block_processes:
-            self.block_processes[pipeline_run_id] = dict()
-        self.block_processes[pipeline_run_id][block_run_id] = proc
-
     def terminate_pipeline_process(self, pipeline_run_id: int) -> None:
-        if self.has_pipeline_process(
-            pipeline_run_id in self.pipeline_processes
-            and self.pipeline_processes[pipeline_run_id].is_alive()
-        ):
-            self.pipeline_processes[pipeline_run_id].terminate()
+        if self.has_pipeline_process(pipeline_run_id):
+            try:
+                self.pipeline_processes[pipeline_run_id].terminate()
+            except AttributeError as err:
+                print(f'ExecutionProcessManager.terminate_pipeline_process: {err}')
 
     def set_pipeline_process(
         self,
@@ -39,6 +27,28 @@ class ExecutionProcessManager:
     ):
         self.terminate_pipeline_process(pipeline_run_id)
         self.pipeline_processes[pipeline_run_id] = proc
+
+    def has_block_process(self, pipeline_run_id: int, block_run_id: int):
+        return (
+            pipeline_run_id in self.block_processes
+            and block_run_id in self.block_processes[pipeline_run_id]
+            and self.block_processes[pipeline_run_id][block_run_id].is_alive()
+        )
+
+    def set_block_process(
+        self,
+        pipeline_run_id: int,
+        block_run_id: int,
+        proc: multiprocessing.Process,
+    ):
+        self.terminate_block_process(pipeline_run_id, block_run_id)
+        if pipeline_run_id not in self.block_processes:
+            self.block_processes[pipeline_run_id] = dict()
+        self.block_processes[pipeline_run_id][block_run_id] = proc
+
+    def terminate_block_process(self, pipeline_run_id: int, block_run_id: int) -> None:
+        if self.has_block_process(pipeline_run_id, block_run_id):
+            self.block_processes[pipeline_run_id][block_run_id].terminate()
 
     def clean_up_processes(self, include_child_processes=True):
         """
@@ -56,15 +66,11 @@ class ExecutionProcessManager:
                     proc = block_run_procs[block_run_id]
                     if proc.is_alive():
                         proc.terminate()
-
-                        # Kill subprocess children
-                        if include_child_processes:
-                            os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
                     del block_run_procs[block_run_id]
             else:
                 for block_run_id in list(block_run_procs.keys()):
                     proc = block_run_procs[block_run_id]
-                    if not proc.is_alive():
+                    if proc and hasattr(proc, 'is_alive') and not proc.is_alive():
                         del block_run_procs[block_run_id]
             if not block_run_procs:
                 del self.block_processes[pipeline_run_id]
@@ -75,7 +81,7 @@ class ExecutionProcessManager:
                 del self.pipeline_processes[pipeline_run_id]
             else:
                 pipeline_run = PipelineRun.query.get(pipeline_run_id)
-                if pipeline_run.status == PipelineRun.PipelineRunStatus.CANCELLED:
+                if pipeline_run and pipeline_run.status == PipelineRun.PipelineRunStatus.CANCELLED:
                     pipeline_run_proc.terminate()
                     del self.pipeline_processes[pipeline_run_id]
 

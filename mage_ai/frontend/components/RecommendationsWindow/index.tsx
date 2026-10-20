@@ -14,7 +14,6 @@ import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import SuggestionType from '@interfaces/SuggestionType';
 import Text from '@oracle/elements/Text';
-
 import { Close } from '@oracle/icons';
 import {
   RowStyle,

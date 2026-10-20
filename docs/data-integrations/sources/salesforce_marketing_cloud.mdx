@@ -1,0 +1,109 @@
+---
+title: "Salesforce Marketing Cloud"
+description: "Sync campaigns, journeys, assets, subscribers, and engagement events from Salesforce Marketing Cloud using the REST and SOAP APIs."
+---
+
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="data-integration" />
+
+![Salesforce Marketing Cloud](https://upload.wikimedia.org/wikipedia/commons/f/f9/Salesforce.com_logo.svg)
+
+<br/>
+
+## Overview
+
+This source syncs marketing data from [Salesforce Marketing Cloud](https://www.salesforce.com/products/marketing-cloud/overview/) (SFMC) using both the **Marketing Cloud Engagement REST API** and the **SOAP API**. Authentication uses the OAuth 2.0 `client_credentials` flow via an installed package.
+
+<br/>
+
+## Authentication
+
+Create an **Installed Package** in Marketing Cloud:
+
+1. In Marketing Cloud, go to **Setup → Platform Tools → Apps → Installed Packages**.
+2. Click **New** and give the package a name.
+3. Under **Components**, click **Add Component → API Integration → Server-to-Server**.
+4. Grant the scopes listed below and save.
+5. Copy the **Client ID**, **Client Secret**, and the tenant subdomain from the **Authentication Base URI** (e.g. `mc563885gzs27c5t9-63k636ttgm` from `https://mc563885gzs27c5t9-63k636ttgm.auth.marketingcloudapis.com/`).
+
+### Required scopes
+
+| Area | Scope |
+|---|---|
+| Campaigns | `campaigns_read` |
+| Content Builder (assets) | `documents_and_images_read`, `saved_content_read` |
+| Journey Builder | `journeys_read` |
+| Automation Studio | `automations_read` |
+| Email Studio / SOAP | `list_and_subscribers_read`, `tracking_events_read`, `data_extensions_read` |
+
+
+## Configuration
+
+| Key | Required | Default | Description |
+|---|---|---|---|
+| `client_id` | ✅ | — | OAuth 2.0 client ID from the installed package. |
+| `client_secret` | ✅ | — | OAuth 2.0 client secret from the installed package. |
+| `subdomain` | ✅ | — | Tenant-specific subdomain. Accepts a bare subdomain (`mc563885gzs27c5t9-63k636ttgm`) or a full URL — the connector parses the subdomain automatically. |
+| `account_id` | | — | MID of the child business unit to target. Omit to use the top-level account. |
+| `start_date` | | — | ISO 8601 lower bound for incremental streams. **Required** for event streams (`sent_events`, `open_events`, `click_events`, `bounce_events`, `unsub_events`). Example: `2024-01-01T00:00:00Z`. |
+
+
+## Sample configs
+
+**Minimal — REST streams only:**
+
+```yaml
+client_id: abcdef1234567890abcdef1234567890
+client_secret: ABCDEF1234567890abcdef1234567890
+subdomain: mc563885gzs27c5t9-63k636ttgm
+```
+
+**With child business unit and event streams:**
+
+```yaml
+client_id: abcdef1234567890abcdef1234567890
+client_secret: ABCDEF1234567890abcdef1234567890
+subdomain: mc563885gzs27c5t9-63k636ttgm
+account_id: "7281234"
+start_date: "2024-01-01T00:00:00Z"
+```
+
+
+## Streams
+
+### REST streams
+
+| Stream | Replication | Key | Description |
+|---|---|---|---|
+| `campaigns` | Full table | `entity_id` | Marketing campaigns. |
+| `assets` | Incremental (`modifiedDate`) | `entity_id` | Content Builder assets — emails, images, and templates. |
+| `journeys` | Full table | `entity_id` | Journey Builder definitions including triggers, goals, and activities. |
+| `journey_statistics` | Full table | `entity_id` | Aggregate send/open/click/bounce metrics per journey, plus per-activity breakdowns. |
+| `automations` | Full table | `entity_id` | Automation Studio definitions including schedule and steps. |
+
+### SOAP streams
+
+| Stream | Replication | Key | Description |
+|---|---|---|---|
+| `subscriber_lists` | Full table | `entity_id` | Email Studio subscriber lists. |
+| `data_extensions` | Full table | `entity_id` | Data Extension definitions — name, key, sendable flag, and retention settings. |
+| `subscribers` | Full table | `entity_id` | All subscribers with email address and status. |
+| `sends` | Full table | `entity_id` | Email send job summaries with delivered/open/click/bounce counts. |
+| `sent_events` | Incremental (`EventDate`) | `entity_id` | Individual email send records per subscriber. Requires `start_date`. |
+| `open_events` | Incremental (`EventDate`) | `entity_id` | Email open tracking records per subscriber. Requires `start_date`. |
+| `click_events` | Incremental (`EventDate`) | `entity_id` | Link click records including URL. Requires `start_date`. |
+| `bounce_events` | Incremental (`EventDate`) | `entity_id` | Bounce records with category, type, and SMTP details. Requires `start_date`. |
+| `unsub_events` | Incremental (`EventDate`) | `entity_id` | Unsubscribe records per subscriber. Requires `start_date`. |
+
+Event streams use **30-day date windowing** to avoid SFMC server-side timeouts on large datasets. The `start_date` config value (or the `EventDate` bookmark from a previous sync) is used as the window start.
+
+
+## Related links
+
+- [SFMC Installed Packages](https://developer.salesforce.com/docs/marketing/marketing-cloud/guide/packages-overview.html)
+- [Marketing Cloud Engagement REST API](https://developer.salesforce.com/docs/marketing/marketing-cloud/guide/rest-api-overview.html)
+- [Marketing Cloud SOAP API](https://developer.salesforce.com/docs/marketing/marketing-cloud/guide/web_service_guide.html)
+- [OAuth 2.0 Server-to-Server Integration](https://developer.salesforce.com/docs/marketing/marketing-cloud/guide/integration-s2s-client-credentials.html)
+

@@ -28,6 +28,7 @@ function Charts({
   savePipelineContent,
   selectedBlock,
   setAnyInputFocused,
+  setErrors,
   setSelectedBlock,
   setTextareaFocused,
   textareaFocused,
@@ -49,7 +50,6 @@ function Charts({
       priority: idx,
     },
   }), {}), [runningBlocks]);
-
 
   return (
     <FlexContainer
@@ -95,6 +95,7 @@ function Charts({
               savePipelineContent={savePipelineContent}
               selected={selectedBlock?.uuid === uuid}
               setAnyInputFocused={setAnyInputFocused}
+              setErrors={setErrors}
               setSelectedBlock={setSelectedBlock}
               setTextareaFocused={setTextareaFocused}
               textareaFocused={textareaFocused}

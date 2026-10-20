@@ -1,0 +1,59 @@
+---
+title: "Postmark"
+---
+
+![Postmark](https://assets.getshieldsecurity.com/onedollarplugin.com/uploads/2020/12/postmarkapp-logo-1024x576.jpg)
+
+<br/>
+
+## Configuration
+
+To connect to the Postmark API and extract email event data, provide the following configuration parameters:
+
+| Key                    | Description                                                      | Sample Value | Required |
+| ---------------------- | ----------------------------------------------------------------- | ------------ | -------- |
+| `postmark_server_token` | Your Postmark server's API token used to authenticate requests.   | `abc123...`  | ✅        |
+| `start_date`            | Cutoff date to start syncing historical data (format: `YYYY-MM-DD`). | `2023-01-01` | ✅        |
+
+<br/>
+
+## What is Postmark?
+
+[Postmark](https://postmarkapp.com/) is a reliable transactional email service for sending and tracking important application-generated emails, such as password resets, receipts, welcome emails, and more.  
+Integrating Postmark with Mage allows you to automate the extraction of email delivery events, bounce information, and open/click tracking into your data warehouse for advanced analytics.
+
+<br/>
+
+## How to Get Your `postmark_server_token`
+
+1. Log in to your [Postmark account](https://postmarkapp.com/).
+2. Navigate to **Servers** → **API Tokens**.
+3. Copy the **Server API Token** you want to use.
+
+For more information, see Postmark's [API token documentation](https://postmarkapp.com/support/article/1008-what-are-the-account-and-server-api-tokens).
+
+<br/>
+
+## Why Integrate Postmark with Mage?
+
+- **Automated email tracking**: Extract delivery, open, click, and bounce events.
+- **Centralized analytics**: Consolidate Postmark email data with other sources in your data warehouse.
+- **Improve deliverability**: Analyze bounce reasons and optimize your sending practices.
+- **Real-time monitoring**: Stay updated on the performance of transactional emails.
+- **Scalable architecture**: Sync millions of email events without manual intervention.
+
+<br/>
+
+## Supported Streams from Postmark
+
+When integrated with Mage, the following Postmark data streams are available:
+
+- **messages_opens** — Track when recipients open your emails.
+- **messages_outbound** — Retrieve details of outbound messages sent via Postmark.
+- **stats_outbound_bounces** — Statistics on email bounces (hard, soft bounces).
+- **stats_outbound_clients** — Email client analytics (e.g., Gmail, Outlook, Apple Mail).
+- **stats_outbound_overview** — High-level summary of outbound email performance.
+- **stats_outbound_platform** — Platform analytics showing devices used by recipients.
+
+
+<br/>

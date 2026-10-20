@@ -1,7 +1,9 @@
 from mage_ai.io.base import BaseFile, FileFormat
+from mage_ai.shared.utils import files_in_path
 from pandas import DataFrame
-from typing import Union
+from typing import List, Union
 import os
+import pandas as pd
 
 
 class FileIO(BaseFile):
@@ -11,8 +13,9 @@ class FileIO(BaseFile):
 
     def load(
         self,
-        filepath: str,
-        format: FileFormat = None,
+        filepath: Union[str, os.PathLike] = None,
+        format: Union[FileFormat, str, None] = None,
+        file_directories: List[str] = None,
         **kwargs,
     ) -> DataFrame:
         """
@@ -26,13 +29,33 @@ class FileIO(BaseFile):
         Returns:
             DataFrame: Data frame object loaded from the specified data frame.
         """
-        if format is None:
-            format = self._get_file_format(filepath)
+
         with self.printer.print_msg(f'Loading data frame from \'{filepath}\''):
-            return self._read(filepath, format, **kwargs)
+            if not file_directories:
+                if format is None:
+                    format = self._get_file_format(filepath)
+
+                return self._read(filepath, format, **kwargs)
+
+            file_paths = []
+            for file_directory in file_directories:
+                file_paths += files_in_path(file_directory)
+
+            dfs = []
+            for fp in file_paths:
+                if format is None:
+                    format = self._get_file_format(fp)
+                df = self._read(fp, format, **kwargs)
+                dfs.append(df)
+
+            return pd.concat(dfs, axis=0, ignore_index=True)
 
     def export(
-        self, df: DataFrame, filepath: str, format: Union[FileFormat, str] = None, **kwargs
+        self,
+        df: DataFrame,
+        filepath: Union[str, os.PathLike],
+        format: Union[FileFormat, str, None] = None,
+        **kwargs,
     ) -> None:
         """
         Exports the input dataframe to the file specified.
@@ -49,6 +72,7 @@ class FileIO(BaseFile):
             self._write(df, format, filepath, **kwargs)
 
     def exists(
-        self, filepath: str
+        self,
+        filepath: Union[os.PathLike, str],
     ) -> bool:
         return os.path.exists(filepath)

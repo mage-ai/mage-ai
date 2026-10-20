@@ -1,11 +1,10 @@
-from mage_ai.data_preparation.models.constants import BlockType
-from mage_ai.data_preparation.variable_manager import get_variable
+from typing import Dict, List
+
 from mage_ai.data_preparation.models.block.sql.utils.shared import (
-    interpolate_input,
-    should_cache_data_from_upstream,
+    create_upstream_block_tables as create_upstream_block_tables_orig,
 )
+from mage_ai.data_preparation.models.block.sql.utils.shared import interpolate_input
 from mage_ai.io.config import ConfigKey
-from typing import Dict
 
 
 def create_upstream_block_tables(
@@ -15,54 +14,44 @@ def create_upstream_block_tables(
     configuration: Dict = None,
     execution_partition: str = None,
     cache_upstream_dbt_models: bool = False,
+    query: str = None,
+    dynamic_block_index: int = None,
+    dynamic_upstream_block_uuids: List[str] = None,
+    variables: Dict = None,
 ):
-    from mage_ai.data_preparation.models.block.dbt.utils import (
-        parse_attributes,
-        source_table_name_for_block,
-    )
-    configuration = configuration if configuration else block.configuration
-
-    for idx, upstream_block in enumerate(block.upstream_blocks):
-        if should_cache_data_from_upstream(block, upstream_block, [
-            'data_provider',
-        ], [
+    create_upstream_block_tables_orig(
+        loader,
+        block,
+        cascade_on_drop,
+        configuration,
+        execution_partition,
+        cache_upstream_dbt_models,
+        cache_keys=[
             ConfigKey.POSTGRES_DBNAME,
             ConfigKey.POSTGRES_HOST,
             ConfigKey.POSTGRES_PORT,
-        ]):
-            if BlockType.DBT == upstream_block.type and not cache_upstream_dbt_models:
-                continue
-
-            table_name = upstream_block.table_name
-
-            df = get_variable(
-                upstream_block.pipeline.uuid,
-                upstream_block.uuid,
-                'output_0',
-                partition=execution_partition,
-            )
-
-            schema_name = configuration.get('data_provider_schema')
-
-            if BlockType.DBT == block.type and BlockType.DBT != upstream_block.type:
-                attributes_dict = parse_attributes(block)
-                schema_name = attributes_dict['source_name']
-                table_name = source_table_name_for_block(upstream_block)
-
-            loader.export(
-                df,
-                schema_name,
-                table_name,
-                cascade_on_drop=cascade_on_drop,
-                drop_table_on_replace=True,
-                if_exists='replace',
-                index=False,
-                verbose=False,
-            )
+            # ConfigKey.POSTGRES_SCHEMA,
+        ],
+        query=query,
+        schema_name=loader.default_schema(),
+        dynamic_block_index=dynamic_block_index,
+        dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
+        variables=variables,
+    )
 
 
-def interpolate_input_data(block, query):
+def interpolate_input_data(
+    block,
+    query: str,
+    loader,
+    dynamic_block_index: int = None,
+    dynamic_upstream_block_uuids: List[str] = None,
+):
     return interpolate_input(
         block,
         query,
+        get_database=lambda opts: f'"{loader.default_database()}"',
+        get_schema=lambda opts: loader.default_schema(),
+        dynamic_block_index=dynamic_block_index,
+        dynamic_upstream_block_uuids=dynamic_upstream_block_uuids,
     )

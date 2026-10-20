@@ -1,0 +1,108 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": ["null", "string"]
+    },
+    "customerNumber": {
+      "type": ["null", "string"]
+    },
+    "key": {
+      "type": ["null", "string"]
+    },
+    "version": {
+      "type": ["null", "number"]
+    },
+    "createdAt": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "createdBy": {
+      "type": ["null", "object"],
+      "additionalProperties": true
+    },
+    "lastModifiedAt": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "lastModifiedBy": {
+      "type": ["null", "object"],
+      "additionalProperties": true
+    },
+    "email": {
+      "type": ["null", "string"]
+    },
+    "password": {
+      "type": ["null", "string"]
+    },
+    "stores": {
+      "type": ["null", "array"],
+      "items": {
+        "type": ["null", "object"],
+        "additionalProperties": true
+      }
+    },
+    "firstName": {
+      "type": ["null", "string"]
+    },
+    "lastName": {
+      "type": ["null", "string"]
+    },
+    "middleName": {
+      "type": ["null", "string"]
+    },
+    "title": {
+      "type": ["null", "string"]
+    },
+    "salutation": {
+      "type": ["null", "string"]
+    },
+    "dateOfBirth": {
+      "type": ["null", "string"],
+      "format": "date"
+    },
+    "companyName": {
+      "type": ["null", "string"]
+    },
+    "vatId": {
+      "type": ["null", "string"]
+    },
+    "addresses": {
+      "type": ["null", "array"],
+      "items": {
+        "type": ["null", "object"],
+        "additionalProperties": true
+      }
+    },
+    "defaultShippingAddressId": {
+      "type": ["null", "string"]
+    },
+    "shippingAddressIds": {
+      "type": ["null", "array"]
+    },
+    "defaultBillingAddressId": {
+      "type": ["null", "string"]
+    },
+    "billingAddressIds": {
+      "type": ["null", "array"]
+    },
+    "isEmailVerified": {
+      "type": ["null", "boolean"]
+    },
+    "externalId": {
+      "type": ["null", "string"]
+    },
+    "customerGroup": {
+      "type": ["null", "object"],
+      "additionalProperties": true
+    },
+    "custom": {
+      "type": ["null", "object"],
+      "additionalProperties": true
+    },
+    "locale": {
+      "type": ["null", "string"]
+    }
+  }
+}

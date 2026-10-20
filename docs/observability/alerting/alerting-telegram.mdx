@@ -1,0 +1,180 @@
+---
+title: "Alerting status updates in Telegram"
+sidebarTitle: "Telegram"
+icon: "telegram"
+description: "Get status updates in your Telegram Group."
+---
+
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<img
+  alt="Telegram"
+  src="https://cdn0.iconfinder.com/data/icons/social-media-2092/100/social-56-512.png"
+  width="300"
+/>
+
+## Overview of steps
+
+1. Set Bot with **BotFather** for Telegram
+2. Get the chat_id of your Telegram Group
+3. Update Mage project settings
+
+---
+
+## Configure alerts in the Mage Pro UI
+
+After you create your Telegram bot webhook URL, you can configure alerts in the
+Mage Pro UI instead of editing `metadata.yaml` directly:
+
+1. For project defaults, go to **Settings > Account > Alerts**.
+2. For one pipeline, open the pipeline and go to **Alerts**. Pipeline-level
+   settings override the project-level alert config for that pipeline.
+3. Choose the alert outcomes, enable Telegram, enter the webhook URL, and use
+   **Send test notification** to send a test alert before saving.
+
+You can still reference secrets with values such as
+`{{ env_var('MAGE_TELEGRAM_WEBHOOK_URL') }}`.
+
+---
+
+## Set Bot with BotFather for Telegram
+
+Follow these
+[Tutorial](https://www.directual.com/lesson-library/how-to-create-a-telegram-bot)
+to setup Bot with BotFather and **Don't Forget to add your Bot to the Group**.
+
+---
+
+## Get the chat_id of your Telegram Group
+
+1. Open https://web.telegram.org/ and Follow the instructions
+2. Click your Telegram Group and your Group chat_id is on your url like `https://web.telegram.org/a/#-7222xxxxxx`
+
+## Update Mage project settings
+
+Once you’ve set up the **Bot** and get the `chat_id` of your group, you need to set the webhook like example below:
+
+Here is an example webhook (yours may vary):
+
+```
+https://api.telegram.org/bot{your_token:from_botfather}/sendMessage?chat_id=-7222xxxxxx
+```
+
+Follow these steps to add that webhook URL to your project settings:
+
+1. Open the Mage tool in your browser (e.g. http://localhost:6789/).
+2. Open a pipeline and start editing it (e.g.
+   http://localhost:6789/pipelines/example_pipeline/edit).
+3. In your left sidebar in the file browser, scroll all the way down and click
+   on a file named `metadata.yaml`.
+4. In the `metadata.yaml` file, add a section with the following
+   configuration or update the existing `notification_config` section:
+
+    ```yaml
+    notification_config:
+      alert_on:
+        - trigger_failure
+        - trigger_passed_sla
+    ```
+
+    If you omit the `alert_on` section it will default to `trigger_failure` and `trigger_passed_sla`.
+
+    Options:
+
+    - `trigger_failure`: alert when a run of a trigger fails
+    - `trigger_success`: alert when a run of a trigger succeeds
+    - `trigger_passed_sla`: alert when a SLA is missed.
+      - In this context, SLA (Service Level Agreement) is an expected amount of time for the pipeline to complete.
+      - If the pipeline runs _longer_ than the SLA, an alert will be sent.
+
+5. In the `metadata.yaml` file, add the following values:
+
+    ```yaml
+    notification_config:
+      alert_on:
+        ...
+      telegram_config:
+        webhook_url: ...
+    ```
+
+    Change the `webhook_url` value to be the webhook URL like mentioned above.
+
+## Customize message templates
+You can customize message templates in `notification_config`. Here is an example config:
+```yaml
+notification_config:
+  alert_on:
+    ...
+  telegram_config:
+    ...
+  message_templates:
+    failure:
+      title: 'Failed to execute pipeline {pipeline_uuid} at {execution_time}'
+      summary: >
+        Failed to execute pipeline {pipeline_run_url}.
+        Pipeline uuid: {pipeline_uuid}. Trigger name: {pipeline_schedule_name}.
+        Test custom message.
+    success:
+      title: ...
+      summary: ...
+    passed_sla:
+      title: ...
+      summary: ...
+```
+You can customize the message template for `success`, `failure`, `passed_sla` scenarios. For each message template,
+you can specify the sentence on `summary` and the `title`.
+
+To interpolate variables in the message template, you can use `{variable_name}` syntax.
+Here are the supported variables:
+1. `execution_time`
+1. `pipeline_run_url`
+1. `pipeline_schedule_id`
+1. `pipeline_schedule_name`
+1. `pipeline_schedule_description`
+1. `pipeline_uuid`
+1. `error`
+    * available only for the `failure` message template
+1. `stacktrace`
+    * available only for the `failure` message template
+
+> **Note**: For `pipeline_run_url`, the default host is `http://localhost:6789`. You can specify `MAGE_PUBLIC_HOST` to be
+the host url you want to use in the notification messages.
+
+### 🚀 Pro Only: Interpolate Mage Variables in Message Templates
+
+<ProOnly source="notification" />
+
+If you're using **Mage Pro**, you can interpolate environment variables and other [Mage variables](/development/variables/referencing-variables#accessing-variables-in-mage) directly in your Telegram message templates using the familiar Jinja-like syntax:
+
+```yaml
+notification_config:
+  message_templates:
+    failure:
+      title: 'Failed to execute pipeline {pipeline_uuid} at {{ env_var('ENVIRONMENT') }} environment'
+      summary: >
+        Failed to execute pipeline {pipeline_run_url}.
+        Pipeline uuid: {pipeline_uuid}. Trigger name: {pipeline_schedule_name}.
+        Test custom message.
+```
+
+In addition to the variables mentioned above (e.g. `execution_time`, `pipeline_uuid`, etc), you can also use the
+following in your message templates in Mage Pro:
+1. `start_time`
+1. `end_time`
+1. `duration` (in seconds)
+1. `env` (this gets the value stored in the `ENV` environment variable)
+
+This makes your Telegram notifications more dynamic and context-aware — ideal for multi-environment deployments and advanced workflows.
+
+---
+
+## What next?
+
+Whenever a pipeline run is successfully completed or fails, a Telegram Group message will
+appear in the group you configured the webhook URL for.
+
+Here is an example of what that message could look like:
+
+|                                                                                                        |
+| ------------------------------------------------------------------------------------------------------ |
+| ![Telegram](https://mage-ai.github.io/assets/third-party/telegram-message-run-alert.jpg) |

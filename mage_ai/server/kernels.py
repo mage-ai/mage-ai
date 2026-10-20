@@ -1,17 +1,18 @@
-from enum import Enum
 from jupyter_client import KernelManager
 from jupyter_client.session import Session
 
 from mage_ai.data_preparation.models.constants import PipelineType
+from mage_ai.shared.enum import StrEnum
 
 
-class KernelName(str, Enum):
+class KernelName(StrEnum):
     PYSPARK = 'pysparkkernel'
     PYTHON3 = 'python3'
 
 
 PIPELINE_TO_KERNEL_NAME = {
     PipelineType.INTEGRATION: KernelName.PYTHON3,
+    PipelineType.DATABRICKS: KernelName.PYTHON3,
     PipelineType.PYTHON: KernelName.PYTHON3,
     PipelineType.PYSPARK: KernelName.PYSPARK,
     PipelineType.STREAMING: KernelName.PYTHON3,

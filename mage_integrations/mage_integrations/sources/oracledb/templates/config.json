@@ -1,0 +1,8 @@
+{
+    "host": "host_name",
+    "port": "1521",
+    "service": "exported service name",
+    "password": "password",
+    "user": "user_name"
+}
+

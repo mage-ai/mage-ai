@@ -1,0 +1,67 @@
+---
+title: "Azure Container Instance executor"
+sidebarTitle: "Azure"
+icon: "microsoft"
+description: "Execute block runs in separate container instances."
+---
+
+import { ProButton } from '/snippets/pro/button.mdx';
+import { urls } from '/snippets/variables/urls.mdx';
+
+If your Mage app is deployed on Microsoft Azure with Mage’s [Terraform](https://github.com/mage-ai/mage-ai-terraform-templates/tree/master/azure)
+scripts, you can choose to launch separate Azure container instances to execute blocks.
+
+How to configure pipeline to use Azure Container Instance executor:
+1. Update Project's metadata.yaml
+```yaml
+azure_container_instance_config:
+  cpu: 1
+  memory: 2
+```
+
+2. Update the `executor_type` of the block to `azure_container_instance` in pipeline's metadata.yaml and specify `executor_config` optionally.
+The block level executor_config will override the global executor_config.
+
+```yaml
+blocks:
+- uuid: example_data_loader
+  type: data_loader
+  upstream_blocks: []
+  downstream_blocks: []
+  executor_type: azure_container_instance
+  executor_config:
+    cpu: 1
+    memory: 2
+  ...
+```
+
+---
+
+## Resource management
+
+<Card
+  title="Get started for free"
+  href={`${urls.pro}?source=azure-executor`}
+>
+  <img
+    src="https://mage-ai.github.io/assets/pro/banner-light.png"
+    className="hidden dark:block"
+    noZoom
+  />
+  <img
+    src="https://mage-ai.github.io/assets/pro/banner-dark.png"
+    className="block dark:hidden"
+    noZoom
+  />
+
+  <br />
+
+  A fully managed service, where we maintain the infrastructure, guarantee uptime,
+  automatically scale your workloads to handle any volume of pipeline runs,
+  automatically upgrade new versions of Mage Pro only features,
+  monitor your production pipelines, and provide enterprise level support.
+</Card>
+
+<br />
+
+<ProButton source="azure-executor" />

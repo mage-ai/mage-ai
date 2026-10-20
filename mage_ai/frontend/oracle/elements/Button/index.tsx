@@ -1,7 +1,15 @@
 import React from 'react';
 import NextLink from 'next/link';
 import styled, { css } from 'styled-components';
+import { useRouter } from 'next/router';
 
+import EventPropertiesType, {
+  buildEventData,
+  EVENT_ACTION_TYPE_CLICK,
+  EVENT_COMPONENT_TYPE_BUTTON,
+  getDefaultEventParameters,
+  logEventCustom,
+} from '@interfaces/EventPropertiesType';
 import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
@@ -14,7 +22,7 @@ import {
   OUTLINE_OFFSET,
   OUTLINE_WIDTH,
 } from '@oracle/styles/units/borders';
-import { FONT_FAMILY_BOLD } from '@oracle/styles/fonts/primary';
+import { FONT_FAMILY_BOLD, FONT_FAMILY_REGULAR } from '@oracle/styles/fonts/primary';
 import { LARGE, REGULAR, SMALL } from '@oracle/styles/fonts/sizes';
 import { SHARED_LINK_STYLES } from '@oracle/elements/Link';
 import { UNIT } from '@oracle/styles/units/spacing';
@@ -28,6 +36,11 @@ export function selectOutlineColor(props) {
   return (props.theme.background || dark.background).panel;
 }
 
+export type ButtonHighlightProps = {
+  highlightOnHover?: boolean;
+  highlightOnHoverAlt?: boolean;
+};
+
 export type ButtonProps = {
   afterIcon?: any;
   backgroundColor?: string;
@@ -36,17 +49,19 @@ export type ButtonProps = {
   beforeIcon?: any;
   borderColor?: string;
   borderLess?: boolean;
-  borderRadius?: number;
+  borderRadius?: string;
   borderRadiusLeft?: boolean;
   borderRadiusRight?: boolean;
   children?: any;
+  compact?: boolean;
   danger?: boolean;
   default?: boolean;
   disabled?: boolean;
+  eventProperties?: EventPropertiesType;
   fullWidth?: boolean;
-  highlightOnHover?: boolean;
   iconOnly?: boolean;
   id?: string;
+  inline?: boolean;
   large?: boolean;
   linkProps?: {
     as?: string;
@@ -55,41 +70,76 @@ export type ButtonProps = {
   loading?: boolean;
   minWidth?: number;
   noBackground?: boolean;
+  noBold?: boolean;
   noBorder?: boolean;
   noBorderRight?: boolean;
+  noHover?: boolean;
   noHoverUnderline?: boolean;
   noPadding?: boolean;
   notClickable?: boolean;
   outline?: boolean;
   onClick?: (e?: Event | React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
+  onMouseEnter?: (e?: Event | React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
   padding?: string;
+  pill?: boolean;
   pointerEventsEnabled?: boolean;
   primary?: boolean;
+  primaryAlternate?: boolean;
   primaryGradient?: boolean;
   sameColorAsText?: boolean;
+  secondary?: boolean;
   secondaryGradient?: boolean;
   selected?: boolean;
   selectedAlt?: boolean;
   small?: boolean;
+  style?: {
+    position?: string;
+    right?: number;
+    top?: number;
+    zIndex?: number;
+  } & any;
   success?: boolean;
+  tabIndex?: number;
   target?: string;
   title?: string;
   transparent?: boolean;
   warning?: boolean;
   width?: number;
-};
+} & ButtonHighlightProps;
+
+export const SHARED_HIGHLIGHT_STYLES = css<ButtonHighlightProps>`
+  ${props => props.highlightOnHover && `
+    &:hover {
+      background-color: ${(props.theme.interactive || dark.interactive).hoverBorder} !important;
+    }
+  `}
+
+  ${props => props.highlightOnHoverAlt && `
+    &:hover {
+      background-color: ${(props.theme || dark).borders?.medium2} !important;
+    }
+  `}
+`;
 
 const SHARED_STYLES = css<{
   hasOnClick?: boolean;
 } & ButtonProps>`
   ${transition()}
+  ${SHARED_HIGHLIGHT_STYLES}
 
   border: none;
   display: block;
-  font-family: ${FONT_FAMILY_BOLD};
   padding: ${1 * UNIT}px ${1.5 * UNIT}px;
   position: relative;
   z-index: 0;
+
+  ${props => !props.noBold && `
+    font-family: ${FONT_FAMILY_BOLD};
+  `}
+
+  ${props => props.noBold && `
+    font-family: ${FONT_FAMILY_REGULAR};
+  `}
 
   ${props => !props.hasOnClick && `
     &:hover {
@@ -107,10 +157,6 @@ const SHARED_STYLES = css<{
 
   ${props => props.default && `
     color: ${(props.theme.content || dark.content).default};
-  `}
-
-  ${props => props.borderColor && `
-    border-color: ${props.borderColor};
   `}
 
   ${props => !props.noBackground && `
@@ -133,6 +179,10 @@ const SHARED_STYLES = css<{
     padding: ${props.padding} !important;
   `}
 
+  ${props => !props.noPadding && props.compact && `
+    padding: ${UNIT / 2}px ${UNIT}px;
+  `}
+
   ${props => props.noPadding && `
     padding: 0;
   `}
@@ -149,8 +199,12 @@ const SHARED_STYLES = css<{
     border-width: 1px;
   `}
 
-  ${props => !props.borderRadiusLeft && !props.borderRadiusRight && !props.noBorder && `
+  ${props => !props.borderRadiusLeft && !props.borderRadiusRight && `
     border-radius: ${BORDER_RADIUS}px;
+  `}
+
+  ${props => props.pill && `
+    border-radius: ${UNIT * 3}px;
   `}
 
   ${props => (props.noBorder || props.borderLess) && `
@@ -158,7 +212,7 @@ const SHARED_STYLES = css<{
   `}
 
   ${props => props.borderRadius && `
-    border-radius: ${props.borderRadius}px;
+    border-radius: ${props.borderRadius} !important;
   `}
 
   ${props => !props.borderRadiusLeft && props.borderRadiusRight && `
@@ -211,12 +265,6 @@ const SHARED_STYLES = css<{
     background-color: transparent;
   `}
 
-  ${props => props.highlightOnHover && `
-    &:hover {
-      background-color: ${(props.theme.interactive || dark.interactive).hoverBorder};
-    }
-  `}
-
   ${props => props.outline && !props.disabled && !props.notClickable && `
     &:hover {
       box-shadow:
@@ -236,7 +284,8 @@ const SHARED_STYLES = css<{
   `}
 
   ${props => !props.disabled && !props.notClickable && !props.outline && `
-    &:hover {
+    &:hover,
+    &:focus {
       border-color: ${(props.theme.interactive || dark.interactive).hoverBorder};
     }
     &:active {
@@ -244,15 +293,32 @@ const SHARED_STYLES = css<{
     }
   `}
 
+  ${props => props.secondary && !props.disabled && `
+    background-color: ${(props.theme.interactive || dark.interactive).defaultBackground};
+    border-color: ${(props.theme || dark).borders.dark};
+  `}
+
   ${props => props.primary && !props.disabled && `
     background-color: ${(props.theme.interactive || dark.interactive).linkPrimary};
     border-color: ${(props.theme.interactive || dark.interactive).linkPrimary};
     color: ${(props.theme.monotone || dark.monotone).white};
+  `}
 
-    &:hover {
-      background-color: ${(props.theme.interactive || dark.interactive).linkPrimaryHover};
-      border-color: ${(props.theme.interactive || dark.interactive).linkPrimary};
+  ${props => props.primary && !props.disabled && !props.notClickable && `
+    &:hover,
+    &:focus,
+    &:active {
+      background-color: ${(props.theme.interactive || dark.interactive).linkPrimaryHover} !important;
+      border-color: ${(props.theme.interactive || dark.interactive).linkPrimary} !important;
     }
+  `}
+
+  ${props => props.primaryAlternate && `
+    background-color: ${(props.theme.brand || dark.brand).wind400};
+  `}
+
+  ${props => props.borderColor && `
+    border-color: ${props.borderColor};
   `}
 
   ${props => props.secondaryGradient && `
@@ -293,30 +359,55 @@ const SHARED_STYLES = css<{
 `;
 
 const ButtonStyle = styled.button`
-  ${SHARED_STYLES};
+  ${SHARED_STYLES}
 `;
 
 const AnchorStyle = styled.a`
-  ${SHARED_STYLES};
+  ${SHARED_STYLES}
   ${SHARED_LINK_STYLES}
+
+  ${props => props.disabled && `
+    pointer-events: none;
+  `}
 `;
 
 const Button = ({
   afterIcon,
   beforeIcon,
   children,
+  compact,
+  danger,
   disabled,
+  eventProperties,
   iconOnly,
   id,
   linkProps,
   loading,
   onClick,
+  secondary,
   ...props
 }: ButtonProps, ref) => {
+  const router = useRouter();
+  const query = router?.query;
   const iconProps = {
     disabled,
     size: UNIT * 1.5,
   };
+
+  const {
+    eventActionType = EVENT_ACTION_TYPE_CLICK,
+    eventComponentType = EVENT_COMPONENT_TYPE_BUTTON,
+    eventParameters: eventParametersProp = {},
+  } = eventProperties || {};
+  const defaultEventParameters = getDefaultEventParameters(eventParametersProp, query);
+  const {
+    eventName,
+    eventParameters,
+  } = buildEventData({
+    actionType: eventActionType,
+    componentType: eventComponentType,
+    parameters: defaultEventParameters,
+  });
 
   const {
     as: asHref,
@@ -325,20 +416,31 @@ const Button = ({
   const ElToUse = (asHref || linkHref) ? AnchorStyle : ButtonStyle;
 
   const el = (
+    // @ts-ignore
     <ElToUse
       {...props}
+      compact={compact}
+      danger={danger}
       disabled={disabled}
-      hasOnClick={!!onClick || asHref || linkHref}
+      hasOnClick={!!onClick || !!asHref || !!linkHref}
       iconOnly={iconOnly}
       id={id}
       onClick={onClick
         ? (e) => {
           e?.preventDefault();
+          const updatedEventParameters = {
+            ...eventParameters,
+          };
+          if (typeof children === 'string') {
+            updatedEventParameters.label = children;
+          }
+          logEventCustom(eventName, eventParameters);
           onClick?.(e);
         }
         : null
       }
       ref={ref}
+      secondary={secondary}
     >
       <FlexContainer
         alignItems="center"
@@ -354,7 +456,7 @@ const Button = ({
             </Flex>
           </Spacing>
         )}
-        {loading && <Spinner />}
+        {loading && <Spinner inverted={danger || secondary} size={compact ? 20 : 24} />}
         {!loading && (
           <Flex>
             {!iconOnly && children}

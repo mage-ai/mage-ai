@@ -1,0 +1,20 @@
+{
+    "type": ["null", "object"],
+    "properties": {
+      "issues": {
+        "type": ["null", "string"]
+      },
+      "checks": {
+        "type": ["null", "string"]
+      },
+      "metadata": {
+        "type": ["null", "string"]
+      },
+      "contents": {
+        "type": ["null", "string"]
+      },
+      "deployments": {
+        "type": ["null", "string"]
+      }
+    }
+  }

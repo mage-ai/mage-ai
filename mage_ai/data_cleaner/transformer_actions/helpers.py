@@ -1,8 +1,8 @@
+import numpy as np
+
 from mage_ai.data_cleaner.column_types.constants import ColumnType
 from mage_ai.data_cleaner.shared.utils import parse_list
-from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Operator, VariableType
-import numpy as np
-import re
+from mage_ai.data_cleaner.transformer_actions.constants import ActionType, VariableType
 
 DAY_SECONDS = 86400
 HOUR_SECONDS = 3600
@@ -10,7 +10,12 @@ HOUR_SECONDS = 3600
 
 def convert_col_type(df_col, col_type):
     if col_type == ColumnType.NUMBER:
-        return df_col.replace(r'^\s*$', 0, regex=True).fillna(0).astype(np.int64)
+        return (
+            df_col.replace(r'^\s*$', 0, regex=True)
+            .fillna(0)
+            .infer_objects(copy=False)
+            .astype(np.int64)
+        )
     elif col_type == ColumnType.NUMBER_WITH_DECIMALS:
         return df_col.dropna().astype(float)
     elif col_type == ColumnType.TEXT:
@@ -35,14 +40,19 @@ def convert_value_type(feature_uuid, action, value):
 
 
 def drop_na(df):
-    return df.replace(r'^\s*$', np.nan, regex=True).dropna()
+    return (
+        df.replace(r'^\s*$', np.nan, regex=True)
+        .infer_objects(copy=False)
+        .dropna()
+    )
 
 
 def extract_join_feature_set_version_id(payload):
     if payload['action_type'] != ActionType.JOIN:
         return None
     join_feature_set_version_id = payload['action_arguments'][0]
-    if type(join_feature_set_version_id) == str and join_feature_set_version_id.startswith('%{'):
+    if isinstance(join_feature_set_version_id, str) and \
+            join_feature_set_version_id.startswith('%{'):
 
         join_feature_set_version_id = next(
             v['id']

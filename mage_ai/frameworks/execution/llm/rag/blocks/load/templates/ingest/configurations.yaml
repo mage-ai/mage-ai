@@ -1,0 +1,32 @@
+files:
+  description: 'Load files'
+  name: 'Local file loader'
+  inputs:
+    text:
+      style:
+        monospace: true
+      type: text_field
+  variables:
+    path:
+      description: 'Path to file directory'
+      name: 'Directory path'
+      input: text
+      required: true
+      types:
+        - string
+github:
+  description: 'Fetch GitHub repository'
+  name: 'GitHub repository loader'
+  inputs:
+    text:
+      style:
+        monospace: true
+      type: text_field
+  variables:
+    url:
+      description: 'GitHub repository URL'
+      name: 'Repo URL'
+      input: text
+      required: true
+      types:
+        - string

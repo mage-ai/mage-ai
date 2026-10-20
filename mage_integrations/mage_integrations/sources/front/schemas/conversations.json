@@ -1,0 +1,40 @@
+{
+  "type": ["null", "object"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": ["null", "string"]
+    },
+    "subject": {
+      "type": ["null", "string"]
+    },
+    "status": {
+      "type": ["null", "string"]
+    },
+    "assignee": {
+      "type": ["null", "object"],
+      "additionalProperties": true
+    },
+    "recipient": {
+      "type": ["null", "object"],
+      "additionalProperties": true
+    },
+    "tags": {
+      "type": ["null", "array"],
+      "items": {
+        "type": ["null", "object"],
+        "additionalProperties": true
+      }
+    },
+    "last_message": {
+      "type": ["null", "object"],
+      "additionalProperties": true
+    },
+    "created_at": {
+      "type": ["null", "number"]
+    },
+    "is_private": {
+      "type": ["null", "boolean"]
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+    "type": "object",
+    "properties": {
+        "contact-id": {
+            "type": ["integer"]
+        },
+        "company-id": {
+            "type": ["integer"]
+        }
+    },
+    "additionalProperties": false
+}

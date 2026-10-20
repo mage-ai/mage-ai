@@ -19,6 +19,7 @@ class GoogleSearchConsole(Source):
         super().__init__(**kwargs)
 
         self.connection = GoogleSearchConsoleConnection(
+            email=self.config.get('email'),
             path_to_credentials_json_file=self.config['path_to_credentials_json_file'],
         )
 

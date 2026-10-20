@@ -1,0 +1,19 @@
+{
+  "type": ["null", "object"],
+  "additionalProperties": false,
+  "properties": {
+    "_sdc_repository": {
+      "type": ["string"]
+    },
+    "user": {
+      "$ref": "shared/user.json#/"
+    },
+    "starred_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "user_id": {
+      "type": ["null", "integer"]
+    }
+  }
+}

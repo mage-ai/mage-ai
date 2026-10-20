@@ -1,7 +1,6 @@
 from datetime import datetime as dt
 from mage_ai.data_cleaner.cleaning_rules.fix_syntax_errors import FixSyntaxErrors
 from mage_ai.data_cleaner.column_types.constants import ColumnType
-from mage_ai.data_cleaner.statistics.calculator import StatisticsCalculator
 from mage_ai.tests.base_test import TestCase
 import pandas as pd
 import numpy as np

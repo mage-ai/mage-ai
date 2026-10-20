@@ -1,0 +1,50 @@
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": ["null", "string"]
+    },
+    "version": {
+      "type": ["null", "number"]
+    },
+    "key": {
+      "type": ["null", "string"]
+    },
+    "sku": {
+      "type": ["null", "string"]
+    },
+    "quantityOnStock": {
+      "type": ["null", "integer"]
+    },
+    "availableQuantity": {
+      "type": ["null", "integer"]
+    },
+    "restockableInDays": {
+      "type": ["null", "integer"]   
+    },
+    "expectedDelivery": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "custom": {
+      "type": ["null", "object"],
+      "additionalProperties": true
+    },
+    "createdAt": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "createdBy": {
+      "type": ["null", "object"],
+      "additionalProperties": true
+    },
+    "lastModifiedAt": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "lastModifiedBy": {
+      "type": ["null", "object"],
+      "additionalProperties": true
+    }
+  }
+}

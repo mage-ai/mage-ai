@@ -1,0 +1,118 @@
+---
+title: "Overview"
+---
+
+Streaming pipelines in Mage are designed to process data in real-time as it arrives, rather than in batches at scheduled intervals. This feature is particularly beneficial for use cases where immediate data processing is crucial, such as real-time analytics, monitoring, and decision-making systems.
+
+One of the key benefits of streaming pipelines in Mage is the reduction in latency from data ingestion to actionable insights. For example, a technology solutions company was able to reduce the latency of transforming stream data and writing to MongoDB from 1.5 seconds to 200ms, even for larger size messages, by replacing Spark Structured Streaming with Mage's streaming pipelines. This represents a significant improvement in performance, enabling faster response times and more timely data-driven actions.
+
+Another benefit is the simplification of the data pipeline architecture. Streaming pipelines in Mage allow for a more straightforward setup compared to other tools that may require complex configurations and tuning for performance. This ease of use can lead to increased developer productivity and a lower barrier to entry for teams to implement real-time data processing solutions
+
+## Case study
+
+The use case where streaming pipelines in Mage outperform Spark Structured Streaming involves processing streaming data with high efficiency and low latency. Specifically, the example provided involves a company that needed to transform stream data and write it to MongoDB.
+
+Using Spark Structured Streaming on Databricks for this task, the company experienced an average latency of 1.2 to 1.9 seconds, and for larger size messages, the latency could go up to 3 to 4 seconds. This level of latency was not optimal for their requirements, which necessitated a more efficient solution.
+
+Upon switching to Mage's streaming pipelines, they were able to significantly reduce the latency of their data processing and writing operations to MongoDB. They achieved a latency of less than 200 milliseconds, even for larger size messages. This represents a substantial improvement over their previous setup with Spark Structured Streaming, making Mage's streaming pipelines a better choice for their specific use case.
+
+## Performance difference
+
+Spark Streaming processes data in micro-batches, which inherently introduces a delay as data is collected over a period before being processed. This micro-batching approach, while effective for many use cases, is not truly real-time. 
+
+Mage’s performance advantage over Spark Streaming in real-time data processing scenarios include focus on real-time streaming (as opposed to micro-batching), simpler configuration and setup process, and reduced need for performance tuning. It’s designed with streaming pipelines that can handle data in real-time, reducing latency significantly for applications that require immediate data processing and insights.
+
+## Benefits
+
+The key benefits of using Mage's streaming pipelines in this context include:
+
+1. **Reduced latency**
+    1. Mage’s streaming pipelines provided a drastic reduction in latency, from seconds to milliseconds, which is crucial for real-time data processing and analytics applications.
+2. **Simplicity and efficiency**
+    1. Mage’s approach to streaming pipelines allows for a more straightforward and efficient data processing workflow, reducing the complexity and overhead associated with managing Spark Structured Streaming jobs.
+3. **Scalability and flexibility**
+    1. Mage’s streaming pipelines are designed to be scalable and flexible, accommodating varying data volumes and processing requirements without significant adjustments to the infrastructure.
+
+This use case demonstrates the effectiveness of Mage’s streaming pipelines in scenarios where low latency and high efficiency are critical, making it a superior alternative to Spark Structured Streaming for specific real-time data processing tasks.
+
+---
+
+## Introduction
+
+Each streaming pipeline has three components:
+- Source: The data stream source to consume message from.
+- Transformer: Write python code to transform the message before writing to destination.
+- Sink (destination): The data stream destination to write message to.
+
+Check out this [tutorial](/guides/streaming-pipeline#create-a-new-pipeline) to set up an example streaming pipeline.
+
+<Note>In version `0.8.80` or greater.</Note>
+
+You can build a streaming pipeline with one source, multiple transformers, and multiple sinks. Here is an example streaming
+pipeline:
+![Complex streaming pipeline](https://media.graphassets.com/4ZWHyLpgTESu0rB1sXnP)
+
+## Supported sources
+- [Amazon SQS](/streaming/sources/amazon-sqs)
+- [Azure Event Hub](/streaming/sources/azure-event-hub)
+- [Google Cloud PubSub](/streaming/sources/google-cloud-pubsub)
+- [Kafka](/streaming/sources/kafka)
+- [Kinesis](/streaming/sources/kinesis)
+- [RabbitMQ](/guides/streaming-pipeline-rabbitmq)
+
+## Supported sinks (destinations)
+
+- [Amazon S3](/streaming/destinations/amazon-s3)
+- [BigQuery](/streaming/destinations/bigquery)
+- [ClickHouse](/streaming/destinations/clickhouse)
+- [DuckDB](/streaming/destinations/duckdb)
+- [Dummy](/streaming/destinations/dummy)
+- [Elasticsearch](/streaming/destinations/elasticsearch)
+- [Kafka](/streaming/destinations/kafka)
+- [Kinesis](/streaming/destinations/kinesis)
+- [MongoDB](/streaming/destinations/mongodb)
+- [Microsoft SQL Server](/streaming/destinations/mssql)
+- [MySQL](/streaming/destinations/mysql)
+- [Opensearch](/streaming/destinations/opensearch)
+- [Postgres](/streaming/destinations/postgres)
+- [Redshift](/streaming/destinations/redshift)
+- [Snowflake](/streaming/destinations/snowflake)
+- [Trino](/streaming/destinations/trino)
+
+## Test pipeline execution
+After finishing configuring the streaming pipeline, you can click the button `Execution pipeline` to test streaming pipeline execution.
+
+## Run pipeline in production
+Create the trigger in [triggers page](/design/data-pipeline-management#create-trigger) to run streaming pipelines in production.
+
+### Executor count
+If you want to run multiple executors at the same time to scale the streaming pipeline execution, you can set the `executor_count` variable
+in the pipeline's metadata.yaml file. Here is an example:
+```yaml
+blocks:
+- ...
+- ...
+executor_count: 10
+name: test_streaming_pipeline
+type: streaming
+uuid: test_streaming_pipeline
+```
+
+### Executor type
+When running Mage on Kubernetes cluster, you can also configure streaming pipeline to be run on separate k8s pods by setting `executor_type`
+field in the pipeline's metadata.yaml to `k8s`.
+
+Example config:
+```yaml
+blocks:
+- ...
+- ...
+executor_type: k8s
+name: test_streaming_pipeline
+type: streaming
+uuid: test_streaming_pipeline
+```
+
+## Contributing guide
+
+Follow this [doc](contributing) to add a new source or destination (sink) to Mage streaming pipeline.

@@ -1,0 +1,211 @@
+---
+title: "Monitoring with Prometheus"
+icon: "fire-flame-curved"
+sidebarTitle: "Prometheus"
+---
+
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+## Enable Prometheus
+
+You will need to add `ENABLE_PROMETHEUS` environment variable as `true` in order to
+enable Prometheus style metrics on the \<BASE_PATH\>/metrics route.
+
+## Prometheus metrics
+
+When enabled, Mage will publish Metrics for the HTTP Server (Tornado) as well as for
+the Python Runtime. The /metrics route will be updated on-demand to respond to scrape requests.
+
+## Kubernetes resource usage in Mage Pro
+
+<ProOnly source="kubernetes-resource-usage" />
+
+In Mage Pro, Kubernetes executor resource usage summaries can optionally read
+historical CPU and memory samples from Prometheus. Set
+`K8S_RESOURCE_USAGE_PROMETHEUS_URL` to your Prometheus base URL to make
+Prometheus the preferred source for K8s resource usage metrics. If Prometheus is
+not configured or does not return samples for the run pod, Mage falls back to the
+Kubernetes Metrics API when it is available.
+
+Mage queries Prometheus for the completed run pod by namespace and pod name. CPU
+usage is read from `container_cpu_usage_seconds_total`, and memory usage is read
+from `container_memory_working_set_bytes`. The stored samples power the
+**Resources** tab on pipeline run pages and the K8s resource usage panel in
+pipeline monitoring.
+
+### Set up Prometheus for resource usage
+
+For self-hosted or private-cloud Mage Pro clusters, install Prometheus in the
+same Kubernetes cluster as the Mage deployment and expose it to the Mage server
+pod through an internal Kubernetes service. Keep Prometheus as a `ClusterIP`
+service unless your platform already provides an authenticated internal gateway.
+
+Install Prometheus separately from the Mage Pro Helm chart:
+
+```bash
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+
+helm upgrade --install prometheus prometheus-community/kube-prometheus-stack \
+  --namespace monitoring \
+  --create-namespace
+```
+
+After installation, confirm the Prometheus service name in your cluster:
+
+```bash
+kubectl get svc -n monitoring | grep prometheus
+```
+
+The default service name from `kube-prometheus-stack` is commonly
+`prometheus-kube-prometheus-prometheus`, but it can differ based on the Helm
+release name and chart values.
+
+### Verify required metrics
+
+Mage Pro needs cAdvisor container CPU and memory metrics. Port-forward
+Prometheus, then check that the metrics exist for pods in the namespace where
+K8s executor jobs run:
+
+```bash
+kubectl -n monitoring port-forward svc/prometheus-kube-prometheus-prometheus 9090:9090
+```
+
+```bash
+curl -G http://localhost:9090/api/v1/query \
+  --data-urlencode 'query=count(container_cpu_usage_seconds_total{namespace="mage",pod!=""})'
+
+curl -G http://localhost:9090/api/v1/query \
+  --data-urlencode 'query=count(container_memory_working_set_bytes{namespace="mage",pod!=""})'
+```
+
+Replace `mage` with the namespace used by your K8s executor pods. If either
+query returns `0`, confirm that Prometheus is scraping kubelet/cAdvisor metrics
+for that namespace before enabling Mage Pro resource usage collection.
+
+### Configure Mage Pro
+
+Set the Prometheus URL on the Mage Pro web/server deployment. Use the in-cluster
+service DNS name so traffic stays inside the cluster:
+
+```yaml
+K8S_RESOURCE_USAGE_PROMETHEUS_URL: http://prometheus-kube-prometheus-prometheus.monitoring.svc:9090
+K8S_RESOURCE_USAGE_PROMETHEUS_STEP_SECONDS: "15"
+K8S_RESOURCE_USAGE_PROMETHEUS_COMPLETION_DELAY_SECONDS: "15"
+K8S_RESOURCE_USAGE_PROMETHEUS_TIMEOUT_SECONDS: "5"
+K8S_RESOURCE_USAGE_PROMETHEUS_VERIFY_TLS: "true"
+```
+
+If Prometheus is behind an authenticated proxy, configure either bearer token
+auth:
+
+```yaml
+K8S_RESOURCE_USAGE_PROMETHEUS_BEARER_TOKEN: "<token>"
+```
+
+or basic auth:
+
+```yaml
+K8S_RESOURCE_USAGE_PROMETHEUS_USERNAME: "<username>"
+K8S_RESOURCE_USAGE_PROMETHEUS_PASSWORD: "<password>"
+```
+
+Bearer token auth takes precedence over basic auth when both are set.
+
+### Managed cloud deployments
+
+For managed cloud deployments, do not configure customer Mage Pro clusters to
+query a shared Prometheus service directly. Route resource usage requests
+through a tenant-aware gateway, such as `mage-pro-api`, so authentication,
+authorization, and tenant label scoping happen before Prometheus is queried.
+
+### Kubernetes Metrics API fallback
+
+When `K8S_RESOURCE_USAGE_PROMETHEUS_URL` is unset, Mage Pro can use the
+Kubernetes Metrics API as a best-effort fallback. The fallback samples active
+K8s executor pods while the job is still running, then stores average and peak
+CPU/RAM from the collected snapshots. It does not provide historical pod
+metrics after Kubernetes removes the pod, so Prometheus is still recommended for
+completed runs, fast runs, and long-term pipeline monitoring history.
+
+Install Metrics Server if your cluster does not already expose
+`metrics.k8s.io`:
+
+```bash
+helm repo add metrics-server https://kubernetes-sigs.github.io/metrics-server/
+helm repo update
+
+helm upgrade --install metrics-server metrics-server/metrics-server \
+  --namespace kube-system
+```
+
+Verify the APIService is available:
+
+```bash
+kubectl get apiservice v1beta1.metrics.k8s.io
+```
+
+Verify Metrics Server returns pod metrics in the namespace where K8s executor
+jobs run:
+
+```bash
+kubectl top pods -n <job-namespace>
+```
+
+The Mage service account that runs the web/server process must be able to read
+pod metrics:
+
+```bash
+kubectl auth can-i get pods.metrics.k8s.io \
+  --as system:serviceaccount:<mage-namespace>:<mage-service-account>
+```
+
+If the command returns `no`, grant read access to `pods.metrics.k8s.io` in the
+namespace where job pods run:
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: mage-k8s-metrics-reader
+  namespace: <job-namespace>
+rules:
+  - apiGroups:
+      - metrics.k8s.io
+    resources:
+      - pods
+    verbs:
+      - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: mage-k8s-metrics-reader
+  namespace: <job-namespace>
+subjects:
+  - kind: ServiceAccount
+    name: <mage-service-account>
+    namespace: <mage-namespace>
+roleRef:
+  kind: Role
+  name: mage-k8s-metrics-reader
+  apiGroup: rbac.authorization.k8s.io
+```
+
+If the UI shows the Metrics API fallback as unavailable, check that the run used
+the Kubernetes executor, that Mage identified the job pod, that the pod stayed
+running long enough to be sampled, and that `kubectl top pods` works for active
+pods in the job namespace.
+
+### Configuration reference
+
+| Variable | Description | Default |
+| --- | --- | --- |
+| `K8S_RESOURCE_USAGE_PROMETHEUS_URL` | Prometheus base URL used for Mage Pro K8s resource usage summaries. Leave unset to use only the Kubernetes Metrics API fallback. | — |
+| `K8S_RESOURCE_USAGE_PROMETHEUS_BEARER_TOKEN` | Bearer token for Prometheus requests. Takes precedence over basic auth when set. | — |
+| `K8S_RESOURCE_USAGE_PROMETHEUS_USERNAME` | Username for Prometheus basic authentication. | — |
+| `K8S_RESOURCE_USAGE_PROMETHEUS_PASSWORD` | Password for Prometheus basic authentication. | — |
+| `K8S_RESOURCE_USAGE_PROMETHEUS_TIMEOUT_SECONDS` | Request timeout for each Prometheus query. | `5` |
+| `K8S_RESOURCE_USAGE_PROMETHEUS_STEP_SECONDS` | Query range step used when sampling each completed run pod. | `15` |
+| `K8S_RESOURCE_USAGE_PROMETHEUS_COMPLETION_DELAY_SECONDS` | Delay before retrying Prometheus once for completed runs that initially return too few samples. | `K8S_RESOURCE_USAGE_PROMETHEUS_STEP_SECONDS` |
+| `K8S_RESOURCE_USAGE_PROMETHEUS_VERIFY_TLS` | Set to `0`, `false`, `no`, or `off` to skip TLS certificate verification for Prometheus requests. | `true` |

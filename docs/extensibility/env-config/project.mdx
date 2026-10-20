@@ -1,0 +1,119 @@
+---
+title: Project configuration environment overrides
+sidebarTitle: "Project configuration"
+description: "Add environment-specific overrides for your project configuration."
+icon: "briefcase"
+---
+
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="env-specific-config" />
+
+### Location of project configuration
+
+Each project in Mage has a `metadata.yaml` configuration file located in the
+project's root directory. For example, if you had a project called `your_project`,
+the folder structure for that project might look something like this:
+
+```
+your_project/
+├─ pipelines/
+├─ data_loaders/
+├─ transformers/
+├─ data_exporters/
+├─ .../
+├─ io_config.yaml
+├─ metadata.yaml
+├─ requirements.txt
+├─ ...
+```
+
+### **Override project config based on environment**
+
+In the project's `metadata.yaml` config file, add an `overrides` key at the top-level
+(no indentations) with the name of your environment (e.g. `prod`, `dev`, `test`) under
+the `overrides` key and indented once. Then under the environment name key, add the
+properties of your base project config that you want to override. Make sure the
+indentations of the properties match those of the base config. Any environment-specific
+overrides will REPLACE the matching property in the base config, so be careful when
+overriding properties with nested values.
+
+<Note>
+The environment name should match the environment defined in the `ENV`
+[environment variable](https://docs.mage.ai/development/variables/environment-variables).
+</Note>
+
+### Example project config file with environment overrides
+
+```yaml
+# your_project/metadata.yaml
+project_type: standalone
+
+variables_dir: ~/.mage_data
+remote_variables_dir: s3://bucket/path_prefix
+
+variables_retention_period: '90d'
+
+emr_config:
+  master_instance_type: 'r5.4xlarge'
+  slave_instance_type: 'r5.4xlarge'
+  master_security_group: 'sg-xxxxxxxxxxxx'
+  slave_security_group: 'sg-yyyyyyyyyyyy'
+  ec2_key_name: '[ec2_key_pair_name]'
+
+spark_config:
+  app_name: 'my spark app'
+  spark_master: 'local'
+  executor_env: {}
+  spark_jars: []
+  spark_home:
+  others: {}
+  use_custom_session: false
+  custom_session_var_name: 'spark'
+
+help_improve_mage: true
+notification_config:
+  alert_on:
+  - trigger_failure
+  - trigger_passed_sla
+  slack_config:
+    webhook_url: "{{ env_var('MAGE_SLACK_WEBHOOK_URL') }}"
+  teams_config:
+    webhook_url: "{{ env_var('MAGE_TEAMS_WEBHOOK_URL') }}"
+project_uuid: 123456781234abcd1234abcde123456
+features:
+  add_new_block_v2: true
+  code_block_v2: true
+  command_center: true
+  custom_design: true
+  data_integration_in_batch_pipeline: true
+  dbt_v2: true
+  interactions: true
+  display_local_timezone: true
+  notebook_block_output_split_view: true
+  operation_history: true
+  polars: true
+  automatic_kernel_cleanup: false
+pipelines:
+  settings:
+    triggers:
+      save_in_code_automatically: true
+
+overrides:
+  dev:
+    help_improve_mage: false
+    pipelines:
+      settings:
+        triggers:
+          save_in_code_automatically: false
+    features:
+      automatic_kernel_cleanup: true
+      global_hooks: true
+```
+
+In the example above when in the `dev` environment, the project's nested configuration
+property of `save_in_code_automatically` will be overridden to be `false` (instead of
+`true` as defined in the base config). The other properties (i.e. `help_improve_mage`,
+`automatic_kernel_cleanup`, and `global_hooks`) will also be overridden.
+Other environments (not `dev`) will not utilize the `overrides` section.

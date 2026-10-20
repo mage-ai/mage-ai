@@ -1,39 +1,38 @@
+from typing import Dict, Generator, List
+
+from singer.schema import Schema
+
 from mage_integrations.sources.base import Source, main
-from mage_integrations.sources.catalog import Catalog
 from mage_integrations.sources.chargebee.client import ChargebeeClient
-from mage_integrations.sources.chargebee.state import save_state
 from mage_integrations.sources.chargebee.streams import (
-    STREAMS,
     ITEM_MODEL_AVAILABLE_STREAMS,
     PLAN_MODEL_AVAILABLE_STREAMS,
+    STREAMS,
 )
-from mage_integrations.sources.chargebee.streams.base import is_selected
-from singer.schema import Schema
-from typing import Dict, Generator, List
-import singer
 
-
-LOGGER = singer.get_logger()
 
 class Chargebee(Source):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        self.client = ChargebeeClient(self.config)
+        self.client = ChargebeeClient(self.config or {})
 
     def load_data(
         self,
         stream,
         bookmarks: Dict = None,
-        query: Dict = {},
+        query: Dict = None,
         **kwargs,
     ) -> Generator[List[Dict], None, None]:
+        if query is None:
+            query = {}
         tap_stream_id = stream.tap_stream_id
         stream_obj = STREAMS[tap_stream_id](
             self.config,
             self.state,
             stream,
-            self.client
+            self.client,
+            logger=self.logger,
         )
 
         return stream_obj.load_data()
@@ -49,36 +48,35 @@ class Chargebee(Source):
 
     def load_schemas_from_folder(self) -> Dict:
         site_name = self.config.get('site')
-        LOGGER.info("Site Name {}".format(site_name))
+        self.logger.info("Site Name {}".format(site_name))
         configuration_url = 'https://{}.chargebee.com/api/v2/configurations'.format(site_name)
         response = self.client.make_request(
             url=configuration_url,
             method='GET')
         site_configurations = response['configurations']
-        LOGGER.info("Configurations API response {}".format(response))
-        product_catalog_version = next(iter(config['product_catalog_version'] for config in site_configurations if
-                                            config['domain'].lower() == site_name.lower()),
-                                    None)
+        self.logger.info(f'Configurations API response {response}')
+        product_catalog_version = next(
+            iter(config['product_catalog_version'] for config in site_configurations
+                 if config['domain'].lower() == site_name.lower()),
+            None,
+        )
         if product_catalog_version == 'v2':
             available_streams = ITEM_MODEL_AVAILABLE_STREAMS
             self.config['item_model'] = True
-            LOGGER.info('Item Model')
+            self.logger.info('Item Model')
         elif product_catalog_version == 'v1':
             available_streams = PLAN_MODEL_AVAILABLE_STREAMS
             self.config['item_model'] = False
-            LOGGER.info('Plan Model')
+            self.logger.info('Plan Model')
         else:
-            LOGGER.error("Incorrect Product Catalog version {}".format(product_catalog_version))
-            raise RuntimeError("Incorrect Product Catalog version")
-        
+            self.logger.error(f'Incorrect Product Catalog version {product_catalog_version}')
+            raise RuntimeError('Incorrect Product Catalog version')
+
         return {
             stream.TABLE: Schema.from_dict(
                 stream(self.config, self.state, None, None).get_schema())
             for stream in available_streams
         }
-
-    def test_connection(self):
-        pass
 
 
 if __name__ == '__main__':

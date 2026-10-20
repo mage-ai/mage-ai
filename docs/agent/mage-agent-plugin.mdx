@@ -1,0 +1,221 @@
+---
+title: "Mage Agent Plugin"
+description: "Install the Mage Agent Plugin and connect it to a Mage cluster."
+---
+
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+# Mage Agent Plugin Installation Guide
+
+<ProOnly source="mage-agent-plugin" />
+
+## What It Is
+
+The Mage Agent Plugin connects an AI agent client to Mage so the agent can work
+with the Mage clusters you authorize. After installation and sign-in, the agent
+can help inspect and operate Mage workflows, including pipelines, blocks,
+schedules, runs, logs, outputs, files, and other Mage project resources.
+
+## Where To Download It
+
+Download the installer from the public Mage Agent Plugin releases repository:
+
+```text
+https://github.com/mage-ai/agent-plugin/releases
+```
+
+The `mage-ai/agent-plugin` repository is the public release-asset repository.
+The plugin source and release automation are maintained in the Mage plugin
+source under:
+
+```text
+mage-pro/plugins/mage-agent-plugin
+```
+
+## Choose The Correct Installer
+
+Use the package that matches your agent client and operating system.
+
+macOS:
+
+```text
+Mage-Agent-MacOS-Codex.pkg
+Mage-Agent-MacOS-Claude.pkg
+```
+
+Windows:
+
+```text
+Mage-Agent-Windows-Codex.zip
+Mage-Agent-Windows-Claude.zip
+```
+
+Use the Codex package if you are installing the plugin for Codex. Use the
+Claude package if you are installing it for Claude Code.
+
+## Prerequisites
+
+Before installing, make sure you have:
+
+- Access to the Mage cluster you want the agent to use.
+- The cluster name or cluster URL.
+- The correct agent client installed, such as Codex or Claude Code.
+- For Claude Code, the Claude Code CLI must be installed and support plugins.
+
+For Claude Code, verify:
+
+```bash
+claude plugin --help
+```
+
+## Install On macOS
+
+1. Open the GitHub Releases page:
+
+```text
+https://github.com/mage-ai/agent-plugin/releases
+```
+
+2. Download the correct `.pkg` file:
+
+```text
+Mage-Agent-MacOS-Codex.pkg
+Mage-Agent-MacOS-Claude.pkg
+```
+
+3. Open the downloaded package.
+4. Follow the installer prompts.
+5. When the installer finishes, the Mage plugin is installed for the selected
+   agent client.
+
+The macOS installer starts the Mage OAuth sign-in helper after installing the
+plugin.
+
+## Install On Windows
+
+1. Open the GitHub Releases page:
+
+```text
+https://github.com/mage-ai/agent-plugin/releases
+```
+
+2. Download the correct `.zip` file:
+
+```text
+Mage-Agent-Windows-Codex.zip
+Mage-Agent-Windows-Claude.zip
+```
+
+3. Extract the zip file.
+4. Run the installer command inside the extracted folder.
+
+For Codex:
+
+```powershell
+.\Install-Codex.cmd
+```
+
+For Claude Code:
+
+```powershell
+.\Install-Claude-Code.cmd
+```
+
+## Sign In To Mage
+
+After installing, sign in to Mage and connect the plugin to a cluster.
+
+If the installer opens the sign-in flow automatically, complete the browser
+login and select or provide the Mage cluster.
+
+If you need to sign in manually from the plugin source checkout, run:
+
+```bash
+./plugins/mage-agent-plugin/scripts/mage-login <cluster-name-or-url>
+```
+
+Example:
+
+```bash
+./plugins/mage-agent-plugin/scripts/mage-login mageai-1-tutorials
+```
+
+You can also use a full cluster URL:
+
+```bash
+./plugins/mage-agent-plugin/scripts/mage-login https://your-mage-cluster-url
+```
+
+## Switch Clusters
+
+To connect the plugin to a different Mage cluster, run:
+
+```bash
+./plugins/mage-agent-plugin/scripts/mage-switch-cluster
+```
+
+To skip the cluster selection screen, pass the cluster name or URL directly:
+
+```bash
+./plugins/mage-agent-plugin/scripts/mage-switch-cluster <cluster-name-or-url>
+```
+
+Example:
+
+```bash
+./plugins/mage-agent-plugin/scripts/mage-switch-cluster mageai-1-tutorials
+```
+
+## Verify The Active Cluster
+
+Check which Mage cluster is currently connected:
+
+```bash
+./plugins/mage-agent-plugin/scripts/mage-current-cluster
+```
+
+List saved local cluster state:
+
+```bash
+./plugins/mage-agent-plugin/scripts/mage-list-clusters
+```
+
+## What Gets Saved Locally
+
+After sign-in, the plugin stores the active Mage connection locally at:
+
+```text
+~/.mage/agent/config.json
+```
+
+That file stores the selected `cluster_url` and the token needed for the plugin
+to call Mage on your behalf.
+
+OAuth helper logs are written to:
+
+```text
+~/.mage/agent/codex-oauth.log
+```
+
+## Confirm It Works
+
+After installation and sign-in:
+
+1. Open your agent client.
+2. Ask the agent to use Mage.
+3. Try a read-only request first, such as listing available Mage pipelines or
+   checking the current cluster.
+4. If the agent asks you to authenticate, complete the browser sign-in and retry
+   the request.
+
+## Quick Checklist
+
+- Download installer from `https://github.com/mage-ai/agent-plugin/releases`.
+- Pick Codex or Claude package.
+- Pick macOS `.pkg` or Windows `.zip`.
+- Install the package.
+- Sign in to Mage.
+- Provide or select the Mage cluster name or URL.
+- Verify the active cluster.
+- Ask the agent to run a simple Mage read-only request.

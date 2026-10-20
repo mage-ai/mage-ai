@@ -1,0 +1,56 @@
+---
+title: "Managed cloud"
+sidebarTitle: "SaaS"
+icon: "laptop"
+description: "Fully managed Mage Pro"
+---
+
+Mage Pro SaaS is fully managed and deployed in the Mage cloud infrastructure. In this configuration, both the control and data planes are hosted and managed within Mage's cloud infrastructure:
+
+<img
+    alt="SaaS Deployment"
+    src="https://raw.githubusercontent.com/mage-ai/assets/main/pro/deployments/SaaS%20Deployment%20Architecture%20(1).png"
+/>
+
+### Technical Specifications
+
+- **Deployment Method**: Zero touch deployment with automatic provisioning
+- **Infrastructure**: Containerized environment with auto scaling in Kubernetes
+- **Networking**: Secure TLS connections to data sources with IP Whitelisting
+- **Authentication**: SAML/OAuth2 support for SSO integration
+- **Updates**: Automated version management with zero-downtime updates
+- **Scalability**: Dynamic resource allocation based on workload patterns
+- **Monitoring**: Internal monitoring tools, capable of integrating with external monitoring tools
+
+### IP Whitelisting
+Enhance your network security by configuring firewall rules or security groups to allow traffic only from Mage Pro's static IP addresses. 
+This prevents unauthorized access by restricting connections to trusted sources only.
+
+**Mage Pro IP ranges:**
+
+```
+100.21.110.88
+34.213.159.59
+35.155.191.84
+35.80.236.114
+44.231.28.12
+52.34.99.83
+52.37.240.164
+52.38.195.57
+52.42.154.61
+54.185.105.221
+54.190.141.196
+```
+
+### Integration Requirements
+
+- Ensure network connectivity between your data sources and Mage's cloud environment
+- Configure firewall rules to allow connection from Mage's IP ranges
+- Set up authentication credentials for data source access
+- Establish monitoring integrations if desired
+
+### Regional deployment
+
+Mage Pro’s SaaS is currently deployed in the following regions U.S. West, U.S. East, Canada, Europe, Asia, and Australia.
+
+Please reach out to Mage if you would like to deploy Mage Pro from a specific region other than what’s listed above.

@@ -1,0 +1,99 @@
+---
+title: "Power BI"
+---
+
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="powerbi" />
+
+## Add credentials
+
+1. Create a new pipeline or open an existing pipeline.
+2. Expand the left side of your screen to view the file browser.
+3. Scroll down and click on a file named `io_config.yaml`.
+4. Enter the following keys and values under the key named `default` (you can
+   have multiple profiles, add it under whichever is relevant to you)
+
+**Required:** Azure subscription ID and Power BI workspace ID. For authentication you can use either Azure AD (service principal) or default credentials.
+
+```yaml
+version: 0.1.1
+default:
+  AZURE_SUBSCRIPTION_ID: your_azure_subscription_id
+  POWER_BI_WORKSPACE_ID: your_power_bi_workspace_id
+
+  # Optional: Service principal (if not using DefaultAzureCredential)
+  AZURE_CLIENT_ID: ...
+  AZURE_CLIENT_SECRET: ...
+  AZURE_TENANT_ID: ...
+```
+
+If `AZURE_CLIENT_ID`, `AZURE_CLIENT_SECRET`, and `AZURE_TENANT_ID` are omitted, the client uses `DefaultAzureCredential` (e.g. Azure CLI login or managed identity). The service principal or user must have access to the Power BI workspace and the **Power BI Service** API.
+
+<br />
+
+## Using Python block
+
+1. Create a new pipeline or open an existing pipeline.
+2. Add a data loader, transformer, or data exporter block.
+3. Select `Generic (no template)`.
+4. Enter this code snippet (note: change the `config_profile` from `default` if
+   you have a different profile):
+
+### Trigger a dataset refresh
+
+   ```python
+   from mage_ai.settings.repo import get_repo_path
+   from mage_ai.io.config import ConfigFileLoader
+   from mage_ai.io.power_bi import PowerBI
+   from os import path
+
+   if 'data_loader' not in globals():
+       from mage_ai.data_preparation.decorators import data_loader
+
+
+   @data_loader
+   def trigger_power_bi_refresh(**kwargs):
+       config_path = path.join(get_repo_path(), 'io_config.yaml')
+       config_profile = 'default'
+       dataset_id = '...'  # Your Power BI dataset ID
+
+       client = PowerBI.with_config(ConfigFileLoader(config_path, config_profile))
+       client.load(dataset_id)
+   ```
+
+### Export data to a Power BI dataset
+
+   ```python
+   from mage_ai.settings.repo import get_repo_path
+   from mage_ai.io.config import ConfigFileLoader
+   from mage_ai.io.power_bi import PowerBI
+   from os import path
+   from pandas import DataFrame
+
+   if 'data_exporter' not in globals():
+       from mage_ai.data_preparation.decorators import data_exporter
+
+
+   @data_exporter
+   def export_data_to_power_bi(df: DataFrame, **kwargs) -> None:
+       config_path = path.join(get_repo_path(), 'io_config.yaml')
+       config_profile = 'default'
+       dataset_id = '...'
+
+       client = PowerBI.with_config(ConfigFileLoader(config_path, config_profile))
+       client.export(df, dataset_id=dataset_id)
+   ```
+
+### Check if a dataset exists
+
+   ```python
+   client = PowerBI.with_config(ConfigFileLoader(config_path, config_profile))
+   exists = client.exists('your-dataset-id')
+   ```
+
+## Permissions
+
+- Your Azure AD app or user needs the **Power BI Service** scope (e.g. `https://analysis.windows.net/powerbi/api/.default`).
+- The app or user must have access to the specified Power BI workspace and dataset (e.g. Admin, Member, or Contributor on the workspace).

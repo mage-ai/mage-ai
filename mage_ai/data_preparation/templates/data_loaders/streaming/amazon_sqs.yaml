@@ -1,0 +1,8 @@
+connector_type: amazon_sqs
+queue_name: queue_name
+batch_size: 1   # Between 1 and 10
+wait_time_seconds: 1
+message_deletion_method: AFTER_RECEIVED   # AFTER_RECEIVED or MANUAL
+
+serde_config:
+  serialization_method: JSON

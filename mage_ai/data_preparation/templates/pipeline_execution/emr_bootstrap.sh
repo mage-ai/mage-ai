@@ -8,3 +8,4 @@ sudo pip3 install --no-cache --upgrade --upgrade-strategy only-if-needed scipy==
 sudo pip3 install --no-cache --upgrade --upgrade-strategy only-if-needed pandas==1.1.3
 sudo pip3 install --no-cache --upgrade --upgrade-strategy only-if-needed pyarrow==0.13.0
 sudo pip3 install --no-cache --upgrade --upgrade-strategy only-if-needed scikit-learn==0.24.1
+sudo pip3 install --no-cache --upgrade --upgrade-strategy only-if-needed boto3==1.24.19

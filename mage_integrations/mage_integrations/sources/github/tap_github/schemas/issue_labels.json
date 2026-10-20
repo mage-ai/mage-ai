@@ -1,0 +1,29 @@
+{
+    "type": ["null", "object"],
+    "properties": {
+      "_sdc_repository": {
+        "type": ["null", "string"]
+      },
+      "id": {
+        "type": ["null", "number"]
+      },
+      "node_id": {
+        "type": ["null", "string"]
+      },
+      "url": {
+        "type": ["null", "string"]
+      },
+      "name": {
+        "type": ["null", "string"]
+      },
+      "description": {
+        "type": ["null", "string"]
+      },
+      "color": {
+        "type": ["null", "string"]
+      },
+      "default": {
+        "type": ["null", "boolean"]
+      }
+    }
+}

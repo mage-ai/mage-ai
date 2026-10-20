@@ -17,7 +17,13 @@ You must enter the following settings when configuring this source:
 >
 > See Amplitude’s [documentation](https://www.docs.developers.amplitude.com/analytics/find-api-credentials/).
 
+### Optional Configs
+
+| Key | Description | Sample value
+| --- | --- | --- |
+| `host` | The Amplitude host. Standard server: `https://amplitude.com`. EU Residency Server: `https://analytics.eu.amplitude.com`.| Default value is `https://amplitude.com` |
 <br />
+
 
 ## Query
 
@@ -30,7 +36,7 @@ For example, if you create a scheduled trigger that runs daily, then on each pip
 start date will be 1 day ago and the end date will be today’s date.
 
 If you want to hardcode and customize the start date and end date,
-follow these [instructions to override the runtime variables](../../../docs/production/runtime_variables.md)
+follow these [instructions to override the runtime variables](https://docs.mage.ai/production/configuring-production-settings/runtime-variable)
 for your pipeline.
 
 Add the following keys and sample values to your pipeline’s variables:

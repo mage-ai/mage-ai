@@ -1,5 +1,5 @@
 import React from 'react';
-import { Meta, Story } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 
 import TextInput, { TextInputProps } from '../../../../oracle/elements/Inputs/TextInput';
 import ThemeBlock from '../../../ThemeBlock';
@@ -16,7 +16,7 @@ const TemplateWithTheme = ({ ...props }) => (
   </ThemeBlock>
 );
 
-const Template: Story<TextInputProps> = (args) => <TemplateWithTheme {...args} />;
+const Template: StoryFn<TextInputProps> = (args) => <TemplateWithTheme {...args} />;
 
 export const Regular = Template.bind({});
 Regular.args = {

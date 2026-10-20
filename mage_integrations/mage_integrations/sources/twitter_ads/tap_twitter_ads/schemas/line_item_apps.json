@@ -1,0 +1,32 @@
+{
+  "type": ["null", "object"],
+  "additionalProperties": false,
+  "properties": {
+    "account_id": {
+      "type": ["null", "string"]
+    },
+    "line_item_id": {
+      "type": ["null", "string"]
+    },
+    "app_store_identifier": {
+      "type": ["null", "string"]
+    },
+    "id": {
+      "type": ["null", "string"]
+    },
+    "created_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    },
+    "os_type": {
+      "type": ["null", "string"]
+    },
+    "deleted": {
+      "type": ["null", "boolean"]
+    }
+  }
+}

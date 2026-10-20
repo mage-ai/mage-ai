@@ -6,12 +6,15 @@ import Flex from '@oracle/components/Flex';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
-import light from '@oracle/styles/themes/light';
-import { ArrowRight } from '@oracle/icons';
+import dark from '@oracle/styles/themes/dark';
+import { ChevronDown } from '@oracle/icons';
 import { BORDER_RADIUS } from '@oracle/styles/units/borders';
+import { ScrollbarStyledCss }  from '@oracle/styles/scrollbars';
 import { SHARED_LINK_STYLES } from '@oracle/elements/Link';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { outline } from '@oracle/styles/mixins';
+
+export const ANIMATION_DURATION_CONTENT = 300;
 
 export type AccordionPanelProps = {
   beforeTitleElement?: any;
@@ -19,13 +22,19 @@ export type AccordionPanelProps = {
   first?: boolean;
   hideScrollbar?: boolean;
   highlighted?: boolean;
+  id?: string;
   last?: boolean;
   maxHeight?: number;
   noBackground?: boolean;
+  noBorderRadius?: boolean;
   noHoverUnderline?: boolean;
   noPaddingContent?: boolean;
+  refContainer?: any;
+  singlePanel?: boolean;
   smallTitle?: boolean;
   titleXPadding?: number;
+  titleYPadding?: number;
+  unboundedTitle?: boolean;
   visible?: boolean;
   visibleCount?: number;
   visibleHighlightDisabled?: boolean;
@@ -40,20 +49,20 @@ type AccordionPanelInternalProps = {
 };
 
 const AccordionPanelStyle = styled.div<AccordionPanelProps>`
-  .accordion-panel-chevron-right-exit-done {
+  .accordion-panel-chevron-down-exit-done {
     transform: rotate(0deg);
     transition: all 200ms;
   }
-  .accordion-panel-chevron-right-enter-active {
-    transform: rotate(90deg);
+  .accordion-panel-chevron-down-enter-active {
+    transform: rotate(180deg);
     transition: all 200ms;
   }
-  .accordion-panel-chevron-right-enter-done,
-  .accordion-panel-chevron-right-enter-done-visible {
-    transform: rotate(90deg);
+  .accordion-panel-chevron-down-enter-done,
+  .accordion-panel-chevron-down-enter-done-visible {
+    transform: rotate(180deg);
     transition: all 300ms;
   }
-  .accordion-panel-chevron-right-exit {
+  .accordion-panel-chevron-down-exit {
     transform: rotate(0deg);
     transition: all 300ms;
   }
@@ -65,6 +74,7 @@ const AccordionPanelStyle = styled.div<AccordionPanelProps>`
     transition: max-height 400ms ease-in-out;
   }
   .accordion-panel-content-enter-active {
+    max-height: 100vh;
     ${props => props.maxHeight && `
       max-height: ${props.maxHeight}px;
     `}
@@ -75,6 +85,7 @@ const AccordionPanelStyle = styled.div<AccordionPanelProps>`
 
   .accordion-panel-content-exit {
     display: block;
+    max-height: 100vh;
     ${props => props.maxHeight && `
       max-height: ${props.maxHeight}px;
     `}
@@ -93,55 +104,69 @@ const TitleStyle = styled.a<AccordionPanelProps>`
   ${SHARED_LINK_STYLES}
   display: block;
   position: relative;
-  padding: ${UNIT * 2.5}px ${UNIT * 2}px;
   z-index: 1;
-
-  ${props => !props.last && props.visible && `
-    border-bottom: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
-  `}
-
-  ${props => props.first && `
-    border-top-left-radius: ${BORDER_RADIUS}px;
-    border-top-right-radius: ${BORDER_RADIUS}px;
-  `}
-
-  ${props => props.last && !props.visible && `
-    border-bottom-left-radius: ${BORDER_RADIUS}px;
-    border-bottom-right-radius: ${BORDER_RADIUS}px;
-  `}
 
   ${props => `
     &:hover,
     &:focus {
       outline: none;
     }
-
     ${outline(props)}
-  `}
 
-  ${props => `
+    background-color: ${(props.theme.background || dark.background).table};
+
     &:hover {
-      background-color: ${(props.theme.interactive || light.interactive).hoverBackground};
+      background-color: ${(props.theme || dark)?.background?.page};
     }
 
     &:active {
-      background-color: ${(props.theme.interactive || light.interactive).activeOverlay};
+      background-color: ${(props.theme || dark)?.background?.page};
     }
   `}
 
-  ${props => !props.visible && `
-    background-color: ${(props.theme.background || light.background).header};
+  ${props => props.visible && `
+    border-bottom: 1px solid ${(props.theme || dark)?.borders?.medium2};
   `}
 
-  ${props => props.titleXPadding && `
+  ${props => !props.first && props.visible && `
+    border-top: 1px solid ${(props.theme || dark)?.borders?.medium2};
+  `}
+
+  ${props => !props.noBorderRadius && props.first && `
+    border-top-left-radius: ${BORDER_RADIUS}px;
+    border-top-right-radius: ${BORDER_RADIUS}px;
+  `}
+
+  ${props => !props.noBorderRadius && (props.last || props.singlePanel) && !props.visible && `
+    border-bottom-left-radius: ${BORDER_RADIUS}px;
+    border-bottom-right-radius: ${BORDER_RADIUS}px;
+  `}
+
+  ${props => typeof props.titleXPadding !== 'undefined' && `
     padding-left: ${props.titleXPadding}px;
     padding-right: ${props.titleXPadding}px;
+  `}
+
+  ${props => typeof props.titleXPadding === 'undefined' && `
+    padding-left: ${2 * UNIT}px;
+    padding-right: ${2 * UNIT}px;
+  `}
+
+  ${props => typeof props.titleYPadding !== 'undefined' && `
+    padding-bottom: ${props.titleYPadding}px;
+    padding-top: ${props.titleYPadding}px;
+  `}
+
+  ${props => typeof props.titleYPadding === 'undefined' && `
+    padding-bottom: ${2 * UNIT}px;
+    padding-top: ${2 * UNIT}px;
   `}
 `;
 
 const ContentStyle = styled.div<AccordionPanelProps>`
   padding-left: ${UNIT * 2}px;
   padding-right: ${UNIT * 2}px;
+  ${ScrollbarStyledCss}
 
   ${props => props.hideScrollbar && `
     ::-webkit-scrollbar {
@@ -187,14 +212,20 @@ const AccordionPanel = ({
   hideScrollbar,
   highlighted,
   last,
-  maxHeight = 1000,
+  maxHeight,
   noBackground,
+  noBorderRadius,
   noPaddingContent,
   onClick,
   onEntered,
   onExited,
+  refContainer,
+  singlePanel,
+  smallTitle,
   title,
   titleXPadding,
+  titleYPadding,
+  unboundedTitle,
   visible,
   visibleCount,
   visibleHighlightDisabled,
@@ -203,11 +234,13 @@ const AccordionPanel = ({
   <AccordionPanelStyle
     {...props}
     maxHeight={maxHeight}
+    ref={refContainer}
   >
     <TitleStyle
       first={first}
       href="#"
       last={last}
+      noBorderRadius={noBorderRadius}
       noHoverUnderline
       onClick={(e: any) => {
         e.preventDefault();
@@ -222,35 +255,47 @@ const AccordionPanel = ({
           }
         }
       }}
+      singlePanel={singlePanel}
       titleXPadding={titleXPadding}
+      titleYPadding={titleYPadding}
       visible={visible && !visibleHighlightDisabled}
     >
-      <FlexContainer alignItems="center">
-        <CSSTransition
-          classNames="accordion-panel-chevron-right"
-          in={visible}
-          timeout={400}
-        >
-          <Flex className={visible && visibleCount === 0 && 'accordion-panel-chevron-right-enter-done-visible'}>
-            <ArrowRight default />
-          </Flex>
-        </CSSTransition>
+      <FlexContainer alignItems="center" justifyContent="space-between">
+        {unboundedTitle && beforeTitleElement}
 
-        <Spacing ml={1}>
+        {!unboundedTitle && (
           <FlexContainer alignItems="center">
             {beforeTitleElement}
 
             {beforeTitleElement && <Spacing ml={1} />}
 
-            <Text
-              bold
-              default={!visible}
-              wind={highlighted}
-            >
-              {title}
-            </Text>
+            {typeof title !== 'string' && title}
+
+            {typeof title === 'string' && (
+              <Text
+                bold
+                default={!visible}
+                large={!smallTitle}
+                wind={highlighted}
+              >
+                {title}
+              </Text>
+            )}
           </FlexContainer>
-        </Spacing>
+        )}
+        {unboundedTitle && title}
+
+        <Spacing mr={1} />
+
+        <CSSTransition
+          classNames="accordion-panel-chevron-down"
+          in={visible}
+          timeout={400}
+        >
+          <Flex className={visible && visibleCount === 0 && 'accordion-panel-chevron-down-enter-done-visible'}>
+            <ChevronDown default size={UNIT * 2} />
+          </Flex>
+        </CSSTransition>
       </FlexContainer>
     </TitleStyle>
 
@@ -259,7 +304,7 @@ const AccordionPanel = ({
       in={visible}
       onEntered={refContentOutter => onEntered && onEntered(refContentOutter)}
       onExited={refContentOutter => onExited && onExited(refContentOutter)}
-      timeout={300}
+      timeout={ANIMATION_DURATION_CONTENT}
     >
       <ContentStyle
         contentOverflowVisible={contentOverflowVisible}

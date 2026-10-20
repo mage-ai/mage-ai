@@ -1,0 +1,26 @@
+---
+title: "OracleDB"
+---
+
+## Configuration
+
+To set up the OracleDB source, provide the following configuration parameters:
+
+| Key        | Description                                                                                   | Sample Value            |
+| ---------- | --------------------------------------------------------------------------------------------- | ----------------------- |
+| `host`     | OracleDB host.                                                                                 | `oracledb.example.com`    |
+| `port`     | OracleDB port (defaults to `1521`).                                                             | `1521`                    |
+| `service`  | Listener service name on the database server for client connections.                            | `xepdb1`                  |
+| `password` | Password for the user.                                                                          | `xyz123`                  |
+| `user`     | Username with permission to connect and query the database.                                     | `xyz123`                  |
+| `mode`     | Connection mode for the Oracle client. Accepted values are `thin` or `thick`.                   | `thick`                   |
+
+<br/>
+
+### Optional Configuration
+
+| Key                | Description                                                                                      | Sample Value |
+| ------------------ | ------------------------------------------------------------------------------------------------ | ------------ |
+| `batch_fetch_limit` | Number of rows to fetch per batch (defaults to 50,000). Adjust higher if your instance has more memory. | `50000`      |
+
+<br/>

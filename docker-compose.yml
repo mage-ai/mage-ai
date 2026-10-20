@@ -1,57 +1,136 @@
-version: '3'
+x-server_settings: &server_settings
+  image: mage/data
+  build:
+    context: .
+    dockerfile: ./dev.Dockerfile
+  command: "python mage_ai/server/server.py --host ${HOST} --port ${PORT} --project ${PROJECT} --manage-instance ${MANAGE_INSTANCE}"
+  environment:
+    - AUTHENTICATION_MODE=$AUTHENTICATION_MODE
+    - AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+    - AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+    - AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN
+    - DEBUG=$DEBUG
+    - DEBUG_FILE_IO=$DEBUG_FILE_IO
+    - DEBUG_MEMORY=$DEBUG_MEMORY
+    - DEUS_EX_MACHINA=$DEUS_EX_MACHINA
+    - DISABLE_API_TERMINAL_OUTPUT=$DISABLE_API_TERMINAL_OUTPUT
+    - DISABLE_DATABASE_TERMINAL_OUTPUT=$DISABLE_DATABASE_TERMINAL_OUTPUT
+    - DYNAMIC_BLOCKS_VERSION=$DYNAMIC_BLOCKS_VERSION
+    - ECS_CLUSTER_NAME=$ECS_CLUSTER_NAME
+    - ECS_CONTAINER_NAME=$ECS_CONTAINER_NAME
+    - ECS_TASK_DEFINITION=$ECS_TASK_DEFINITION
+    - ENABLE_NEW_RELIC=$ENABLE_NEW_RELIC
+    - ENABLE_PROMETHEUS=$ENABLE_PROMETHEUS
+    - ENABLE_OPEN_AI=$ENABLE_OPEN_AI
+    - ENABLE_HUGGING_FACE=$ENABLE_HUGGING_FACE
+    - ENV=dev
+    - EXPERIMENTS_DB=$EXPERIMENTS_DB
+    - EXPERIMENTS_TRACKING_URI=$EXPERIMENTS_TRACKING_URI
+    - GCP_PROJECT_ID=$GCP_PROJECT_ID
+    - GCP_REGION=$GCP_REGION
+    - HUGGINGFACE_API=$HUGGINGFACE_API
+    - HUGGINGFACE_INFERENCE_API_TOKEN=$HUGGINGFACE_INFERENCE_API_TOKEN
+    - KERNEL_MANAGER=$KERNEL_MANAGER
+    - LDAP_ADMIN_USERNAME=$LDAP_ADMIN_USERNAME
+    - LDAP_AUTHENTICATION_FILTER=$LDAP_AUTHENTICATION_FILTER
+    - LDAP_AUTHORIZATION_FILTER=$LDAP_AUTHORIZATION_FILTER
+    - LDAP_BASE_DN=$LDAP_BASE_DN
+    - LDAP_BIND_DN=$LDAP_BIND_DN
+    - LDAP_BIND_PASSWORD=$LDAP_BIND_PASSWORD
+    - LDAP_SERVER=$LDAP_SERVER
+    - MAGE_BASE_PATH=$MAGE_BASE_PATH
+    - MAGE_DATABASE_CONNECTION_URL=$DATABASE_CONNECTION_URL
+    - MAGE_DATA_DIR=$MAGE_DATA_DIR
+    - MAGE_PRESENTERS_DIRECTORY=$MAGE_PRESENTERS_DIRECTORY
+    - MAX_NUMBER_OF_FILE_VERSIONS=$MAX_NUMBER_OF_FILE_VERSIONS
+    - MEMORY_MANAGER_PANDAS_VERSION=$MEMORY_MANAGER_PANDAS_VERSION
+    - MEMORY_MANAGER_POLARS_VERSION=$MEMORY_MANAGER_POLARS_VERSION
+    - MEMORY_MANAGER_VERSION=$MEMORY_MANAGER_VERSION
+    - NEW_RELIC_CONFIG_PATH=$NEW_RELIC_CONFIG_PATH
+    - OPENAI_API_KEY=$OPENAI_API_KEY
+    - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT}
+    - OTEL_EXPORTER_OTLP_HTTP_ENDPOINT=${OTEL_EXPORTER_OTLP_HTTP_ENDPOINT}
+    - OTEL_PYTHON_TORNADO_EXCLUDED_URLS=$OTEL_PYTHON_TORNADO_EXCLUDED_URLS
+    - REQUIRE_USER_AUTHENTICATION=$REQUIRE_USER_AUTHENTICATION
+    - REQUIRE_USER_PERMISSIONS=$REQUIRE_USER_PERMISSIONS
+    - RUN_PIPELINE_IN_ONE_PROCESS=$RUN_PIPELINE_IN_ONE_PROCESS
+    - SCHEDULER_TRIGGER_INTERVAL=$SCHEDULER_TRIGGER_INTERVAL
+    - SERVER_LOGGING_TEMPLATE=${SERVER_LOGGING_TEMPLATE:-%(levelname)s:%(name)s:%(message)s}
+    - SERVER_VERBOSITY=$SERVER_VERBOSITY
+    - SMTP_EMAIL=$SMTP_EMAIL
+    - SMTP_PASSWORD=$SMTP_PASSWORD
+    - VARIABLE_DATA_OUTPUT_META_CACHE=$VARIABLE_DATA_OUTPUT_META_CACHE
+
+    - path_to_keyfile=$GCP_PATH_TO_CREDENTIALS
+  ports:
+    - 6789:6789
+  volumes:
+    - .:/home/src
+    - ~/.aws:/root/.aws
+    - ~/.mage_data:/root/.mage_data
+  restart: on-failure:5
+  stdin_open: true # used for interactive debugging
+  tty: true # used for interactive debugging
+x-app_settings: &app_settings
+  image: node:18-alpine
+  command: sh -c "yarn install && yarn cache clean && npx next dev"
+  ports:
+    - 3000:3000
+  volumes:
+    - .:/home/src
+    - node_modules_volume:/home/src/mage_ai/frontend/node_modules
+  working_dir: /home/src/mage_ai/frontend
 services:
   server:
-    image: mage/data
+    <<: *server_settings
+  app:
+    <<: *app_settings
+  server_spark:
+    <<: *server_settings
+    image: mage/data_spark
     build:
       context: .
-      dockerfile: ./dev.Dockerfile
-    command: "python mage_ai/server/server.py --host ${HOST} --port ${PORT} --project ${PROJECT} --manage-instance ${MANAGE_INSTANCE}"
-    environment:
-      - AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
-      - AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
-      - ECS_CLUSTER_NAME=$ECS_CLUSTER_NAME
-      - ECS_CONTAINER_NAME=$ECS_CONTAINER_NAME
-      - ECS_TASK_DEFINITION=$ECS_TASK_DEFINITION
-      - ENV=dev
-      - MAGE_DATABASE_CONNECTION_URL=$DATABASE_CONNECTION_URL
-    ports:
-      - 6789:6789
+      dockerfile: ./dev.spark.Dockerfile
+  app_spark:
+    <<: *app_settings
+    image: mage/data_spark
+    build:
+      context: .
+      dockerfile: ./dev.spark.Dockerfile
+    depends_on:
+      - server_spark
+  py:
+    <<: *server_settings
+    ports: []
+  lsp:
+    build:
+      context: .
+      dockerfile: ./lsp.Dockerfile
     volumes:
       - .:/home/src
-      - ~/.aws:/root/.aws
-      - ~/.mage_data:/root/.mage_data
-    restart: on-failure:5
-    stdin_open: true # used for interactive debugging
-    tty: true # used for interactive debugging
-  app:
-    image: mage/data
-    build:
-      context: .
-      dockerfile: ./dev.Dockerfile
-    depends_on:
-      - server
-    command: ./scripts/install_and_run.sh
+    environment:
+      - PORT=8765
     ports:
-      - 3000:3000
+      - 8765:8765
+    networks:
+      - app-network
+  database:
+    image: pgvector/pgvector:0.6.0-pg16
+    environment:
+      POSTGRES_USER: $POSTGRES_USER
+      POSTGRES_PASSWORD: $POSTGRES_PASSWORD
+      POSTGRES_DB: $POSTGRES_DB
+    ports:
+      - 5432:5432
     volumes:
-      - ./mage_ai/frontend/.babelrc:/home/src/mage_ai/frontend/.babelrc
-      - ./mage_ai/frontend/.eslintrc.js:/home/src/mage_ai/frontend/.eslintrc.js
-      - ./mage_ai/frontend/api:/home/src/mage_ai/frontend/api
-      - ./mage_ai/frontend/components:/home/src/mage_ai/frontend/components
-      - ./mage_ai/frontend/context:/home/src/mage_ai/frontend/context
-      - ./mage_ai/frontend/hocs:/home/src/mage_ai/frontend/hocs
-      - ./mage_ai/frontend/interfaces:/home/src/mage_ai/frontend/interfaces
-      - ./mage_ai/frontend/next-env.d.ts:/home/src/mage_ai/frontend/next-env.d.ts
-      - ./mage_ai/frontend/next.config.js:/home/src/mage_ai/frontend/next.config.js
-      - ./mage_ai/frontend/oracle:/home/src/mage_ai/frontend/oracle
-      - ./mage_ai/frontend/package.json:/home/src/mage_ai/frontend/package.json
-      - ./mage_ai/frontend/pages:/home/src/mage_ai/frontend/pages
-      - ./mage_ai/frontend/public:/home/src/mage_ai/frontend/public
-      - ./mage_ai/frontend/scripts:/home/src/mage_ai/frontend/scripts
-      - ./mage_ai/frontend/storage:/home/src/mage_ai/frontend/storage
-      - ./mage_ai/frontend/stories:/home/src/mage_ai/frontend/stories
-      - ./mage_ai/frontend/styles:/home/src/mage_ai/frontend/styles
-      - ./mage_ai/frontend/tsconfig.json:/home/src/mage_ai/frontend/tsconfig.json
-      - ./mage_ai/frontend/utils:/home/src/mage_ai/frontend/utils
-      - ./mage_ai/frontend/yarn.lock:/home/src/mage_ai/frontend/yarn.lock
-    working_dir: /home/src/mage_ai/frontend
+      - ~/.postgres/data:/var/lib/postgresql/data
+      - ./scripts:/docker-entrypoint-initdb.d # Mount init script
+    restart: always
+    networks:
+      - app-network
+networks:
+  app-network:
+    driver: bridge
+volumes:
+  node_modules_volume:
+    driver: local

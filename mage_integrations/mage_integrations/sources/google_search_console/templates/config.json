@@ -1,5 +1,6 @@
 {
     "path_to_credentials_json_file": "path_to_credentials_json_file",
+    "email": null,
     "site_urls": "https://example.com, sc-domain:example.com",
     "start_date": "2022-01-01"
 }

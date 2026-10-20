@@ -1,0 +1,261 @@
+---
+title: 'AI Blocks'
+sidebarTitle: 'AI Blocks'
+description: 'Use AI blocks to turn prompts, upstream data, and pipeline context into reusable pipeline outputs.'
+icon: 'microchip-ai'
+---
+
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="ai-blocks" />
+
+<Frame>
+  <iframe
+    width="560"
+    height="315"
+    src="https://www.youtube.com/embed/28pRdPk2DAQ"
+    title="AI Blocks"
+    frameborder="0"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+    referrerpolicy="strict-origin-when-cross-origin"
+    allowfullscreen
+  />
+</Frame>
+
+AI blocks bring generative AI into the same pipeline canvas as your loaders, transformers, exporters, and monitors. Use them to summarize data, classify records, draft messages, create structured JSON, generate code, or hand work to Mage Pro AI Sidekick when a task needs project context.
+
+Because AI blocks run inside a Mage pipeline, their answers can become real pipeline outputs. Downstream blocks can consume the final response just like any other block result.
+
+## Create an AI Block
+
+Add an AI block to a pipeline, then describe the job in YAML.
+
+```yaml
+prompt: |
+  Summarize the customer feedback from upstream blocks.
+  Return the top themes and recommended next actions.
+```
+
+Run the block from the editor, or run the full pipeline from a trigger. Mage sends the prompt to the configured AI runtime and stores the final response as the block output.
+
+Use AI blocks when you want to:
+
+- summarize reports, logs, feedback, or operational data
+- extract structured fields from text
+- classify rows or events into business categories
+- generate code or SQL for a controlled workflow
+- turn upstream block outputs into plain-language recommendations
+- automate a decision step before the next pipeline block runs
+
+## Use Sidekick as an Agent
+
+Set `type: agent` when you want the AI block to run through Mage Pro AI Sidekick. Agent mode is useful when the block should understand pipeline context, inspect upstream block outputs, and produce a final answer with the same project awareness users expect from Sidekick.
+
+```yaml
+type: agent
+prompt: |
+  Use the upstream customer rows to summarize churn risk.
+message: Summarize the highest-risk customers and recommend next steps.
+settings:
+  speed: fast
+output:
+  level: default
+runtime:
+  report_name: weekly_churn_review
+```
+
+Agent mode is still an AI block. It runs as part of the pipeline and returns the final Sidekick answer as the block output. While Sidekick works, Mage prints progress and streamed response events to the block logs so users can see that the agent is running.
+
+Use agent mode when the task benefits from pipeline context:
+
+- "Read the upstream customer output and explain the highest churn risk."
+- "Review this pipeline run's logs and summarize what failed."
+- "Compare the two upstream datasets and write a short executive summary."
+- "Use the runtime variables and upstream rows to draft a customer follow-up."
+
+## Fields
+
+### `prompt`
+
+The main instruction for the AI block. Keep it clear and specific. Multi-line prompts are easier to read and maintain.
+
+```yaml
+prompt: |
+  Write a three-bullet summary of the upstream sales report.
+  Include one recommended action for the revenue team.
+```
+
+### `message`
+
+An optional user-style request for `type: agent` blocks. Use `prompt` for standing instructions and `message` for the specific request to answer on this run.
+
+```yaml
+type: agent
+prompt: |
+  You are a customer retention analyst.
+message: Which accounts need attention this week?
+```
+
+### `settings`
+
+Controls how the AI runtime should behave. For agent blocks, `speed: fast` is a good default when you want a quick operational answer.
+
+```yaml
+settings:
+  speed: fast
+```
+
+### `runtime`
+
+Optional context that travels with the block run. Use it for business labels, report names, or request metadata that helps the AI understand the job.
+
+```yaml
+runtime:
+  customer_segment: enterprise
+  report_name: renewal_risk
+```
+
+### `output`
+
+Use `output` when you need the response to follow a predictable shape or control agent block logs.
+
+For `type: agent` blocks, `output.level` controls how much Sidekick runtime output Mage prints while the block runs:
+
+- `default`: print streamed answer, narration/status, tool call, and error events.
+- `all`: print every runtime event, including completion and other low-level events.
+- `none`: do not print Sidekick runtime output; the final answer still becomes the block output.
+
+```yaml
+type: agent
+prompt: Review the upstream data and summarize the result.
+message: What changed since the last run?
+output:
+  level: all
+```
+
+Use `format` when a non-agent AI block should return structured data.
+
+```yaml
+prompt: Extract customer details from the text.
+output:
+  format:
+    name:
+      type: string
+      description: Customer's full name
+    email:
+      type: string
+      format: email
+    priority:
+      type: string
+      enum:
+        - low
+        - medium
+        - high
+```
+
+### `validation`
+
+Use validation when the answer has to meet a business rule before it moves downstream.
+
+```yaml
+prompt: Draft a customer escalation summary.
+validation: Make sure the response includes the customer name, issue, impact, and next step.
+```
+
+### `tools`
+
+Use tools when a standard AI block should choose and trigger another pipeline as part of the workflow.
+
+```yaml
+prompt: Analyze the request and choose the next processing pipeline.
+tools:
+  prompt: Choose the best pipeline for the request.
+  required: true
+  pipelines:
+    - uuid: customer_follow_up
+      description: Creates customer follow-up tasks.
+      variables:
+        customer_id:
+          type: string
+```
+
+## Upstream Data
+
+AI blocks can sit downstream of regular Mage blocks. In agent mode, Sidekick receives references to upstream block outputs and can inspect those outputs through Mage instead of copying raw datasets into the prompt.
+
+```yaml
+type: agent
+prompt: |
+  Read the upstream customer scores and event history.
+  Explain the biggest churn risk in plain English.
+message: What should the account team do next?
+settings:
+  speed: fast
+```
+
+The final answer becomes the AI block output. Downstream blocks can store it, send it to another system, or combine it with additional data.
+
+## Examples
+
+### Minimal Summary
+
+```yaml
+prompt: Summarize this document in five bullet points.
+```
+
+### Structured Extraction
+
+```yaml
+prompt: Extract the renewal request from the customer note.
+output:
+  format:
+    customer_name:
+      type: string
+    renewal_date:
+      type: string
+      format: date
+    requested_discount:
+      type: number
+    risk_level:
+      type: string
+      enum:
+        - low
+        - medium
+        - high
+```
+
+### Agent Block With Upstream Outputs
+
+```yaml
+type: agent
+prompt: |
+  You are reviewing customer health data from upstream blocks.
+  Use the available customer scores and recent events to identify retention risk.
+message: Summarize the top risks and recommended outreach.
+settings:
+  speed: fast
+runtime:
+  audience: account_team
+```
+
+### Agent Block With No Message
+
+```yaml
+type: agent
+prompt: |
+  Use the upstream rows to produce a short operational summary.
+settings:
+  speed: fast
+```
+
+Use this pattern when the prompt itself is the complete request.
+
+## Best Practices
+
+- Give the block one clear job.
+- Put reusable instructions in `prompt`.
+- Put the run-specific ask in `message` for agent blocks.
+- Use upstream blocks for data and the AI block for interpretation.
+- Use structured output when downstream blocks need predictable fields.
+- Keep runtime context business-focused, such as segment, audience, or report name.
+- Use agent mode when project context or upstream block output matters.

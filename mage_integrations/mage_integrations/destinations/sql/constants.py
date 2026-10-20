@@ -826,3 +826,18 @@ SQL_RESERVED_WORDS = [
     'ZEROFILL',
     'ZONE',
 ]
+
+SQL_RESERVED_WORDS_SUBSET = {
+    'AS',
+    'DEFAULT',
+    'FROM',
+    'GROUP',
+    'JOIN',
+    'LIMIT',
+    'ORDER',
+    'REFERENCES',
+    'SELECT',
+    'TO',
+    'USER',
+    'WHERE',
+}

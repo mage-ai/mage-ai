@@ -1,9 +1,9 @@
-from mage_integrations.sources.constants import (
-    METADATA_KEY_SELECTED,
-)
-from singer import catalog
-from typing import List
 import json
+from typing import Dict, List
+
+from singer import catalog
+
+from mage_integrations.sources.constants import METADATA_KEY_SELECTED
 
 
 class CatalogEntry(catalog.CatalogEntry):
@@ -11,7 +11,10 @@ class CatalogEntry(catalog.CatalogEntry):
         self,
         auto_add_new_fields: bool = False,
         bookmark_properties: List[str] = None,
+        bookmark_property_operators: Dict = None,
+        disable_column_type_check: bool = None,
         partition_keys: List[str] = None,
+        run_in_parallel: bool = False,
         unique_conflict_method: str = None,
         unique_constraints: List[str] = None,
         **kwargs,
@@ -19,7 +22,10 @@ class CatalogEntry(catalog.CatalogEntry):
         super().__init__(**kwargs)
         self.auto_add_new_fields = False
         self.bookmark_properties = bookmark_properties
+        self.bookmark_property_operators = bookmark_property_operators
+        self.disable_column_type_check = disable_column_type_check
         self.partition_keys = partition_keys
+        self.run_in_parallel = run_in_parallel
         self.unique_conflict_method = unique_conflict_method
         self.unique_constraints = unique_constraints
 
@@ -30,8 +36,12 @@ class CatalogEntry(catalog.CatalogEntry):
             result['auto_add_new_fields'] = self.auto_add_new_fields
         if self.bookmark_properties:
             result['bookmark_properties'] = self.bookmark_properties
+        if self.disable_column_type_check is not None:
+            result['disable_column_type_check'] = self.disable_column_type_check
         if self.partition_keys:
             result['partition_keys'] = self.partition_keys
+        if self.run_in_parallel:
+            result['run_in_parallel'] = self.run_in_parallel
         if self.unique_conflict_method:
             result['unique_conflict_method'] = self.unique_conflict_method
         if self.unique_constraints:
@@ -81,13 +91,16 @@ class Catalog(catalog.Catalog):
             entry = CatalogEntry()
             entry.auto_add_new_fields = stream.get('auto_add_new_fields')
             entry.bookmark_properties = stream.get('bookmark_properties')
+            entry.bookmark_property_operators = stream.get('bookmark_property_operators')
             entry.database = stream.get('database_name')
+            entry.disable_column_type_check = stream.get('disable_column_type_check')
             entry.is_view = stream.get('is_view')
             entry.key_properties = stream.get('key_properties')
             entry.metadata = stream.get('metadata')
             entry.partition_keys = stream.get('partition_keys')
             entry.replication_key = stream.get('replication_key')
             entry.replication_method = stream.get('replication_method')
+            entry.run_in_parallel = stream.get('run_in_parallel')
             entry.schema = catalog.Schema.from_dict(stream.get('schema'))
             entry.stream = stream.get('stream')
             entry.stream_alias = stream.get('stream_alias')
@@ -104,3 +117,9 @@ class Catalog(catalog.Catalog):
             arr.append(stream if type(stream) is dict else stream.to_dict())
 
         return dict(streams=arr)
+
+    def get_stream(self, tap_stream_id):
+        for stream in self.streams:
+            if stream.tap_stream_id == tap_stream_id:
+                return stream
+        return None

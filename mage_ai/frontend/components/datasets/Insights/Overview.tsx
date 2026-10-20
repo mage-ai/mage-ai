@@ -234,13 +234,13 @@ function Overview({
       margin={{
         right: 4 * UNIT,
       }}
-      renderTooltipContent={([, count, xLabelMin, xLabelMax]) => (
+      renderTooltipContent={(count, _, opts) => (
         <Text small>
           Rows: {count}
           <br />
-          Dates: {xLabelMin} - {xLabelMax}
+          Dates: {opts?.values?.[0]} - {opts?.values?.[1]}
         </Text>
-      )}
+        )}
       showAxisLabels
       showYAxisLabels
       showZeroes
@@ -606,15 +606,15 @@ function Overview({
             >
               <ScatterPlot
                 featureMapping={featureMapping}
-                scatterPlotLabels={scatterPlotLabels}
-                scatterPlotOverview={scatterPlot}
                 height={UNIT * 50}
                 margin={{
                   left: 5 * UNIT,
                 }}
-                yLabelFormat={formatNumberLabel}
+                scatterPlotLabels={scatterPlotLabels}
+                scatterPlotOverview={scatterPlot}
                 xFeature={features[0]?.uuid}
                 yFeature={features[features?.length - 1]?.uuid}
+                yLabelFormat={formatNumberLabel}
               />
             </ChartContainer>
           }

@@ -6,7 +6,7 @@ if 'transformer' not in globals():
 
 {% block content %}
 @transformer
-def transform_df(df, *args, **kwargs):
+def transform(*args, **kwargs):
     """
     Template code for a transformer block.
 
@@ -14,12 +14,12 @@ def transform_df(df, *args, **kwargs):
     There should be one parameter for each output variable from each parent block.
 
     Args:
-        df: Data frame from parent block.
+        args: The input variables from upstream blocks
 
     Returns:
-        Transformed data frame
+        Anything (e.g. data frame, dictionary, array, int, str, etc.)
     """
     # Specify your transformation logic here
 {{ code }}
-    return df
+    return {}
 {% endblock %}

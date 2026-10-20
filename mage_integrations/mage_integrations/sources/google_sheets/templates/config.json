@@ -1,4 +1,5 @@
 {
     "path_to_credentials_json_file": "path_to_credentials_json_file",
-    "spreadsheet_id": ""
+    "spreadsheet_id": "",
+    "selected_sheet_names": null
 }

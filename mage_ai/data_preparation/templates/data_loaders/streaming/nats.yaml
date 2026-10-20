@@ -1,0 +1,34 @@
+connector_type: nats
+server_url: "nats://localhost:4222"
+subject: subject_name
+stream_name: stream_name
+
+# Optional: Consumer type, available types: PULL and PUSH. Defined as PULL by default
+consumer_type: PULL
+
+# Optional: Pull consumer configuration
+batch_size: 100
+
+# Optional: Push consumer configuration
+use_queue_group: true
+
+# Optional: Consumer timeout reading messages
+timeout: 5
+
+# Optional: TLS configuration
+use_tls: false
+
+# Optional: SSL configuration
+# ssl_config:
+#   cafile: "path/to/ca.pem"
+#   certfile: "path/to/client-cert.pem"
+#   keyfile: "path/to/client-key.pem"
+
+# Optional: NKEY seed string
+# nkeys_seed_str: "SUAPAEYJQOQHJ4"
+
+# Optional: user credentials
+# user_credentials: "path/to/credentials.creds"
+
+# Optional: Consumer name for a durable consumer identifier, will use stream name if not provided
+consumer_name: "my_consumer"

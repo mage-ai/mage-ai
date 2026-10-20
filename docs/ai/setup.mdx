@@ -1,0 +1,148 @@
+---
+title: "Using AI (artificial intelligence)"
+sidebarTitle: "Getting started"
+description: "Use AI to perform various actions in Mage."
+icon: "microchip-ai"
+"og:image": "https://steamuserimages-a.akamaihd.net/ugc/813376249149384255/EC3222795DC2961599F7FC0B69E0241C8EC7293E/?imw=5000&imh=5000&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=false"
+---
+
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<Frame>
+    <p align="center">
+    <img
+        alt="Using artificial intelligence"
+        src="https://steamuserimages-a.akamaihd.net/ugc/813376249149384255/EC3222795DC2961599F7FC0B69E0241C8EC7293E/?imw=5000&imh=5000&ima=fit&impolicy=Letterbox&imcolor=%23000000&letterbox=false"
+    />
+    </p>
+</Frame>
+
+Mage uses AI to help you build data pipelines faster. With our OpenAI integration and Mage Pro AI Chat, you can automate the tedious parts of pipeline development and focus on the fun stuff.
+
+<Note>Some AI actions that use direct OpenAI integration require an OpenAI API key. Mage Pro AI Chat uses Mage Pro API proxy authentication for model requests.</Note>
+
+We currently support the following AI features:
+
+- Generate pipelines
+- Generate blocks
+- Chat with AI in Mage Pro
+- Document code
+  - Block documentation
+  - Block comments
+  - Pipeline documentation
+  - Simultaneously document _all_ blocks in a pipeline
+
+<p align="center">
+<img src="https://mage-ai.github.io/assets/overview/ai-demo.gif"/>
+</p>
+
+To see examples of how to use AI in Mage, check out our [AI guides](/guides/ai/overview).
+
+## Setup
+
+For AI actions that use direct OpenAI integration, add an OpenAI API key to your project.
+
+<Note>
+    Read [OpenAI’s documentation](https://help.openai.com/en/articles/4936850-where-do-i-find-my-secret-api-key)
+    to get your API key.
+</Note>
+
+Once you have your OpenAI API key, go to project settings (click the "wizard" in the top right > Workspace > Preferences) and enter the OpenAI API key under the section labeled <b>OpenAI</b>.
+
+## AI Chat in Mage Pro
+
+<ProOnly source="ai-sidekick" />
+
+Mage Pro includes AI Chat for workspace assistance. Open AI Chat from Mage Pro, or visit `/ai/chat` in an authenticated workspace as a user with the Editor role or higher.
+
+For each chat turn, Mage captures the visible non-chat text from the current browser page, along with the page title and URL, so AI Chat can answer page-relative prompts such as "explain this page" or "what am I looking at?" The captured context is scoped to the authenticated user and chat session, excludes the chat UI, and is capped at 20,000 characters.
+
+The AI Chat sidebar lists active and archived chats, lets you search chat history by title, and loads older chats with **Show more** when more results are available. Mage Pro remembers the selected chat and whether you were viewing active or archived chats for the current workspace, then restores that state when you refresh or reopen AI Chat.
+
+When AI Chat replies with Markdown image links that resolve through Mage Pro's authenticated preview flow, AI Chat renders those image previews inline. Markdown links to other workspace files still open in the code editor.
+
+### Inspect delegated subagent work
+
+When a chat turn delegates work, select **Show work** in the AI Chat header. Its **Subagents** summary shows how many subagents are working and how many are done.
+
+Selecting **Subagents** opens the right panel, where subagents are grouped into **Active** and **Done**. Each row shows the subagent name and its latest activity. Select a row to inspect that subagent's turn output, tool activity, and generated outputs; use the back button to return to the grouped list.
+
+AI Chat supports session-scoped file attachments from the composer File action or paste, folder attachments from the composer Folder action, and file or folder attachments by drag and drop. Uploaded attachments remain available on follow-up messages in the same chat session, even after the composer clears for the next message. Folder uploads appear as a single folder attachment in the chat; for browser-selected folders, Mage Pro packages every browser-exposed file into one zip archive before upload, preserves the relative paths inside that archive, and does not filter files from the selected folder. AI Chat receives an uploaded-file manifest and bounded text previews from readable non-archive attachments so it can answer questions about uploaded files without guessing from workspace files.
+
+AI Chat supports push-to-record voice dictation when the Mage Pro API OpenAI proxy is configured and the signed-in user has the same Editor-or-higher permission required to send AI Chat messages. Click the microphone in the composer, then click the stop control to insert the transcription into the draft for editing, or click the send arrow while recording to stop capture, transcribe the audio, and send or queue the dictated message. Audio is sent from the browser to the Mage Pro workspace, then to the Mage Pro API proxy; the workspace and browser never receive the raw OpenAI API key.
+
+Use the execution settings menu beside the chat composer to choose a **Speed** and **Effort** level for the current chat. Choose **Standard** for the default response tier, or **Fast** to use the priority service tier for that chat. Choose **Light**, **Medium**, **High**, or **Extra High** effort based on how much model effort the task needs. The menu stays open after a selection so you can confirm both checked choices, and its button displays the active effort level. When **Fast** is selected, the button appends the speed after the effort level, such as **Medium Fast**.
+
+For guided Sidekick workflows in Mage Pro, AI Chat can show inline forms directly in the chat transcript. Use these forms to choose sources, streams, destinations, and connector settings without leaving the conversation. Required fields must be completed before continuing, large option lists include filtering, and **Cancel** stops the guided setup. Submitting or cancelling the form resolves the original Sidekick turn instead of adding a separate chat message. After submission, AI Chat replaces the form with a submitted summary that shows safe submitted values, truncates long values, and masks sensitive values such as passwords or credentials.
+
+When AI Chat returns a project-local PNG, JPEG, GIF, or WebP path, AI Chat renders the image inline. The path can be on its own line, embedded in prose, such as `Here it is: /home/src/demo/cyborg_mage.png`, or used as a Markdown link target, such as `[output/anime_styled_mage.png](output/anime_styled_mage.png)`. The preview is served through a short-lived authenticated URL, so the image file does not need a public URL.
+
+When Sidekick media tools generate image, audio, or video files, AI Chat renders them at the end of the assistant answer as chat artifacts instead of only inside tool-usage details. Images render inline, audio renders with browser playback controls, and video renders with browser playback controls. Media previews use five-minute authenticated tokens. Supported preview files are GIF, JPEG, PNG, and WebP images up to 25 MB; AAC, MP3, Opus, WAV, and WebM audio up to 50 MB; and MOV, MP4, and WebM video up to 250 MB. Files must be under the current project or the current Sidekick media directory.
+
+Mage Pro administrators configure AI Chat connectivity and model access when the
+workspace is deployed. Per-chat execution settings take precedence over the
+deployment defaults. Codex CLI commands launched independently from the Mage
+terminal continue to use that terminal's own Codex configuration.
+
+When Codex model capacity is temporarily unavailable, AI Chat shows a **Waiting for model capacity** status and automatically retries the run within the configured retry window. If the retry budget is exhausted, AI Chat shows the rate-limit error.
+
+Voice dictation is available when it is enabled by the Mage Pro administrator.
+The workspace validates supported audio formats and applies configured upload,
+duration, and usage limits before sending audio for transcription.
+
+## Generate pipeline using AI
+
+When creating a new pipeline, select the option labeled <b>Using AI</b>.
+
+Then, type the description of what the pipeline should do.
+
+For example:
+
+*Load data from an API,
+then clean the column names,
+and finally export the dataframe to PostgreSQL.*
+
+<img
+    alt="Generate pipeline using AI"
+    src="https://mage-ai.github.io/assets/guides/ai/generate-pipeline.png"
+/>
+
+## Generate block using AI
+
+<Note>
+    You must turn on the feature named `add_new_block_v2`
+    in your project settings. (click the "wizard" in the top right > Workspace > Preferences)
+</Note>
+
+When adding a new block, type in the description of what you want the block to do.
+In the autocomplete dropdown list, select the 1st option with a label starting with
+
+<b>Generate block using AI: ...</b>
+
+<img
+    alt="Generate block using AI"
+    src="https://mage-ai.github.io/assets/guides/ai/generate-block.png"
+/>
+
+## Document code using AI
+
+<img
+    alt="Add documentation using AI"
+    src="https://mage-ai.github.io/assets/guides/ai/document.png"
+/>
+
+### Add documentation for a block
+
+On the edit pipeline page in the top right corner of a block, click the AI actions icon.
+Select the option labeled <b>Document block</b>.
+
+
+### Add documentation for a pipeline and all its blocks
+
+On the edit pipeline page in the top right corner of a block, click the AI actions icon.
+Select the option labeled <b>Document pipeline and all blocks</b>.
+
+### Add comments in a block
+
+On the edit pipeline page in the top right corner of a block, click the AI actions icon.
+Select the option labeled <b>Add comments in code</b>.

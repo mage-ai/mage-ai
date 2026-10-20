@@ -1,0 +1,120 @@
+---
+title: "Pipeline sidekick"
+sidebarTitle: "Sidekick"
+description: "Have you ever wished you had a sidekick like Batman and Robin? Now you have one."
+icon: "mask"
+"og:image": "https://media1.tenor.com/m/VKeRffhEsFsAAAAC/late-batman.gif"
+---
+
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+The Pipeline sidekick appears when you edit a pipeline.
+
+<Frame>
+    <p align="center">
+        <img
+            alt="The Pipeline sidekick appears when you edit a pipeline."
+            src="https://mage-ai.github.io/assets/dev-ux/sidekick/open-sidekick.gif"
+        />
+    </p>
+</Frame>
+
+In the top right corner of the page, click the `Chevron` or `Arrow` looking icon to expand 
+the right panel and reveal the Sidekick.
+
+---
+
+## Visualize block output data
+
+<ProOnly source="embedded-analytics" />
+
+Add 1 or multiple charts to visualize the data produced by a block.
+Click the chart icon in a supported block header, or click **Add chart** from
+a block output preview, to open AI Sidekick with the pipeline and block context
+already filled in. Describe the chart you want, and Sidekick generates Python
+Plotly code plus dashboard JSON metadata for the Analytics dashboard.
+
+When Sidekick opens for an Analytics chart, the prompt includes an Analytics
+workflow attachment with the target dashboard and source pipeline or block so the
+chart is saved in the expected place.
+
+When viewing block output as a table in the Sidekick data view, click a column
+header to sort the preview or use the filter icon to narrow rows by column value.
+Sorting and filtering only change the current table preview; they don’t modify
+the block output saved by the pipeline.
+
+For dynamic blocks and blocks with dynamic upstream dependencies, the Sidekick
+data view can show each dynamic child output separately. Use the Dynamic child
+selector to switch between child outputs, then use the output tabs to move
+between outputs within the selected child. Outputs without displayable data are
+skipped.
+
+<Frame>
+    <p align="center">
+        <img
+            alt="Visualize block output data."
+            src="https://mage-ai.github.io/assets/dev-ux/sidekick/add-chart.gif"
+        />
+    </p>
+</Frame>
+
+[Read more](/observability/visualizations/analytics) about how to create AI-generated
+Plotly dashboards for an individual pipeline or for the entire project.
+
+---
+
+## Configure pipeline variables
+
+<Frame>
+    <p align="center">
+        <img
+            alt="Configure pipeline variables."
+            src="https://mage-ai.github.io/assets/dev-ux/sidekick/variables.png"
+        />
+    </p>
+</Frame>
+
+Use variables in your code and interpolate them at runtime. 
+These variables can be defined at the moment the pipeline is triggered or 
+pre-configured from the Sidekick.
+
+[Read more here](/getting-started/runtime-variable)
+
+---
+
+## Store sensitive secrets
+
+Secrets don’t make friends... but they save companies from oblivion.
+
+<Frame>
+    <p align="center">
+        <img
+            alt="Store sensitive secrets."
+            src="https://mage-ai.github.io/assets/create-secrets.png"
+        />
+    </p>
+</Frame>
+
+[Read more here](/development/variables/secrets)
+
+---
+
+## Customize settings for every individual block
+
+1. Rename a block
+1. Set what execution engine the block should use
+1. Configure how the block should retry itself in case of failure
+1. Set a timeout limit for how long the block can run before it should fail
+1. Configure variables specific to a block
+1. View which pipelines are currently using a block
+
+<Frame>
+    <p align="center">
+        <img
+            alt="Customize settings for every individual block."
+            src="https://mage-ai.github.io/assets/dev-ux/sidekick/block-settings.png"
+        />
+    </p>
+</Frame>
+
+---

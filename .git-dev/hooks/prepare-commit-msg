@@ -1,0 +1,13 @@
+#!/bin/bash
+
+COMMIT_MSG_FILE=$1
+COMMIT_SOURCE=$2
+SHA1=$3
+
+BRANCH_NAME=$(git symbolic-ref --short HEAD)
+
+ISSUE_NUMBER=$(echo $BRANCH_NAME | grep -Eo '#[0-9]+')
+
+if [ -n "$ISSUE_NUMBER" ]; then
+  echo -e "\nref: $ISSUE_NUMBER" >> "$COMMIT_MSG_FILE"
+fi

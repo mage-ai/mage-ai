@@ -1,0 +1,186 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": [
+        "integer"
+      ]
+    },
+    "action": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "autoskipAt": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "compiledSequenceTemplateHtml": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "completed": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "completedAt": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "createdAt": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "dueAt": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "note": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "scheduledAt": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "state": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "stateChangedAt": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "taskType": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "updatedAt": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "accountId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "callId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "completerId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "creatorId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "mailingId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "opportunityId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "ownerId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "prospectId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "sequenceId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "sequenceStateId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "sequenceStepId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "subjectId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "taskPriorityId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "taskThemeId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "templateId": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    }
+  }
+}

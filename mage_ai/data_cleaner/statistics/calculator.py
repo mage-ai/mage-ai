@@ -1,15 +1,16 @@
+import logging
+import math
+
+import numpy as np
+import pandas as pd
+
 from mage_ai.data_cleaner.column_types.column_type_detector import find_syntax_errors
 from mage_ai.data_cleaner.column_types.constants import NUMBER_TYPES, ColumnType
 from mage_ai.data_cleaner.shared.utils import clean_dataframe
 from mage_ai.shared.constants import SAMPLE_SIZE
 from mage_ai.shared.custom_types import FrozenDict
 from mage_ai.shared.hash import merge_dict
-from mage_ai.shared.logger import timer, VerboseFunctionExec
-import math
-import numpy as np
-import pandas as pd
-import logging
-
+from mage_ai.shared.logger import VerboseFunctionExec, timer
 
 EMAIL_DOMAIN_REGEX = r'\@([^\s]*)'
 INVALID_VALUE_SAMPLE_COUNT = 100
@@ -56,7 +57,11 @@ class StatisticsCalculator:
             self.data_tags,
         )
         with VerboseFunctionExec('Calculating statistics per variable', verbose=self.verbose):
-            return self.__calculate_statistics_overview(df, df_original=df_original, is_clean=is_clean)
+            return self.__calculate_statistics_overview(
+                df,
+                df_original=df_original,
+                is_clean=is_clean,
+            )
 
     def null_seq_gen(self, arr):
         prev = -1
@@ -178,8 +183,10 @@ class StatisticsCalculator:
             df_top_value_counts = df_top_value_counts.head(VALUE_COUNT_LIMIT)
 
         # TODO: remove duplicate data for distinct values
-        # object_key_distinct_values = s3_paths.path_distinct_values_by_column(self.object_key_prefix, col)
-        # s3_data.upload_dataframe(self.s3_client, df_top_value_counts, object_key_distinct_values, columns=[col])
+        # object_key_distinct_values = \
+        #     s3_paths.path_distinct_values_by_column(self.object_key_prefix, col)
+        # s3_data.upload_dataframe(
+        #     self.s3_client, df_top_value_counts, object_key_distinct_values, columns=[col])
         # object_key_statistics = s3_paths.path_statistics_by_column(self.object_key_prefix, col)
         # s3_data.upload_dataframe(self.s3_client, df_top_value_counts, object_key_statistics)
 
@@ -267,7 +274,12 @@ class StatisticsCalculator:
                     data[f'{col}/box_plot_data']['min'] = not_outliers.min()
                     data[f'{col}/box_plot_data']['max'] = not_outliers.max()
             elif column_type == ColumnType.DATETIME:
-                dates = pd.to_datetime(series_non_null, utc=True, errors='coerce').dropna()
+                dates = pd.to_datetime(
+                    series_non_null,
+                    format='mixed',
+                    utc=True,
+                    errors='coerce',
+                ).dropna()
                 data[f'{col}/max'] = dates.max().isoformat()
                 data[f'{col}/median'] = (
                     dates.sort_values().iloc[math.floor(len(dates) / 2)].isoformat()
@@ -281,7 +293,7 @@ class StatisticsCalculator:
                 data[f'{col}/max_character_count'] = string_length.max()
                 text_series = text_series.str.replace(PUNCTUATION, ' ', regex=True)
                 text_series = text_series.str.lower().str.strip()
-                text_series = text_series.str.split('\s+')
+                text_series = text_series.str.split(r'\s+')
 
                 word_count = text_series.map(len)
                 data[f'{col}/max_word_count'] = word_count.max()

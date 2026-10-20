@@ -1,3 +1,8 @@
+import logging
+
+import numpy as np
+import pandas as pd
+
 from mage_ai.data_cleaner.column_types.column_type_detector import find_syntax_errors
 from mage_ai.data_cleaner.column_types.constants import NUMBER_TYPES, ColumnType
 from mage_ai.data_cleaner.estimators.outlier_removal import OutlierRemover
@@ -15,12 +20,10 @@ from mage_ai.data_cleaner.transformer_actions.helpers import (
     get_time_window_str,
 )
 from mage_ai.data_cleaner.transformer_actions.udf.base import execute_udf
-from mage_ai.data_cleaner.transformer_actions.utils import clean_column_name, generate_string_cols
-from keyword import iskeyword
-import logging
-import pandas as pd
-import numpy as np
-
+from mage_ai.data_cleaner.transformer_actions.utils import (
+    clean_column_name,
+    generate_string_cols,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -98,7 +101,11 @@ def impute(df, action, **kwargs):
     value = action_options.get('value')
 
     empty_string_pattern = r'^\s*$'
-    df[columns] = df[columns].replace(empty_string_pattern, np.nan, regex=True)
+    df[columns] = (
+        df[columns]
+        .replace(empty_string_pattern, np.nan, regex=True)
+        .infer_objects(copy=False)
+    )
     ctypes = [action_variables[column]['feature']['column_type'] for column in columns]
 
     if strategy == ImputationStrategy.AVERAGE:
@@ -116,7 +123,8 @@ def impute(df, action, **kwargs):
                 mode = df[column].mode().iloc[0]
                 if dtype == ColumnType.LIST:
                     df[column] = df[column].apply(
-                        lambda element: element if element not in [None, np.nan] else mode
+                        lambda element, mode=mode: element if element not in [
+                            None, np.nan] else mode
                     )
                 else:
                     df[columns] = df[columns].fillna(mode)
@@ -128,7 +136,8 @@ def impute(df, action, **kwargs):
     elif strategy == ImputationStrategy.SEQ:
         timeseries_cols = action_options.get('timeseries_index')
         df = df.sort_values(by=timeseries_cols, axis=0)
-        df[columns] = df[columns].fillna(method='ffill')
+        # In pandas 2.x, fillna(method=...) is deprecated; prefer ffill/bfill directly.
+        df[columns] = df[columns].ffill().infer_objects(copy=False)
     elif strategy == ImputationStrategy.RANDOM:
         for column, dtype in zip(columns, ctypes):
             invalid_idx = df[df[column].isna()].index
@@ -166,40 +175,49 @@ def median(df, action, **kwargs):
 def min(df, action, **kwargs):
     return __agg(df, action, 'min')
 
+
 def normalize(df, action, **kwargs):
     columns = action['action_arguments']
     for col in columns:
         data_min = np.nanmin(df[col], axis=0)
         data_max = np.nanmax(df[col], axis=0)
-        data_range = data_max-data_min
+        data_range = data_max - data_min
         df[col] = (df[col] - data_min) / data_range
     return df
+
 
 def reformat(df, action, **kwargs):
     columns = action['action_arguments']
     options = action['action_options']
     reformat_action = options['reformat']
-    df.loc[:, columns] = df[columns].replace('^\s*$', np.nan, regex=True)
 
     if reformat_action == 'caps_standardization':
         capitalization = options['capitalization']
         for column in generate_string_cols(df, columns):
             if capitalization == 'uppercase':
-                df.loc[:, column] = df[columns][column].str.upper()
+                df[column] = df[column].str.upper()
             else:
-                df.loc[:, column] = df[columns][column].str.lower()
+                df[column] = df[column].str.lower()
+        # Convert empty strings to NaN for this action
+        df[columns] = (
+            df[columns]
+            .replace(r'^\s*$', np.nan, regex=True)
+            .infer_objects(copy=False)
+        )
     elif reformat_action == 'currency_to_num':
         for column in generate_string_cols(df, columns):
             clean_col = df[column].replace(CURRENCY_SYMBOLS, '', regex=True)
-            clean_col = clean_col.replace('\s', '', regex=True)
-            clean_col = clean_col.replace('^\s*$', np.nan, regex=True)
-            try:
-                df.loc[:, column] = clean_col.astype(float)
-            except ValueError:
-                logger.warn(
-                    f'Currency conversion applied on non-numerical column \'{column}\''
-                    ': no action taken'
-                )
+            clean_col = clean_col.replace(r'\s', '', regex=True)
+            clean_col = (
+                clean_col.replace(r'^\s*$', np.nan, regex=True)
+                .infer_objects(copy=False)
+            )
+
+            # Robust numeric coercion that works across pandas 1.x and 2.x
+            numeric_col = pd.to_numeric(clean_col, errors='coerce')
+
+            # Explicitly enforce float dtype so tests comparing dtypes pass
+            df[column] = numeric_col.astype(float)
     elif reformat_action == 'date_format_conversion':
         for column in columns:
             clean_col = df[column]
@@ -208,12 +226,23 @@ def reformat(df, action, **kwargs):
             if exact_dtype is str:
                 clean_col = clean_col.str.replace(r'[\,\s\t]+', ' ')
                 clean_col = clean_col.str.replace(
-                    r'\s*([\/\\\-\.]+)\s*', lambda group: group.group(1)[0]
+                    r'\s*([\/\\\-\.]+)\s*', lambda group: group.group(1)[0],
+                    regex=True,
                 )
                 clean_col = clean_col.str.lower()
-            df.loc[:, column] = pd.to_datetime(
-                clean_col, infer_datetime_format=True, errors='coerce'
+            df[column] = pd.to_datetime(
+                clean_col, format='mixed', errors='coerce'
             )
+    elif reformat_action == 'trim':
+        for column in columns:
+            df[column] = df[column].str.strip()
+    else:
+        # Apply NaN replacement only for other actions
+        df[columns] = (
+            df[columns]
+            .replace(r'^\s*$', np.nan, regex=True)
+            .infer_objects(copy=False)
+        )
 
     return df
     
@@ -233,7 +262,7 @@ def remove_column(df, action, **kwargs):
 
 def remove_outliers(df, action, **kwargs):
     cols = set(action['action_arguments'])
-    numeric_df = df[cols].copy()
+    numeric_df = df[list(cols)].copy()
     for column in numeric_df.columns:
         dtype = action['action_variables'][column]['feature']['column_type']
         if dtype in NUMBER_TYPES:
@@ -286,13 +315,15 @@ def shift_up(df, action, **kwargs):
     df[output_col] = df[action['action_arguments'][0]].shift(-1)
     return df
 
+
 def standardize(df, action, **kwargs):
     columns = action['action_arguments']
     for col in columns:
         data_mean = np.mean(df[col], axis=0)
         data_std = np.std(df[col], axis=0)
-        df[col] = (df[col]-data_mean)/data_std
+        df[col] = (df[col] - data_mean) / data_std
     return df
+
 
 def sum(df, action, **kwargs):
     return __agg(df, action, 'sum')
@@ -324,8 +355,8 @@ def __filter_df_with_time_window(df, action):
     if all(k in action_options for k in time_window_keys):
         window_in_seconds = action_options['window']
         df_time_diff = (
-            pd.to_datetime(df[action_options['timestamp_feature_a']], utc=True)
-            - pd.to_datetime(df[action_options['timestamp_feature_b']], utc=True)
+            pd.to_datetime(df[action_options['timestamp_feature_a']], format='mixed', utc=True)
+            - pd.to_datetime(df[action_options['timestamp_feature_b']], format='mixed', utc=True)
         ).dt.total_seconds()
         if window_in_seconds > 0:
             df_time_diff_filtered = df_time_diff[

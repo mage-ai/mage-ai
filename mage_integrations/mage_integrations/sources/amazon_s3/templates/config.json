@@ -1,0 +1,11 @@
+{
+  "aws_access_key_id": null,
+  "aws_region": "us-west-2",
+  "aws_secret_access_key": null,
+  "column_header_format": null,
+  "bucket": null,
+  "file_type": "infer",
+  "prefix": null,
+  "search_pattern": null,
+  "single_stream_in_prefix": false
+}

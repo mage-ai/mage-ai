@@ -1,0 +1,189 @@
+---
+title: "Helm"
+icon: "anchor"
+---
+
+
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProBanner } from '/snippets/pro/banner.mdx';
+
+![](https://avatars.githubusercontent.com/u/15859888?s=200&v=4)
+
+Deploy Mage to a Kubernetes cluster with Helm. Use the chart's `values.yaml` to customize deployment topology, dependencies, storage, and Mage Pro features.
+
+---
+
+# Prerequisites
+
+## Install Helm
+
+<CodeGroup>
+
+```bash From Homebrew (macOS)
+brew install helm
+```
+
+```bash From Apt (Debian/Ubuntu)
+curl https://baltocdn.com/helm/signing.asc | gpg --dearmor | sudo tee /usr/share/keyrings/helm.gpg > /dev/null
+sudo apt-get install apt-transport-https --yes
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list
+sudo apt-get update
+sudo apt-get install helm
+```
+
+</CodeGroup>
+
+Full installation guide: https://helm.sh/docs/intro/install/
+
+## Setup a Kubernetes Cluster
+
+### Local
+[Enable Kubernetes](https://docs.docker.com/desktop/kubernetes/#enable-kubernetes) in Docker Desktop to start a Kubernetes cluster locally.
+
+Other options for starting a Kubernetes cluster locally:
+* [Kind](https://kind.sigs.k8s.io/docs/user/quick-start/)
+* [Minikube](https://minikube.sigs.k8s.io/docs/start/)
+
+
+### AWS EKS
+Follow the [guide](/production/deploying-to-cloud/aws/setup#deploy-to-eks-cluster) to set up the EKS cluster.
+
+### Google Kubernetes Engine (GKE)
+Follow the [guide](https://cloud.google.com/kubernetes-engine/docs/deploy-app-cluster#create_cluster) to create a GKE cluster.
+
+---
+
+# Deploy Mage using Helm
+
+Mage Helm repo: https://mage-ai.github.io/helm-charts/
+
+### Add Helm repository
+
+```bash
+helm repo add mageai https://mage-ai.github.io/helm-charts
+```
+
+### Install with default config
+
+```bash
+helm install my-mageai mageai/mageai
+```
+
+### Get the default values
+
+To customize the deployment, save the chart's default values and edit them:
+
+```bash
+helm show values mageai/mageai > values.yaml
+```
+
+Then install or upgrade using your file:
+
+```bash
+helm install --values values.yaml my-mageai mageai/mageai
+# or
+helm upgrade --install my-mageai mageai/mageai --values values.yaml
+```
+
+---
+
+# Customize deployment
+
+The chart supports many options. Key areas are summarized below; for the full reference, see the [Mage Helm Chart — Values Reference](https://github.com/mage-ai/helm-charts/blob/master/charts/mageai/values.yaml) in the chart repository.
+
+## Deployment topology
+
+- **`replicaCount`** — Number of Mage replicas (default: `1`). Increase for high availability or more concurrent requests and pipeline runs. When using multiple replicas, you must enable Redis (see [Dependencies](#dependencies)).
+- **`standaloneScheduler`** — When `true`, splits Mage into separate **web server** and **scheduler** deployments so you can scale and schedule them independently. Use `scheduler.replicaCount` and `webServer.replicaCount` instead of `replicaCount` when enabled.
+
+## Dependencies
+
+- **PostgreSQL** (`postgresql.enabled`) — Required for production: pipelines, triggers, and metadata. Enable and set `auth.username`, `auth.password`, and `auth.database` (or use an external database and configure Mage accordingly).
+- **Redis** (`redis.enabled`) — Required when `replicaCount` > 1, for distributed locking and caching. You can use an external Redis by setting `customRedisURL` and leaving `redis.enabled: false`.
+
+## Container image
+
+- **`image.repository`**, **`image.tag`**, **`image.pullPolicy`** — Control which Mage image is used (default repository: `mageai/mageai`).
+- **`imagePullSecrets`** — Use for private registries or Mage Pro registry; the secret must exist in the target namespace.
+
+## Storage and volumes
+
+Project code must be available at `/home/src` inside the container. You can provide it in two ways:
+
+1. **`extraVolumes` / `extraVolumeMounts`** (default) — The chart typically mounts a volume named `mage-fs` at `/home/src`. Point it to your project:
+   - **Local / hostPath:** set `extraVolumes` to a `hostPath` with your Mage project path.
+   - **Cloud (EKS, GKE, AKS):** provision a **ReadWriteMany** PersistentVolume (e.g. EFS, Filestore, Azure Files) and a PersistentVolumeClaim, then use that claim in `extraVolumes` / `extraVolumeMounts`.
+
+2. **`persistence.enabled: true`** — Use the chart's built-in PersistentVolume. Set `persistence.storageClassName` and `persistence.size` (e.g. `5Gi`). For cloud filesystems (e.g. EFS), you can use `persistence.csi` if supported by the chart.
+
+### Example: PVC for project code (EKS / GKE / Azure)
+
+After creating a ReadWriteMany PVC (e.g. [EKS EFS PVC](https://github.com/mage-ai/mage-ai-terraform-templates/blob/master/aws-eks/kube/efs-pvc.yaml), [GKE Filestore](https://cloud.google.com/kubernetes-engine/docs/concepts/persistent-volumes#dynamic_provisioning), or [AKS storage](https://learn.microsoft.com/en-us/azure/aks/concepts-storage#persistent-volume-claims)):
+
+```yaml
+extraVolumeMounts:
+  - name: mage-fs
+    mountPath: /home/src
+
+extraVolumes:
+  - name: mage-fs
+    persistentVolumeClaim:
+      claimName: your-pvc-name
+```
+
+## Service and ingress
+
+- **`service.type`** — Default is `LoadBalancer`; set to `ClusterIP` or `NodePort` if needed. **`service.port`** defaults to `6789`.
+- **`service.annotations`** — Use for cloud load balancers (e.g. AWS NLB, GCP).
+- **`ingress`** — Set `ingress.enabled: true` and configure `ingress.className`, `ingress.hosts`, and `ingress.tls` for external access. For production, consider the [Mage-Ingress chart](https://github.com/mage-ai/helm-charts/tree/master/charts/ingress).
+
+## Environment and configuration
+
+- **`config`** — Key-value environment variables for the Mage container (e.g. `USER_CODE_PATH: /home/src/default_repo`).
+- **`secrets`** — Chart-created secrets injected as env vars. Prefer a secret manager (e.g. Vault, AWS Secrets Manager) in production.
+- **`existingSecret`** — Use an existing Secret for env vars; takes precedence over `secrets` if both are set.
+- **`extraEnvs`** — Additional env vars, including `valueFrom` (e.g. downward API for `metadata.namespace`).
+
+## Resources and scheduling
+
+- **`resources`** — Set CPU/memory `limits` and `requests` for the Mage container.
+- **`nodeSelector`**, **`tolerations`**, **`affinity`** — Control pod placement.
+- **`livenessProbe`** / **`readinessProbe`** — Default to `/api/status` on the http port; customize or replace with `customLivenessProbe` / `customReadinessProbe`.
+- **`hpa`** — Horizontal Pod Autoscaler (commented out by default).
+
+## Quick reference: common overrides
+
+| Use case | Key values |
+|----------|------------|
+| Production with database | `postgresql.enabled: true`, `redis.enabled: true` |
+| Multiple replicas | `replicaCount: 2`, `redis.enabled: true` |
+| Private registry | `image.repository`, `imagePullSecrets` |
+| Custom persistent volume| `extraVolumes` / `extraVolumeMounts` with your path or PVC |
+| Persistent storage | `persistence.enabled: true`, `persistence.storageClassName`, `persistence.size` |
+| Mage Pro workspaces | `workspaceConfig.enabled: true` |
+| Mage Pro K8s executor | `k8sExecutorConfig.enabled: true` |
+
+---
+
+# Default workspace and K8s executor config
+
+<ProBanner
+  source="kubernetes-executor"
+  title="The workspaceConfig and k8sExecutorConfig options in the Helm chart are supported only in Mage Pro. They are ignored when running Mage OSS."
+/>
+
+When using **Mage Pro**, you can configure default workspace and Kubernetes executor settings via the chart so the control plane (and, for the K8s executor, workspace pods) get the config file mounted and the corresponding environment variables set automatically.
+
+- **`workspaceConfig`** — Default workspace configuration (e.g. `container_config`, `service_account_name`, `lifecycle_config`). The chart creates a ConfigMap, mounts it on the control plane at `/etc/mage/workspace-config.yaml`, and sets `WORKSPACE_DEFAULT_CONFIG_PATH`. See [Workspaces — Default config file](/guides/developer-ux/workspaces#default-workspace-config-file).
+- **`k8sExecutorConfig`** — Default K8s executor configuration (e.g. `resource_limits`, `resource_requests`, `pod`). The chart creates a ConfigMap, mounts it at `/etc/mage/k8s-executor-config.yaml`, and sets `K8S_DEFAULT_CONFIG_PATH`. See [K8s executor — Default config file](/production/executors/k8#default-config-file).
+
+Enable and set `enforce` as needed in `values.yaml`; do not set `WORKSPACE_DEFAULT_CONFIG_PATH` or `K8S_DEFAULT_CONFIG_PATH` manually when using these chart options.
+
+---
+
+# Further reading
+
+- [Mage Helm Chart source and values](https://github.com/mage-ai/helm-charts) — full values reference in the chart repo
+- [Helm chart releases](https://github.com/mage-ai/helm-charts/releases)
+- [Mage Pro Workspaces](/guides/developer-ux/workspaces)
+- [Kubernetes Executor](/production/executors/k8)

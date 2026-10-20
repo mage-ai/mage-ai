@@ -1,0 +1,27 @@
+---
+title: "Front"
+---
+
+![Front](https://user-images.githubusercontent.com/80284865/215037433-f8b9e0f6-01e8-4fab-ac2e-f1a191c78103.png)
+
+<br/>
+
+## Configuration
+
+To set up the Front source, provide the following configuration parameters:
+
+| Key                 | Description                                                                                     | Sample Value          |
+| ------------------- | ----------------------------------------------------------------------------------------------- | --------------------- |
+| `token`             | The API token of the Front app.                                                                  | `abc123`               |
+| `start_date`        | Used for the `analytics` stream. Fetch data newer than this `start_date`. Format: ISO8601.        | `2023-01-01T00:00:00Z` |
+| `end_date`          | Used for the `analytics` stream. Fetch data older than this `end_date`. If `null`, current date is used. | `2023-01-05T00:00:00Z` |
+| `incremental_range` | Used for the `analytics` stream. Defines the incremental extract range: `daily` or `hourly`.     | `daily`, `hourly`      |
+
+<br/>
+
+## How to Get Your `token`
+
+Follow [Front’s documentation](https://dev.frontapp.com/docs/create-and-revoke-api-tokens#create-an-api-token)  
+to create and retrieve your API token.
+
+<br/>

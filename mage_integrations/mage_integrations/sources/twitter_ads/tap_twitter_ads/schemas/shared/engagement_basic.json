@@ -1,0 +1,24 @@
+{
+  "type": ["null", "object"],
+  "additionalProperties": false,
+  "properties": {
+    "engagements": {
+      "type": ["null", "integer"]
+    },
+    "impressions": {
+      "type": ["null", "integer"]
+    },
+    "retweets": {
+      "type": ["null", "integer"]
+    },
+    "replies": {
+      "type": ["null", "integer"]
+    },
+    "likes": {
+      "type": ["null", "integer"]
+    },
+    "follows": {
+      "type": ["null", "integer"]
+    }
+  }
+}

@@ -27,10 +27,12 @@ type SelectStreamsProps = {
   catalog: CatalogType;
   isLoading: boolean;
   onActionCallback: (selectedStreams: {
-    [key: string]: boolean;
+    [key: string]: StreamType;
   }) => void;
   streams: StreamType[];
 };
+
+type StreamTypeWithMissingProp = StreamType & { isMissingStream?: boolean };
 
 enum FilterSelectionEnum {
   ALL = 'All',
@@ -38,22 +40,37 @@ enum FilterSelectionEnum {
   NOT_SELECTED = 'Not selected',
 }
 
+const TABLE_WIDTH = UNIT * 45;
+const WARNING_TEXT_WIDTH = TABLE_WIDTH - UNIT * 4;
+
 function SelectStreams({
   catalog,
   isLoading,
   onActionCallback,
   streams,
 }: SelectStreamsProps) {
-  const selectedStreamsInit = indexBy(catalog?.streams || [], ({ stream }) => stream);
-  const [selectedStreams, setSelectedStreams] = useState(selectedStreamsInit);
+  const selectedStreamsInit: { [key: string]: StreamType } = indexBy(catalog?.streams || [], ({ stream }) => stream);
+  const missingSelectedStreams = useMemo(() => {
+    const fetchedStreamsSet = new Set(streams.map(({ stream }) => stream));
+    return Object.values(selectedStreamsInit)
+      .filter(({ stream }) => !fetchedStreamsSet.has(stream))
+      .map(stream => ({ ...stream, isMissingStream: true }));
+  }, [selectedStreamsInit, streams]);
+
+  const selectedStreamsWithoutDeleted = { ...selectedStreamsInit };
+  missingSelectedStreams.forEach(({ stream }) => {
+    delete selectedStreamsWithoutDeleted[stream];
+  });
+
+  const [selectedStreams, setSelectedStreams] = useState(selectedStreamsWithoutDeleted);
   const [filterText, setFilterText] = useState<string>(null);
   const [filterMenuOpen, setFilterMenuOpen] = useState<boolean>(false);
   const [dropdownFilter, setDropdownFilter] = useState<FilterSelectionEnum>(FilterSelectionEnum.ALL);
   const filterButtonRef = useRef(null);
 
+  const selectedStreamIds: string[] = getSelectedStreamIds(selectedStreams);
   const filteredSearchStreams = useMemo(() => {
-    const selectedStreamIds: string[] = getSelectedStreamIds(selectedStreams);
-    let filteredStreams: StreamType[] = streams;
+    let filteredStreams: StreamTypeWithMissingProp[] = streams;
     filteredStreams = filteredStreams.filter(({ tap_stream_id }) => {
       if (dropdownFilter === FilterSelectionEnum.SELECTED) {
         return selectedStreamIds.includes(tap_stream_id);
@@ -66,9 +83,14 @@ function SelectStreams({
 
     return filterText
       ? filteredStreams.filter(({ tap_stream_id: stream }) => (
-        stream.includes(filterText)
+        stream?.toLowerCase().includes(filterText?.toLowerCase())
       )) : filteredStreams;
-  }, [dropdownFilter, filterText, selectedStreams, streams]);
+  }, [dropdownFilter, filterText, selectedStreamIds, streams]);
+
+  const allStreamsSelected = useMemo(() =>
+    streams.every(({ stream }) => !!selectedStreams[stream]),
+    [selectedStreams, streams],
+  );
 
   return (
     <Panel>
@@ -134,22 +156,35 @@ function SelectStreams({
       <TableContainerStyle
         height="55vh"
         hideHorizontalScrollbar
-        width={`${UNIT * 45}px`}
+        width={`${TABLE_WIDTH}px`}
       >
         <Table
+          borderCollapseSeparate
           columnFlex={[1, 6]}
           columns={[
             {
-              label: () => '',
+              label: () => (
+                <Checkbox
+                  checked={allStreamsSelected}
+                  onClick={() => {
+                    const allStreamsIndexed = indexBy(streams || [], ({ stream }) => stream);
+                    if (allStreamsSelected) {
+                      setSelectedStreams({});
+                    } else {
+                      setSelectedStreams(allStreamsIndexed);
+                    }
+                  }}
+                />
+              ),
               uuid: 'Selected',
             },
             {
-              uuid: 'Stream',
+              uuid: 'Stream name',
             },
           ]}
-          noHeader
-          rows={filteredSearchStreams.map((stream) => {
+          rows={filteredSearchStreams.concat(missingSelectedStreams).map((stream) => {
             const {
+              isMissingStream,
               stream: streamID,
             } = stream;
             const selected: boolean = !!selectedStreams[streamID];
@@ -157,6 +192,7 @@ function SelectStreams({
             return [
               <Checkbox
                 checked={selected}
+                disabled={!selected && isMissingStream}
                 key={`selected-${streamID}`}
                 onClick={() => {
                   setSelectedStreams(prev => ({
@@ -165,16 +201,49 @@ function SelectStreams({
                   }));
                 }}
               />,
-              <Text key={`stream-${streamID}`}>
-                {streamID}
+              <Text
+                danger={isMissingStream}
+                key={`stream-${streamID}`}
+                title={streamID}
+                width={TABLE_WIDTH - 48 - 32}
+              >
+                {streamID}{isMissingStream ? ' (no longer available)' : ''}
               </Text>,
             ];
           })}
+          stickyHeader
         />
       </TableContainerStyle>
 
       <Divider medium />
       <Spacing p={2}>
+        {selectedStreamIds?.length > 50 &&
+          <Spacing pb={2}>
+            <Text
+              danger
+              maxWidth={WARNING_TEXT_WIDTH}
+              rightAligned
+              whiteSpaceNormal
+            >
+              WARNING: Selecting too many streams (e.g. &gt;50)
+              <br />
+              may cause app performance issues.
+            </Text>
+          </Spacing>
+        }
+        {streams?.length === 0 &&
+          <Spacing pb={2}>
+            <Text
+              bold
+              maxWidth={WARNING_TEXT_WIDTH}
+              warning
+              whiteSpaceNormal
+            >
+              If you can successfully connect to the data source but no streams are
+              displayed, check if the user has proper database/schema permissions.
+            </Text>
+          </Spacing>
+        }
         <FlexContainer justifyContent="flex-end">
           <Button
             loading={isLoading}

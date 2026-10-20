@@ -1,0 +1,8 @@
+connector_type: oracledb
+user: 'test'
+password: '123456'
+host: 'host_name'
+port: 1521
+table: 'exported_table'
+service_name: 'service_name'
+mode: 'thin'

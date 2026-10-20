@@ -1,0 +1,116 @@
+---
+title: "Databricks"
+icon: "block-brick-fire"
+description:
+  "This is a guide for using Databricks Spark cluster with Mage."
+---
+
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="databricks" />
+
+Besides supporting running Spark pipelines in AWS EMR cluster and standalone Spark cluster, Mage also supports
+running Spark pipelines in Databricks cluster.
+
+## Set up
+
+Here is an overview of the steps required to use Mage with Databricks Cluster:
+
+1. [Set up Databricks cluster](#1-set-up-databricks-cluster)
+2. [Use Mage databricks docker image](#2-use-mage-databricks-docker-image)
+3. [Configure environment variables](#3-configure-environment-variables)
+4. [Sample pipeline with PySpark code](#4-sample-pipeline-with-pyspark-code)
+5. [Verify everything worked](#5-verify-everything-worked)
+
+If you get stuck, run into problems, or just want someone to walk you through
+these steps, please join our [Slack](https://www.mage.ai/chat)
+
+### 1. Set up Databricks cluster
+
+Set up a Databricks workspace and cluster following the docs:
+* [Create a workspace using the account console](https://docs.databricks.com/administration-guide/account-settings-e2/workspaces.html)
+* [Create a cluster](https://docs.databricks.com/clusters/create-cluster.html)
+
+### 2. Use Mage databricks docker image
+
+Contact Mage team to update your Mage Pro cluster to use Mage databricks docker image.
+
+### 3. Configure environment variables
+
+Set the following environment variables in your Mage Pro cluster to enable connectivity with your Databricks workspace:
+
+- **`DATABRICKS_HOST`**  
+   The base URL of your Databricks workspace.  
+   Example: `https://<your-databricks-instance>.cloud.databricks.com`
+
+- **`DATABRICKS_TOKEN`**  
+   A personal access token (PAT) used for authenticating with Databricks.  
+   You can generate this token in the Databricks UI by navigating to:  
+   **Settings** > **Developer** > **Access Tokens**.
+
+- **`DATABRICKS_CLUSTER_ID`**  
+   The unique identifier for the Databricks cluster where queries will be executed.  
+   You can find this in your Databricks workspace under: **Compute** > **Clusters**.  
+   Refer to [Databricks documentation](https://docs.databricks.com/aws/en/workspace/workspace-details#cluster-url-and-id) for detailed steps on retrieving the cluster ID.
+
+### 4. Sample pipeline with PySpark code
+
+1. Create a new pipeline by clicking `New pipeline` in the `/pipelines` page.
+2. Open the pipeline's metadata.yaml file and set the config.
+    ```
+    cache_block_output_in_memory: true
+    run_pipeline_in_one_process: true
+    ```
+3. Click `+ Data loader`, then `Base template (generic)` to add a new data loader
+   block.
+4. Paste the following sample code in the new data loader block:
+5. Click "Run code" button to run the block.
+
+```python
+from databricks.connect import DatabricksSession
+
+if 'data_loader' not in globals():
+    from mage_ai.data_preparation.decorators import data_loader
+if 'test' not in globals():
+    from mage_ai.data_preparation.decorators import test
+
+
+@data_loader
+def load_data(*args, **kwargs):
+    spark = DatabricksSession.builder.remote().getOrCreate()
+
+    data = [("John", 28), ("Anna", 23), ("Mike", 35)]
+    columns = ["Name", "Age"]
+
+    df = spark.createDataFrame(data, columns)
+    return df
+
+
+@test
+def test_output(output, *args) -> None:
+    """
+    Template code for testing the output of the block.
+    """
+    assert output is not None, 'The output is undefined'
+```
+
+1. Click `+ Data exporter`, then `Base template (generic)` to add a new data
+   exporter block.
+2. Paste the following sample code in the new data exporter block:
+3. Click "Run code" button to run the block.
+```python
+if 'data_exporter' not in globals():
+    from mage_ai.data_preparation.decorators import data_exporter
+
+
+@data_exporter
+def export_data(df, *args, **kwargs):
+    df.write.format("delta").mode("append").saveAsTable("user_table")
+
+    return df
+```
+
+### 5. Verify everything worked
+
+Check the table in your Unity Catalog to verify whether the data is written to it correctly. 

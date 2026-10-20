@@ -1,0 +1,46 @@
+---
+title: Trino
+description: How to configure Trino as a destination in Mage to write pipeline data to Trino-compatible catalogs using supported connectors such as PostgreSQL, Iceberg, Delta Lake, and more.
+---
+
+![Trino logo](https://trino.io/assets/trino-og.png)
+
+---
+
+## Overview
+
+Use **Trino** as a destination in Mage to write data to a variety of underlying data sources including **PostgreSQL**, **Delta Lake**, **Iceberg**, **S3**, and more—via Trino’s supported catalog and connector system.
+
+Trino enables federated query and write access across databases, data warehouses, and data lakes, all through a unified SQL engine.
+
+---
+
+## Configuration Parameters
+
+You must provide the following parameters when configuring Trino as a destination:
+
+| Key                          | Description                                                                                                                   | Example Value                | Required |
+|-------------------------------|-------------------------------------------------------------------------------------------------------------------------------|-------------------------------|----------|
+| `catalog`                     | Trino catalog used to access the target data source (e.g., PostgreSQL, Iceberg, Delta Lake).                                 | `my_prod_pg`                 | ✅        |
+| `connector`                   | Trino connector name. Determines how Trino interacts with the catalog's backend.                                             | `postgresql`                 | ✅        |
+| `host`                        | Hostname or IP address of the Trino coordinator.                                                                             | `127.0.0.1`                  | ✅        |
+| `port`                        | Port where the Trino coordinator is running. Default is `8080`.                                                              | `8080`                       | ✅        |
+| `username`                    | Username for authenticating with the Trino coordinator.                                                                      | `admin`                      | ✅        |
+| `password`                    | *(Optional)* Password for Trino authentication.                                                                              | `abc123...`                  | ❌        |
+| `schema`                      | Schema name where the target table will be created or written to.                                                            | `public`                     | ✅        |
+| `table`                       | Name of the destination table to write data into.                                                                            | `dim_users_v1`               | ✅        |
+| `query_max_length`            | Maximum character length allowed for Trino SQL query payloads.                                                               | `1000000`                    | ❌        |
+| `ssl`                         | Whether to disable SSL certificate verification. Set `false` to disable.                                                     | `false`                      | ❌        |
+| `location`                    | (Delta Lake only) URI location of the target table or storage bucket.                                                       | `s3://my-delta-bucket/`      | ❌        |
+| `ignore_location_for_temp_tables` | Prevents Trino from setting `WITH LOCATION` for temp tables. Recommended when using Delta Lake with Glue metastore.       | `false` *(default)*          | ❌        |
+
+---
+
+## Notes on Delta Lake + Glue Integration
+
+When using the **Delta Lake connector** with a **Glue metastore**, tables created with the `WITH LOCATION` property will **not delete underlying data** when dropped.
+
+To avoid residual files when Mage creates temp tables, set:
+
+```yaml
+ignore_location_for_temp_tables: true

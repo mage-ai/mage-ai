@@ -47,12 +47,29 @@ export function queryString(query: object = {}) {
     .join('&');
 }
 
+export function filterQuery(
+  query: object = {},
+  keysToInclude: string[] = [],
+) {
+  return Object.entries(query)
+    .reduce((acc, [key, value]) => {
+      if ((keysToInclude.includes(key))
+        && (!Array.isArray(value)
+          || (Array.isArray(value) && value.length > 0))) {
+          acc[key] = value;
+      }
+      return acc;
+    }, {});
+}
+
 export const redirectToUrl = (url: string, server?: ServerResponse) => {
   if (server) {
-    server.writeHead(302, {
-      Location: url,
-    });
-    server.end();
+    if (typeof server?.writeHead === 'function') {
+      server.writeHead(302, {
+        Location: url,
+      });
+      server.end();
+    }
   } else {
     Router.push(url);
   }

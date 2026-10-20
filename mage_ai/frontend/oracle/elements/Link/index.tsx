@@ -1,6 +1,14 @@
 import React from 'react';
 import styled, { css } from 'styled-components';
+import { useRouter } from 'next/router';
 
+import EventPropertiesType, {
+  buildEventData,
+  EVENT_ACTION_TYPE_CLICK,
+  EVENT_COMPONENT_TYPE_LINK,
+  getDefaultEventParameters,
+  logEventCustom,
+} from '@interfaces/EventPropertiesType';
 import dark from '@oracle/styles/themes/dark';
 import {
   BORDER_STYLE,
@@ -21,6 +29,7 @@ export type LinkProps = {
   danger?: boolean;
   default?: boolean;
   disabled?: boolean;
+  eventProperties?: EventPropertiesType;
   flex?: number;
   fitContentHeight?: boolean;
   fitContentWidth?: boolean;
@@ -28,8 +37,10 @@ export type LinkProps = {
   fullWidth?: boolean;
   height?: number;
   href?: string;
+  hoverBackground?: boolean;
   inline?: boolean;
   large?: boolean;
+  largeSm?: boolean;
   minWidth?: number;
   monospace?: boolean;
   muted?: boolean;
@@ -44,10 +55,15 @@ export type LinkProps = {
   overflow?: string;
   pointerEventsEnabled?: boolean;
   preventDefault?: boolean;
+  primary?: boolean;
   sameColorAsText?: boolean;
   secondary?: boolean;
   selected?: boolean;
   small?: boolean;
+  sky?: boolean;
+  style?: {
+    [key: string]: string | number;
+  };
   tabIndex?: number;
   target?: string;
   textOverflow?: string;
@@ -77,7 +93,13 @@ export const SHARED_LINK_STYLES = css<any>`
     !props.secondary &&
     !props.color &&
     `
-    color: ${(props.theme.interactive || dark.interactive).linkPrimary};
+    color: ${(props.theme.interactive || dark.interactive).linkText};
+
+    &:active,
+    &:focus,
+    &:hover {
+      color: ${(props.theme.interactive || dark.interactive).linkPrimaryHover};
+    }
   `}
 
   ${(props) => props.color && `
@@ -104,13 +126,10 @@ export const SHARED_LINK_STYLES = css<any>`
     text-align: center;
   `}
 
-  ${props => props.danger && `
-    color: ${(props.theme.interactive || dark.interactive).dangerBorder} !important;
-
-    &:active,
-    &:focus,
+  ${props => props.primary && `
+    color: ${(props.theme.interactive || dark.interactive).linkPrimaryLight};
     &:hover {
-      color: ${(props.theme.interactive || dark.interactive).dangerBorder} !important;
+      color: ${(props.theme.interactive || dark.interactive).linkPrimaryLight};
     }
   `}
 
@@ -121,13 +140,33 @@ export const SHARED_LINK_STYLES = css<any>`
     }
   `}
 
+  ${props => props.sky && `
+    color: ${(props.theme.interactive || dark.interactive).linkTextLight};
+  `}
+
+  ${props => props.warning && `
+    color: ${(props.theme || dark).accent.yellow} !important;
+  `}
+
+  ${props => props.danger && `
+    color: ${(props.theme.interactive || dark.interactive).dangerBorder} !important;
+
+    &:active,
+    &:focus,
+    &:hover {
+      color: ${(props.theme.interactive || dark.interactive).dangerBorder} !important;
+    }
+  `}
+
   ${props => props.selected && `
     background: ${(props.theme.interactive || dark.monotone.black)};
     border: ${BORDER_WIDTH}px ${BORDER_STYLE} ${(props.theme.monotone || dark.monotone).focusBorder};
   `}
 
-  ${props => props.danger && `
-    color: ${(props.theme.interactive || dark.interactive).dangerBorder} !important;
+  ${props => props.hoverBackground && `
+    &:hover {
+      background: ${(props.theme.interactive || dark.interactive).hoverBackgroundTransparent};
+    }
   `}
 
   ${props => props.transparentBorder && `
@@ -259,6 +298,7 @@ const LinkStyle = styled.a`
 const Link = ({
   children,
   disabled,
+  eventProperties,
   href = '#',
   onClick,
   onDoubleClick,
@@ -273,40 +313,72 @@ const Link = ({
   ...props
 }: {
   children: any;
-} & LinkProps, ref) => (
-  <LinkStyle
-    {...props}
-    {...({})}
-    disabled={disabled}
-    href={href}
-    onClick={(e) => {
-      if (disabled || preventDefault) {
-        e.preventDefault();
-      }
-      if (onClick && !disabled) {
-        onClick(e);
-      }
-    }}
-    onDoubleClick={(e) => {
-      if (disabled || preventDefault) {
-        e.preventDefault();
-      }
-      if (onDoubleClick && !disabled) {
-        onDoubleClick(e);
-      }
-    }}
-    onFocus={e => onFocus?.(e)}
-    preventDefault={preventDefault}
-    ref={ref}
-    rel={openNewWindow ? 'noopener noreferrer' : null}
-    sameColorAsText={sameColorAsText}
-    selected={selected}
-    target={target || (openNewWindow ? '_blank' : null)}
-    transparentBorder={transparentBorder}
-    weightStyle={weightStyle}
-  >
-    {children}
-  </LinkStyle>
-);
+} & LinkProps, ref) => {
+  const router = useRouter();
+  const query = router?.query;
+
+  const {
+    eventActionType = EVENT_ACTION_TYPE_CLICK,
+    eventComponentType = EVENT_COMPONENT_TYPE_LINK,
+    eventParameters: eventParametersProp = {},
+  } = eventProperties || {};
+  const defaultEventParameters = getDefaultEventParameters(eventParametersProp, query);
+  const {
+    eventName,
+    eventParameters,
+  } = buildEventData({
+    actionType: eventActionType,
+    componentType: eventComponentType,
+    parameters: defaultEventParameters,
+  });
+  const updatedEventParameters = {
+    ...eventParameters,
+  };
+  if (typeof children === 'string') {
+    updatedEventParameters.label = children;
+  }
+
+  return (
+    <LinkStyle
+      {...props}
+      {...({})}
+      disabled={disabled}
+      href={href}
+      onClick={(e) => {
+        if (disabled || preventDefault) {
+          e.preventDefault();
+        }
+        if (onClick && !disabled) {
+          try {
+            logEventCustom(eventName, updatedEventParameters);
+            onClick(e);
+          } catch(err) {
+            console.log(err);
+          }
+        }
+      }}
+      onDoubleClick={(e) => {
+        if (disabled || preventDefault) {
+          e.preventDefault();
+        }
+        if (onDoubleClick && !disabled) {
+          logEventCustom(eventName, updatedEventParameters);
+          onDoubleClick(e);
+        }
+      }}
+      onFocus={e => onFocus?.(e)}
+      preventDefault={preventDefault}
+      ref={ref}
+      rel={openNewWindow ? 'noopener noreferrer' : null}
+      sameColorAsText={sameColorAsText}
+      selected={selected}
+      target={target || (openNewWindow ? '_blank' : null)}
+      transparentBorder={transparentBorder}
+      weightStyle={weightStyle}
+    >
+      {children}
+    </LinkStyle>
+  );
+};
 
 export default React.forwardRef(Link);

@@ -1,41 +1,27 @@
 import { queryString } from '@utils/url';
 
+export const DEFAULT_HOST: string = 'localhost';
+export const DEFAULT_PORT: string = process.env.NEXT_PUBLIC_MAGE_API_PORT || '6789';
+
 function getHostCore(
   windowDefined: boolean,
-  defaultHost: string = 'localhost',
-  defaultPort: string = '6789',
-){
+  defaultHost: string = DEFAULT_HOST,
+  defaultPort: string = DEFAULT_PORT,
+  opts?: {
+    forceDefaultPort?: boolean;
+    forceCurrentPort?: boolean;
+  },
+) {
   let host = defaultHost;
-  if(windowDefined){
+  if (windowDefined) {
     host = window.location.hostname;
   }
-  if(host === defaultHost){
+  if ((host === defaultHost && !opts?.forceCurrentPort) || opts?.forceDefaultPort) {
     host = `${host}:${defaultPort}`;
-  } else if (windowDefined && !!window.location.port){
+  } else if (windowDefined && !!window.location.port) {
     host = `${host}:${window.location.port}`;
   }
-  return host;
-}
 
-function getProtocol(
-  windowDefined: boolean,
-  host: string,
-  defaultHost: string = 'localhost',
-){
-  let protocol = 'http://';
-  if(host !== defaultHost){
-    protocol = 'https://';
-    if(windowDefined && !window.location.protocol?.match(/https/)) {
-      protocol = 'http://';
-    }
-  }
-  return protocol;
-}
-
-function getHost(){
-  const windowDefined = typeof window !== 'undefined';
-  const LOCALHOST = 'localhost';
-  const PORT = '6789';
   /*
   The CLOUD_BASE_PATH placeholder below is used for replacing with base
   paths required by cloud notebooks. The backend will detect the notebook type
@@ -43,27 +29,66 @@ function getHost(){
   know the base path until the tool is launched.
   */
   const CLOUD_BASE_PATH = '/CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER_';
-  const host = getHostCore(windowDefined, LOCALHOST, PORT);
-  const protocol = getProtocol(windowDefined, host, LOCALHOST);
-
   let basePath = '';
   if (!CLOUD_BASE_PATH.includes('CLOUD_NOTEBOOK_BASE_PATH_PLACEHOLDER')) {
     basePath = CLOUD_BASE_PATH;
   }
-  return `${protocol}${host}${basePath}/api`;
+
+  return `${host}${basePath}`;
 }
 
+export function getProtocol(
+  windowDefined: boolean,
+  host: string,
+  defaultHost: string = DEFAULT_HOST,
+) {
+  let protocol = 'http://';
+  if (host !== defaultHost) {
+    protocol = 'https://';
+    if (windowDefined && !window.location.protocol?.match(/https/)) {
+      protocol = 'http://';
+    }
+  }
+  return protocol;
+}
 
-export function getWebSocket() {
+export function getHost(opts?: { forceDefaultPort?: boolean; forceCurrentPort?: boolean }) {
   const windowDefined = typeof window !== 'undefined';
-  const LOCALHOST = 'localhost';
-  const PORT = '6789';
+  const LOCALHOST = DEFAULT_HOST;
+  const PORT = DEFAULT_PORT;
+
+  const host = getHostCore(windowDefined, LOCALHOST, PORT, opts);
+  const protocol = getProtocol(windowDefined, host, LOCALHOST);
+
+  return `${protocol}${host}`;
+}
+
+export function getWebSocket(path = '') {
+  const windowDefined = typeof window !== 'undefined';
+  const LOCALHOST = DEFAULT_HOST;
+  const PORT = DEFAULT_PORT;
+
+  const host = getHostCore(windowDefined, LOCALHOST, PORT);
 
   let prefix = 'ws://';
   if (windowDefined && window.location.protocol?.match(/https/)) {
     prefix = 'wss://';
   }
-  return `${prefix}${getHostCore(windowDefined, LOCALHOST, PORT)}/websocket/`;
+  return `${prefix}${host}/websocket/${path}`;
+}
+
+export function getEventStreamsUrl(uuid?: string): string {
+  const windowDefined = typeof window !== 'undefined';
+  const LOCALHOST = DEFAULT_HOST;
+  const PORT = DEFAULT_PORT;
+
+  const host = getHostCore(windowDefined, LOCALHOST, PORT);
+
+  let prefix = 'http://';
+  if (windowDefined && window.location.protocol?.match(/https/)) {
+    prefix = 'https://';
+  }
+  return `${prefix}${host}/event-streams/${uuid || ''}`;
 }
 
 export function buildUrl(
@@ -73,16 +98,19 @@ export function buildUrl(
   childId: string = null,
   query: any = {},
   grandchildResource: string = null,
+  opts?: {
+    excludeApi?: boolean;
+  },
 ): string {
-  let path: string =`${getHost()}/${resource}`;
+  let path: string = `${getHost()}${opts?.excludeApi ? '' : '/api'}/${resource}`;
 
-  if (id) {
+  if (typeof id !== 'undefined' && id !== null) {
     path = `${path}/${id}`;
   }
   if (childResource) {
     path = `${path}/${childResource}`;
   }
-  if (childId) {
+  if (typeof childId !== 'undefined' && childId !== null) {
     path = `${path}/${childId}`;
   }
   if (grandchildResource) {

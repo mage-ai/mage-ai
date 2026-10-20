@@ -1,0 +1,10 @@
+[flake8]
+ignore = E121,E126,W503,W504,E203,W605,B006
+exclude =
+    mage_ai/data_preparation/templates,
+    mage_ai/orchestration/db/migrations/versions,
+    mage_integrations/mage_integrations/sources/*/tap_*/,
+    mage_integrations/mage_integrations/destinations/*/target_*/
+max-line-length = 100
+per-file-ignores =
+    mage_ai/orchestration/pipeline_scheduler.py: F401,F403

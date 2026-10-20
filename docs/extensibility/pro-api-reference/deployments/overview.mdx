@@ -1,0 +1,65 @@
+---
+title: "Create Deployment"
+api: "POST /deployment_settings/{setting_name}/deployments"
+---
+
+Trigger a deployment using a specific deployment setting.
+
+`POST /deployment_settings/{setting_name}/deployments`
+
+<ParamField path="setting_name" type="string" required>
+  Name of the deployment setting to use for this deployment. Find the deployment setting name on your Mage Pro cluster's `/apps/deploy` page.
+</ParamField>
+
+<ParamField body="deployment.source.head.name" type="string" required>
+  The name of the GitHub branch where the commit is located (e.g., `main`, `feature/xyz`).
+</ParamField>
+
+<ParamField body="deployment.source.name" type="string" required>
+  A human-readable description of the commit (e.g., GitHub commit message).
+</ParamField>
+
+<ParamField body="deployment.source.version" type="string" required>
+  The GitHub commit SHA that will be deployed.
+</ParamField>
+
+<ParamField body="deployment.stage.branch.name" type="string" required>
+  The branch name in the target deployment environment (e.g., `deploy-main`).
+</ParamField>
+
+<ParamField body="deployment.stage.environment" type="string" required>
+  The environment where the deployment will be created (e.g., `development`, `staging`, `production`).
+</ParamField>
+
+<ParamField body="deployment.stage.target_directory" type="string">
+  Optional. The directory path inside the deployment environment where the code will be deployed.
+</ParamField>
+
+<RequestExample>
+
+```bash Request
+curl --request POST \
+  -H 'Content-Type: application/json' \
+  -H 'OAUTH-TOKEN: <your-oauth-token>' \
+  -d '{
+        "deployment": {
+          "source": {
+            "head": {
+              "name": "main"
+            },
+            "name": "Add feature X",
+            "version": "abc123def456"
+          },
+          "stage": {
+            "branch": {
+              "name": "deploy-main"
+            },
+            "environment": "production",
+            "target_directory": "/home/src/project_name"
+          }
+        },
+        "api_key": "zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2"
+      }' \
+  --url https://your-mage-instance.com/api/deployment_settings/prod/deployments
+```
+</RequestExample>

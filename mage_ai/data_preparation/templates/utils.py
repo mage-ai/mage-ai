@@ -1,7 +1,11 @@
 import jinja2
 import os
+import stat
 import shutil
 
+from typing import Dict
+
+from mage_ai.shared.io import chmod
 
 template_env = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
@@ -28,6 +32,7 @@ def copy_template_directory(template_path: str, dest_path: str) -> None:
     if not os.path.exists(template_path):
         raise IOError(f'Could not find templates for {template_path}.')
     shutil.copytree(template_path, dest_path)
+    chmod(dest_path, stat.S_IRWXU)
 
 
 def read_template_file(template_path: str) -> jinja2.Template:
@@ -51,6 +56,8 @@ def write_template(template_source: str, dest_path: str) -> None:
         template_source (str): Template source code to write to file
         dest_path (str): Destination file to write template source code to.
     """
+    os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+
     with open(dest_path, 'w') as foutput:
         foutput.write(template_source)
 
@@ -70,3 +77,20 @@ def template_exists(template_path: str) -> bool:
         template_path,
     )
     return os.path.exists(template_path)
+
+
+def get_variable_for_template(
+    variable_uuid: str,
+    parse: str = None,
+    variables: Dict = None,
+):
+    if not variables:
+        return None
+
+    value = variables.get(variable_uuid)
+    if parse:
+        results = {}
+        exec(f'_parse_func = {parse}', results)
+        return results['_parse_func'](value)
+
+    return value

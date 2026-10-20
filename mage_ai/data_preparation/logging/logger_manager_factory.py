@@ -15,5 +15,8 @@ class LoggerManagerFactory:
             if logger_type == LoggerType.S3:
                 from mage_ai.data_preparation.logging.s3_logger_manager import S3LoggerManager
                 return S3LoggerManager(repo_config=repo_config, **kwargs)
-        
+            elif logger_type == LoggerType.GCS:
+                from mage_ai.data_preparation.logging.gcs_logger_manager import GCSLoggerManager
+                return GCSLoggerManager(repo_config=repo_config, **kwargs)
+
         return LoggerManager(repo_config=repo_config, **kwargs)

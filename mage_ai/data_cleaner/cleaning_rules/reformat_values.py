@@ -1,11 +1,10 @@
+import re
+
+import pandas as pd
+
 from mage_ai.data_cleaner.cleaning_rules.base import BaseRule
 from mage_ai.data_cleaner.column_types.constants import ColumnType
-from mage_ai.data_cleaner.transformer_actions.constants import (
-    ActionType,
-    Axis,
-)
-import pandas as pd
-import re
+from mage_ai.data_cleaner.transformer_actions.constants import ActionType, Axis
 
 
 class ReformatValuesSubRule:
@@ -99,8 +98,8 @@ class StandardizeCapitalizationSubRule(ReformatValuesSubRule):
         Rule:
         1. If column is not a category/string type which may have alphabet, no suggestion
         2. If non-null entries are not string, no suggestion
-        3. If NON_ALPH_UB of entries are not majority alphabetical, no suggestion. Majority alphabetical
-           == ALPH_RATIO_LB of all chars are alphabet
+        3. If NON_ALPH_UB of entries are not majority alphabetical, no suggestion. Majority
+            alphabetical == ALPH_RATIO_LB of all chars are alphabet
         4. If all entries are same case, no suggestion
         5. Suggest the more prevalent occurrence (e.g., if most alphabetical entries are lowercase
         text but some mixedcase and uppercase text, suggest conversion to lowercase)
@@ -224,7 +223,7 @@ class ReformatDateSubRule(ReformatValuesSubRule):
         1. If column is not of dtype category or text, no suggestion
         2. If column does not contain string types, no suggestion
         3. Try use Pandas datetime parse to convert from string to datetime.
-           If more than DATE_MATCHES_LB entries are succesfully converted, suggest
+           If more than DATE_MATCHES_LB entries are successfully converted, suggest
            conversion to datetime type
         """
         dtype = self.column_types[column]
@@ -233,7 +232,7 @@ class ReformatDateSubRule(ReformatValuesSubRule):
         if not self.exact_dtypes[column] is str:
             return
         clean_col = self.strip_column_for_date_parsing(column)
-        clean_col = pd.to_datetime(clean_col, infer_datetime_format=True, errors='coerce')
+        clean_col = pd.to_datetime(clean_col, format='mixed', errors='coerce')
         notnull_value_rate = clean_col.count() / len(clean_col)
         if notnull_value_rate >= self.DATE_MATCHES_LB:
             self.matches.append(column)
@@ -257,8 +256,16 @@ class ReformatDateSubRule(ReformatValuesSubRule):
 
     def strip_column_for_date_parsing(self, column):
         clean_col = self.clean_column(column)
-        clean_col = clean_col.str.replace(r'[\,\s\t]+', ' ')
-        clean_col = clean_col.str.replace(r'\s*([\/\\\-\.]+)\s*', lambda group: group.group(1)[0])
+        clean_col = clean_col.str.replace(
+            r'[\,\s\t]+',
+            ' ',
+            regex=True,
+        )
+        clean_col = clean_col.str.replace(
+            r'\s*([\/\\\-\.]+)\s*',
+            lambda group: group.group(1)[0],
+            regex=True,
+        )
         return clean_col.str.lower()
 
 
@@ -269,7 +276,9 @@ class ReformatValues(BaseRule):
         ReformatDateSubRule,
     ]
 
-    def __init__(self, df, column_types, statistics, custom_config={}):
+    def __init__(self, df, column_types, statistics, custom_config=None):
+        if custom_config is None:
+            custom_config = {}
         super().__init__(df, column_types, statistics, custom_config=custom_config)
         # TODO Clean dataframe prior to giving to rule
         self.clean_column_cache = {}

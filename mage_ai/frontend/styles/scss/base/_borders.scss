@@ -1,0 +1,28 @@
+@use '../abstracts/helpers' as *;
+
+@mixin border-colors() {
+  @each $value in $colors-names {
+    &.border-color-#{$value} {
+      @include shared;
+      border-color: var(--colors-#{$value});
+    }
+  }
+}
+
+@mixin shared {
+  border-radius: var(--borders-radius-base);
+  border-style: var(--borders-style);
+  border-width: var(--borders-width);
+}
+
+@mixin base($muted: false) {
+  @include shared;
+  @incldue border-colors();
+
+  border-color: if($muted, var(--borders-color-muted-default), var(--borders-color-base-default));
+}
+
+@mixin borders-transparent {
+  @include shared;
+  border-color: transparent;
+}

@@ -1,0 +1,125 @@
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": [
+        "integer"
+      ]
+    },
+    "deal_id": {
+      "type": [
+        "integer"
+      ]
+    },
+    "product_id": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "order_nr": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "product_variation_id": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "item_price": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "discount_percentage": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "duration": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "sum_no_discount": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "sum": {
+      "type": [
+        "null",
+        "number"
+      ]
+    },
+    "currency": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "enabled_flag": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "add_time": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "last_edit": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "comments": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "active_flag": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "name": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "sum_formatted": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "quantity_formatted": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "quantity": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    }
+  }
+}

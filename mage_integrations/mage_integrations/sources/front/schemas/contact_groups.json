@@ -1,0 +1,15 @@
+{
+  "type": ["null", "object"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": ["null", "string"]
+    },
+    "name": {
+      "type": ["null", "string"]
+    },
+    "is_private": {
+      "type": ["null", "boolean"]
+    }
+  }
+}

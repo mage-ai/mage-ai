@@ -3,44 +3,98 @@ import styled, { css } from 'styled-components';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
+import dark from '@oracle/styles/themes/dark';
+import { BORDER_RADIUS, BORDER_STYLE, BORDER_WIDTH } from '@oracle/styles/units/borders';
+import { ScrollbarStyledCss } from '@oracle/styles/scrollbars';
 import { UNIT } from '@oracle/styles/units/spacing';
 
-import light from '@oracle/styles/themes/light';
-import { BORDER_RADIUS, BORDER_STYLE, BORDER_WIDTH } from '@oracle/styles/units/borders';
-
-const HEADERS_HEIGHT_OFFSET = 14;
 const HEADER_PADDING_Y_UNITS = 1.5;
 const PADDING_UNITS = 1.75;
 
 const HEADER_STYLES = css`
-  padding: ${PADDING_UNITS * UNIT}px;
+  padding: ${2 * UNIT}px;
   padding-bottom: ${HEADER_PADDING_Y_UNITS * UNIT}px;
   padding-top: ${HEADER_PADDING_Y_UNITS * UNIT}px;
 `;
 
-const PanelStyle = styled.div<any>`
+const PanelStyle = styled.div<{
+  borderless?: boolean;
+  dark?: boolean;
+  fullHeight?: boolean;
+  fullWidth?: boolean;
+  maxHeight?: string;
+  maxWidth?: number;
+  minWidth?: number;
+  noBackground?: boolean;
+  overflowVisible?: boolean;
+  success?: boolean;
+}>`
   border-radius: ${BORDER_RADIUS}px;
   overflow: hidden;
-  width: 100%;
-  
-  ${props => `
-    background-color: ${(props.theme.background || light.background).page};
-    border: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
+
+  ${props => props.fullWidth && `
+    width: 100%;
+  `}
+
+  ${props => !props.borderless && `
+    border: 1px solid ${(props.theme.interactive || dark.interactive).defaultBorder};
+  `}
+
+  ${props => !props.noBackground && props.success && `
+    background-color: ${(props.theme.background || dark.background).successLight};
+  `}
+
+  ${props => props.success && !props.borderless && `
+    border: 1px solid ${(props.theme.background || dark.background).success};
+  `}
+
+  ${props => !props.noBackground && !props.dark && !props.success && `
+    background-color: ${(props.theme.background || dark.background).panel};
+  `}
+
+  ${props => !props.noBackground && props.dark && `
+    background-color: ${(props.theme.background || dark.background).content};
   `}
 
   ${props => !props.fullHeight && `
     height: fit-content;
   `}
-  
-  ${props =>  props.borderless &&`
+
+  ${props => props.maxHeight && `
+    max-height: ${props.maxHeight};
+  `}
+
+  ${props => props.maxWidth && `
+    max-width: ${props.maxWidth}px;
+  `}
+
+  ${props => props.minWidth && `
+    min-width: ${props.minWidth}px;
+
+    @media (max-width: ${props.minWidth}px) {
+      min-width: 0;
+    }
+  `}
+
+  ${props => props.borderless && `
     border: none;
+  `}
+
+  ${props => props.overflowVisible && `
+    overflow: visible;
   `}
 `;
 
-const HeaderStyle = styled.div<any>`
+const HeaderStyle = styled.div<{
+  height?: number;
+  headerPaddingVertical?: number;
+}>`
+  border-top-left-radius: ${BORDER_RADIUS}px;
+  border-top-right-radius: ${BORDER_RADIUS}px;
+
   ${props => `
-    background-color: ${(props.theme.background || light.background).header};
-    border-bottom: 1px solid ${(props.theme.interactive || light.interactive).defaultBorder};
+    background-color: ${(props.theme.background || dark.background).chartBlock};
+    border-bottom: 1px solid ${(props.theme.interactive || dark.interactive).defaultBorder};
   `}
 
   ${props => props.height && `
@@ -48,14 +102,33 @@ const HeaderStyle = styled.div<any>`
   `}
 
   ${HEADER_STYLES}
+
+  ${props => props.headerPaddingVertical && `
+    padding-bottom: ${props.headerPaddingVertical}px;
+    padding-top: ${props.headerPaddingVertical}px;
+  `}
 `;
 
 const ContentStyle = styled.div<any>`
   overflow-y: auto;
   padding: ${PADDING_UNITS * UNIT}px;
+  height: 100%;
+  ${ScrollbarStyledCss}
 
   ${props => props.height && `
     height: ${props.height}px;
+  `}
+
+  ${props => props.maxHeight && `
+    max-height: calc(${props.maxHeight} - ${UNIT * 15}px);
+  `}
+
+  ${props => props.noPadding && `
+    padding: 0;
+  `}
+
+  ${props => props.overflowVisible && `
+    overflow: visible;
   `}
 `;
 
@@ -70,82 +143,103 @@ export type PanelProps = {
   children?: any;
   containerRef?: any;
   contentContainerRef?: any;
+  dark?: boolean;
+  fullWidth?: boolean;
+  footer?: JSX.Element;
+  fullHeight?: boolean;
   header?: JSX.Element;
   headerHeight?: number;
   headerIcon?: JSX.Element;
+  headerPaddingVertical?: number;
   headerTitle?: string;
-  footer?: JSX.Element;
-  fullHeight?: boolean;
-  items?: JSX.Element;
-  subtitle?: JSX.Element;
+  maxHeight?: string;
+  maxWidth?: number;
+  minWidth?: number;
+  noBackground?: boolean;
+  noPadding?: boolean;
+  overflowVisible?: boolean;
+  subtitle?: JSX.Element | string;
+  success?: boolean;
 };
-
-const PANEL_HEADER_HEIGHT = 6.5 * UNIT;
-const PANEL_FOOTER_HEIGHT = 6.5 * UNIT;
 
 function Panel({
   borderless,
   children,
   containerRef,
   contentContainerRef,
+  dark,
   footer,
   fullHeight = true,
+  fullWidth = true,
   header,
   headerHeight,
   headerIcon,
+  headerPaddingVertical,
   headerTitle,
-  items,
+  maxHeight,
+  maxWidth,
+  minWidth,
+  noBackground,
+  noPadding,
+  overflowVisible,
   subtitle,
+  success,
 }: PanelProps) {
-  let contentSectionHeight = HEADERS_HEIGHT_OFFSET;
-
-  if (headerTitle || header) {
-    contentSectionHeight -= (headerHeight || PANEL_HEADER_HEIGHT);
-  }
-  if (footer) {
-    contentSectionHeight -= PANEL_FOOTER_HEIGHT;
-  }
-
   return (
-    <PanelStyle borderless={borderless} fullHeight={fullHeight} ref={containerRef}>
+    <PanelStyle
+      borderless={borderless}
+      dark={dark}
+      fullHeight={fullHeight}
+      fullWidth={fullWidth}
+      maxHeight={maxHeight}
+      maxWidth={maxWidth}
+      minWidth={minWidth}
+      noBackground={noBackground}
+      overflowVisible={overflowVisible}
+      ref={containerRef}
+      success={success}
+    >
       {(header || headerTitle) &&
-        <HeaderStyle height={headerHeight}>
+        <HeaderStyle
+          headerPaddingVertical={headerPaddingVertical}
+          height={headerHeight}
+        >
           {header && header}
           {headerTitle &&
             <FlexContainer alignItems="center" justifyContent="space-between">
               <FlexContainer alignItems="center">
                 {headerIcon && headerIcon}
                 <Spacing ml={headerIcon ? 1 : 0}>
-                  <Text bold>
+                  <Text bold default>
                     {headerTitle}
                   </Text>
                 </Spacing>
               </FlexContainer>
-              { items &&
-                <>
-                  {items}
-                </> 
-              }
             </FlexContainer>
-          }
-          { subtitle &&
-          <>
-            <Spacing mb={2}/>
-            <FlexContainer alignItems="right">
-              {subtitle}
-            </FlexContainer>
-          </>
           }
         </HeaderStyle>
       }
-      <ContentStyle height={fullHeight ? contentSectionHeight : null} ref={contentContainerRef}>
+
+      <ContentStyle
+        maxHeight={maxHeight}
+        noPadding={noPadding}
+        overflowVisible={overflowVisible}
+        ref={contentContainerRef}
+      >
+        {subtitle && typeof subtitle === 'string' &&
+          <Spacing mb={2}>
+            <Text default>
+              {subtitle}
+            </Text>
+          </Spacing>
+        }
+        {subtitle && typeof subtitle !== 'string' && subtitle}
         {children}
       </ContentStyle>
+
       {footer &&
         <FooterStyle>
-          <FlexContainer alignItems="center" justifyContent="center">
-            {footer}
-          </FlexContainer>
+          {footer}
         </FooterStyle>
       }
     </PanelStyle>

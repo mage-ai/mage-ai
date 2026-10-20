@@ -32,8 +32,63 @@ case $key in
     shift # past argument
     shift # past value
     ;;
-    --database_connection_url)
-    DATABASE_CONNECTION_URL="$3"
+    --enable_new_relic)
+    ENABLE_NEW_RELIC="$3"
+    shift # past argument
+    shift # past value
+    ;;
+    --enable_prometheus)
+    ENABLE_PROMETHEUS=1
+    shift # past argument
+    shift # past value
+    ;;
+    --enable_open_ai)
+    ENABLE_OPEN_AI="$3"
+    shift # past argument
+    shift # past value
+    ;;
+    --enable_hugging_face)
+    ENABLE_HUGGING_FACE="$3"
+    shift # past argument
+    shift # past value
+    ;;
+    --otel_exporter_otlp_endpoint)
+    OTEL_EXPORTER_OTLP_ENDPOINT="$3"
+    shift # past argument
+    shift # past value
+    ;;
+    --otel_exporter_otlp_http_endpoint)
+    OTEL_EXPORTER_OTLP_HTTP_ENDPOINT="$3"
+    shift # past argument
+    shift # past value
+    ;;
+    --otel_python_tornado_excluded_urls)
+    OTEL_PYTHON_TORNADO_EXCLUDED_URLS="$3"
+    shift # past argument
+    shift # past value
+    ;;
+    --huggingface_api)
+    HUGGINGFACE_API="$3"
+    shift # past argument
+    shift # past value
+    ;;
+    --huggingface_inference_api_token)
+    HUGGINGFACE_INFERENCE_API_TOKEN="$3"
+    shift # past argument
+    shift # past value
+    ;;
+    --gcp_project_id)
+    GCP_PROJECT_ID="$3"
+    shift # past argument
+    shift # past value
+    ;;
+    --gcp_path_to_credentials)
+    GCP_PATH_TO_CREDENTIALS="$3"
+    shift # past argument
+    shift # past value
+    ;;
+    --gcp_region)
+    GCP_REGION="$3"
     shift # past argument
     shift # past value
     ;;
@@ -52,6 +107,56 @@ case $key in
     shift # past argument
     shift # past value
     ;;
+    --new_relic_config_path)
+    NEW_RELIC_CONFIG_PATH="$3"
+    shift # past argument
+    shift # past value
+    ;;
+    --openai_api_key)
+    OPENAI_API_KEY="$3"
+    shift # past argument
+    shift # past value
+    ;;
+    --database_connection_url)
+    DATABASE_CONNECTION_URL="$3"
+    shift # past argument
+    shift # past value
+    ;;
+    --require-user-authentication)
+    REQUIRE_USER_AUTHENTICATION=1
+    shift # past argument
+    shift # past value
+    ;;
+    --require-user-permissions)
+    REQUIRE_USER_PERMISSIONS=1
+    shift # past argument
+    shift # past value
+    ;;
+    --debug)
+    DEBUG=1
+    shift # past argument
+    shift # past value
+    ;;
+    --spark)
+    SPARK=1
+    shift # past argument
+    shift # past value
+    ;;
+    --data_dir)
+    MAGE_DATA_DIR=1
+    shift # past argument
+    shift # past value
+    ;;
+    --services)
+    SERVICES="$3"
+    shift # past argument
+    shift # past value
+    ;;
+    --override-compose)
+    OVERRIDE_COMPOSE="$3"
+    shift # past argument
+    shift # past value
+    ;;
     *)    # unknown option
     POSITIONAL+=("$1") # save it in an array for later
     shift # past argument
@@ -64,6 +169,7 @@ set -- "${POSITIONAL[@]}" # restore positional parameters
 : "${PORT:="''"}"
 : "${PROJECT_NAME:="''"}"
 : "${MANAGE_INSTANCE:="''"}"
+: "${SERVICES:="server app"}"
 
 export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
 export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
@@ -71,11 +177,71 @@ export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
 export ECS_CLUSTER_NAME=$ECS_CLUSTER_NAME
 export ECS_TASK_DEFINITION=$ECS_TASK_DEFINITION
 export ECS_CONTAINER_NAME=$ECS_CONTAINER_NAME
+export ENABLE_NEW_RELIC=$ENABLE_NEW_RELIC
+export ENABLE_PROMETHEUS=$ENABLE_PROMETHEUS
+export ENABLE_OPEN_AI=$ENABLE_OPEN_AI
+export ENABLE_HUGGING_FACE=$ENABLE_HUGGING_FACE
+export OTEL_EXPORTER_OTLP_ENDPOINT=$OTEL_EXPORTER_OTLP_ENDPOINT
+export OTEL_EXPORTER_OTLP_HTTP_ENDPOINT=$OTEL_EXPORTER_OTLP_HTTP_ENDPOINT
+export OTEL_PYTHON_TORNADO_EXCLUDED_URLS=$OTEL_PYTHON_TORNADO_EXCLUDED_URLS
 
+export GCP_PROJECT_ID=$GCP_PROJECT_ID
+export GCP_PATH_TO_CREDENTIALS=$GCP_PATH_TO_CREDENTIALS
+export GCP_REGION=$GCP_REGION
+
+export HUGGINGFACE_API=$HUGGINGFACE_API
+export HUGGINGFACE_INFERENCE_API_TOKEN=$HUGGINGFACE_INFERENCE_API_TOKEN
 export DATABASE_CONNECTION_URL=$DATABASE_CONNECTION_URL
+export DEUS_EX_MACHINA=$DEUS_EX_MACHINA
+export DISABLE_API_TERMINAL_OUTPUT=$DISABLE_API_TERMINAL_OUTPUT
+export DISABLE_DATABASE_TERMINAL_OUTPUT=$DISABLE_DATABASE_TERMINAL_OUTPUT
+export MAX_NUMBER_OF_FILE_VERSIONS=$MAX_NUMBER_OF_FILE_VERSIONS
+export NEW_RELIC_CONFIG_PATH=$NEW_RELIC_CONFIG_PATH
+export OPENAI_API_KEY=$OPENAI_API_KEY
+export REQUIRE_USER_AUTHENTICATION=$REQUIRE_USER_AUTHENTICATION
+if [ -n "$REQUIRE_USER_PERMISSIONS" ]; then
+    export REQUIRE_USER_PERMISSIONS=$REQUIRE_USER_PERMISSIONS
+fi
+export DEBUG=$DEBUG
+export MAGE_DATA_DIR=$MAGE_DATA_DIR
+export MAGE_PRESENTERS_DIRECTORY=$MAGE_PRESENTERS_DIRECTORY
+export SMTP_EMAIL=$SMTP_EMAIL
+export SMTP_PASSWORD=$SMTP_PASSWORD
 
-HOST=$HOST \
-PORT=$PORT \
-PROJECT=$PROJECT_NAME \
-MANAGE_INSTANCE=$MANAGE_INSTANCE \
-docker-compose -f docker-compose.yml up
+# Check if SERVICES is empty and set it to default services if it is
+if [ -z "$SERVICES" ]; then
+  SERVICES="server app"
+fi
+
+if command -v docker-compose &> /dev/null
+then
+    # docker-compose exists
+    if [ -n "${OVERRIDE_COMPOSE}" ]; then
+        HOST=$HOST \
+        PORT=$PORT \
+        PROJECT=$PROJECT_NAME \
+        MANAGE_INSTANCE=$MANAGE_INSTANCE \
+        docker-compose -f docker-compose.yml -f "${OVERRIDE_COMPOSE}" up $SERVICES
+    else
+        HOST=$HOST \
+        PORT=$PORT \
+        PROJECT=$PROJECT_NAME \
+        MANAGE_INSTANCE=$MANAGE_INSTANCE \
+        docker-compose -f docker-compose.yml up $SERVICES
+    fi
+else
+    # docker-compose does not exist (Docker Compose V2 syntax)
+    if [ -n "${OVERRIDE_COMPOSE}" ]; then
+        HOST=$HOST \
+        PORT=$PORT \
+        PROJECT=$PROJECT_NAME \
+        MANAGE_INSTANCE=$MANAGE_INSTANCE \
+        docker compose -f docker-compose.yml -f "${OVERRIDE_COMPOSE}" up $SERVICES
+    else
+        HOST=$HOST \
+        PORT=$PORT \
+        PROJECT=$PROJECT_NAME \
+        MANAGE_INSTANCE=$MANAGE_INSTANCE \
+        docker compose -f docker-compose.yml up $SERVICES
+    fi
+fi

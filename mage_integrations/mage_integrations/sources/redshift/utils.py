@@ -13,7 +13,7 @@ from mage_integrations.sources.redshift.constants import (
 )
 
 
-def column_type_mapping(column_type: str) -> str:
+def column_type_mapping(column_type: str, column_format: str = None) -> str:
     if COLUMN_TYPE_BOOLEAN == column_type:
         return DATA_TYPE_BOOLEAN
     elif COLUMN_TYPE_INTEGER == column_type:

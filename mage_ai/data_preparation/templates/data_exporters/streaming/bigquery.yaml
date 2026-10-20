@@ -1,0 +1,4 @@
+connector_type: bigquery
+profile: default
+config:
+  table_id: table_id

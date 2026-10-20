@@ -1,0 +1,19 @@
+@use '../base/svg';
+
+.path {
+  @include svg.fill-stroke-colors();
+  @include svg.stroke-width();
+
+  &.fill-transparent {
+    fill: transparent;
+  }
+  &.fill-none {
+    fill: none;
+  }
+  &.stroke-transparent {
+    stroke: transparent;
+  }
+  &.stroke-none {
+    stroke: none;
+  }
+}

@@ -1,0 +1,56 @@
+---
+title: "Dremio"
+---
+
+![Dremio](https://www.dremio.com/wp-content/uploads/2023/02/CompanyDremio_centered.png)
+
+<br/>
+
+## Configuration
+
+This source uses the Dremio Arrow Flight Client to connect and execute SQL queries and shares most of its settings.  
+For more details, refer to the [Dremio Python Client documentation](https://docs.dremio.com/current/sonar/client-applications/clients/python).
+
+> **Note:** Mage's implementation of the Dremio source does **not** allow the `query` connection parameter.
+
+<br/>
+
+### Required Parameters
+
+| Key           | Description                                                                 | Sample Value |
+| ------------- | --------------------------------------------------------------------------- | ------------ |
+| `username`    | Username of the Dremio account used for authentication.                    | `ABC123`     |
+| `schema`      | Dremio source table schema.                                                  | `ABC123`     |
+| `source_backend` | SQL source backend used to query data from Dremio (see section below).   | `postgresql` |
+| `password`    | Password for the Dremio account. (Required if no token is provided.)         | `ABC123`     |
+| `token`       | Personal Access Token or OAuth2 Token. (Required if no password is provided.)| `ABC123`     |
+
+<br/>
+
+### Optional Parameters
+
+| Key                           | Description                                                                              | Sample Value |
+| ----------------------------- | ---------------------------------------------------------------------------------------- | ------------ |
+| `hostname`                    | Hostname or IP address of the coordinator node (defaults to `localhost`).                | `localhost`  |
+| `port`                        | Dremio's Arrow Flight server port (defaults to `32010`).                                 | `32010`      |
+| `tls`                         | Enables TLS encryption for the connection.                                               | `false`      |
+| `disable_certificate_verification` | Disables TLS server certificate verification.                                    | `true`       |
+| `path_to_certs`                | Path to trusted certificates for TLS connections.                                       | `/path/to/certs` |
+| `session_properties`           | Key-value pairs for session properties.                                                  | `{ "key": "value" }` |
+
+<br/>
+
+### Source Backend
+
+To maintain consistent data extraction quality, this source allows specifying a preferred SQL source backend.  
+Currently supported backend sources:
+
+- `postgresql`
+- `mysql`
+- `mssql`
+
+> **Note:**  
+> OracleDB and Snowflake do **not** require a `source_backend`.  
+> Internal tables created by S3 or other object storage also do **not** require a backend source.
+
+<br/>

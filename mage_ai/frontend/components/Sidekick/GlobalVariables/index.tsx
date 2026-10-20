@@ -1,5 +1,4 @@
-import React, { useCallback, useContext, useMemo, useState } from 'react';
-import { ThemeContext } from 'styled-components';
+import React, { useCallback, useMemo, useState } from 'react';
 import { toast } from 'react-toastify';
 import { useMutation } from 'react-query';
 
@@ -9,8 +8,12 @@ import Col from '@components/shared/Grid/Col';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import KeyboardShortcutButton from '@oracle/elements/Button/KeyboardShortcutButton';
+import Link from '@oracle/elements/Link';
 import PipelineType from '@interfaces/PipelineType';
-import PipelineVariableType, { VariableType } from '@interfaces/PipelineVariableType';
+import PipelineVariableType, {
+  GLOBAL_VARIABLES_UUID,
+  VariableType,
+} from '@interfaces/PipelineVariableType';
 import Row from '@components/shared/Grid/Row';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
@@ -23,8 +26,9 @@ import { DARK_CONTENT_BACKGROUND } from '@oracle/styles/colors/content';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import { ScheduleTypeEnum, SCHEDULE_TYPE_TO_LABEL } from '@interfaces/PipelineScheduleType';
 import { addTriggerVariables, getFormattedVariables } from '../utils';
-import { onSuccess } from '@api/utils/response';
 import { capitalizeRemoveUnderscoreLower } from '@utils/string';
+import { onSuccess } from '@api/utils/response';
+import { removeKeyboardFocus } from '@context/shared/utils';
 
 const SAMPLE_SOURCE = `
     from mage_ai.data_preparation.variable_manager import (
@@ -41,6 +45,12 @@ const SAMPLE_SOURCE = `
 
 const SAMPLE_KWARGS_SOURCE = `
     var = kwargs['variable_name']
+`;
+const SAMPLE_SQL_VARIABLE_SOURCE = `
+    {{ variable_name }}
+`;
+const SAMPLE_R_VARIABLE_SOURCE = `
+    var <- global_vars['variable_name']
 `;
 
 const BUILD_CODE_SNIPPET_PREVIEW = (
@@ -82,11 +92,21 @@ function GlobalVariables({
         response, {
           onErrorCallback: ({
             error: {
+              message,
               exception,
             },
           }) => {
             // @ts-ignore
-            setErrorMessages((errorMessages) => errorMessages.concat(exception));
+            setErrorMessages((errorMessages) => {
+              let messagesToDisplay = errorMessages || [];
+              if (exception) {
+                messagesToDisplay = messagesToDisplay.concat(exception);
+              }
+              if (message) {
+                messagesToDisplay = messagesToDisplay.concat(message);
+              }
+              return messagesToDisplay;
+            });
           },
         },
       ),
@@ -117,7 +137,7 @@ function GlobalVariables({
 
   const handleKeyDown = useCallback((e) => {
     if (e.key === 'Enter') {
-      let updatedValue = newVariableValue
+      let updatedValue = newVariableValue;
       try {
         updatedValue = JSON.parse(newVariableValue);
       } catch {
@@ -129,12 +149,16 @@ function GlobalVariables({
         variable: {
           name: newVariableName,
           value: updatedValue,
-        }
+        },
       }).then(() => {
         fetchVariables();
         setNewVariableName(null);
         setNewVariableValue(null);
       });
+      removeKeyboardFocus();
+      setShowNewVariable(false);
+    } else if (e.key === 'Escape') {
+      removeKeyboardFocus();
       setShowNewVariable(false);
     }
   }, [
@@ -146,7 +170,7 @@ function GlobalVariables({
 
   const tableWidth = useMemo(() => width - 4 * UNIT, [width]);
   const globalVariables = useMemo(
-    () => getFormattedVariables(variables, (block) => block.uuid === 'global'),
+    () => getFormattedVariables(variables, (block) => block.uuid === GLOBAL_VARIABLES_UUID),
     [variables],
   );
 
@@ -183,11 +207,12 @@ function GlobalVariables({
               </KeyboardShortcutButton>
             </CellStyle>
           </Col>
-          <Col md={5}>
+          <Col md={4}>
             <CellStyle>
               <TextInput
-                compact
                 borderless
+                compact
+                fullWidth
                 monospace
                 onChange={(e) => {
                   setNewVariableName(e.target.value);
@@ -201,11 +226,12 @@ function GlobalVariables({
               />
             </CellStyle>
           </Col>
-          <Col md={6}>
+          <Col md={7}>
             <CellStyle>
               <TextInput
-                compact
                 borderless
+                compact
+                fullWidth
                 monospace
                 onChange={(e) => {
                   setNewVariableValue(e.target.value);
@@ -219,18 +245,14 @@ function GlobalVariables({
               />
             </CellStyle>
           </Col>
-          {/* <Col md={2}>
-            <CellStyle>
-              <Text monospace>
-                ...
-              </Text>
-            </CellStyle>
-          </Col> */}
         </Row>
       )}
       {globalVariables?.map((variable: VariableType) => (
         <VariableRow
           deleteVariable={() => deleteVariable(variable.uuid)}
+          fetchVariables={fetchVariables}
+          key={variable.uuid}
+          pipelineUUID={pipelineUUID}
           variable={variable}
         />
       ))}
@@ -240,6 +262,7 @@ function GlobalVariables({
     globalVariables,
     newVariableName,
     newVariableValue,
+    pipelineUUID,
     setNewVariableName,
     setNewVariableValue,
     setShowNewVariable,
@@ -260,6 +283,9 @@ ${BUILD_CODE_SNIPPET_PREVIEW(pipelineUUID, selectedBlock?.uuid, uuid)}`;
         {blockVariables?.map((variable: VariableType) => (
           <VariableRow
             copyText={copyText(variable.uuid)}
+            hideEdit
+            key={variable.uuid}
+            pipelineUUID={pipelineUUID}
             variable={variable}
           />
         ))}
@@ -307,15 +333,66 @@ ${BUILD_CODE_SNIPPET_PREVIEW(pipelineUUID, selectedBlock?.uuid, uuid)}`;
 
       <Spacing mb={PADDING_UNITS}>
         <Text>
-          Global variables will be passed into all non-scratchpad blocks as keyword arguments. To load a global variable, use the following syntax:
+          Global variables will be passed into all non-scratchpad blocks as keyword arguments
+          (Python), interpolated variables (SQL), or vector elements (R). To load a global
+          variable, use the following syntax:
         </Text>
       </Spacing>
 
       <Spacing mb={PADDING_UNITS}>
+        <Text bold large>
+          For Python (
+          <Link
+            href="https://docs.mage.ai/production/configuring-production-settings/runtime-variable"
+            large
+            openNewWindow
+            primary
+          >
+            docs
+          </Link>):
+        </Text>
         <CodeBlock
           language="python"
           small
           source={SAMPLE_KWARGS_SOURCE}
+        />
+      </Spacing>
+
+      <Spacing mb={PADDING_UNITS}>
+        <Text bold large>
+          For SQL (
+          <Link
+            href="https://docs.mage.ai/guides/sql-blocks#variables"
+            large
+            openNewWindow
+            primary
+          >
+            docs
+          </Link>):
+        </Text>
+        <CodeBlock
+          language="sql"
+          small
+          source={SAMPLE_SQL_VARIABLE_SOURCE}
+        />
+      </Spacing>
+
+      <Spacing mb={PADDING_UNITS}>
+        <Text bold large>
+          For R (
+          <Link
+            href="https://docs.mage.ai/guides/r-blocks#runtime-variables"
+            large
+            openNewWindow
+            primary
+          >
+            docs
+          </Link>):
+        </Text>
+        <CodeBlock
+          language="r"
+          small
+          source={SAMPLE_R_VARIABLE_SOURCE}
         />
       </Spacing>
 
@@ -329,15 +406,21 @@ ${BUILD_CODE_SNIPPET_PREVIEW(pipelineUUID, selectedBlock?.uuid, uuid)}`;
         </Text>
       </Spacing>
 
-      {Object.values(ScheduleTypeEnum).map((value) => (
-        <Spacing mb={PADDING_UNITS}>
+      {Object.values(ScheduleTypeEnum).map((value, idx) => (
+        <Spacing
+          key={`${value}_${idx}`}
+          mb={PADDING_UNITS}
+        >
           <Spacing mb={PADDING_UNITS}>
             <Text large monospace>
               {capitalizeRemoveUnderscoreLower(SCHEDULE_TYPE_TO_LABEL[value]?.())}
             </Text>
           </Spacing>
-          {addTriggerVariables([], value).map((variable) => (
+          {addTriggerVariables([], value).map((variable, idx) => (
             <VariableRow
+              hideEdit
+              key={`var_${value}_${idx}`}
+              pipelineUUID={pipelineUUID}
               variable={variable}
             />
           ))}
@@ -362,15 +445,18 @@ ${BUILD_CODE_SNIPPET_PREVIEW(pipelineUUID, selectedBlock?.uuid, uuid)}`;
                 bold
                 inline
                 monospace
+                warning
               >
                 {BlockTypeEnum.SCRATCHPAD}
-              </Text> block.
+              </Text> block. They are for scratchpad blocks, specifically.
+              To get upstream block outputs inside of other blocks, use
+              the positional arguments.
             </Text>
           </Spacing>
 
           <Spacing mb={PADDING_UNITS}>
             <Text>
-              To load the variable, use the following syntax:
+              To load the variable in a scratchpad block, use the following syntax:
             </Text>
           </Spacing>
 

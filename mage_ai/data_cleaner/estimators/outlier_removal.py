@@ -19,7 +19,8 @@ class OutlierRemover(BaseEstimator):
         Constructs an outlier remover.
 
         Args:
-            method (str, optional): Specifies the outlier removal method to use. Defaults to 'auto'. There are three options:
+            method (str, optional): Specifies the outlier removal method to use. Defaults to
+            'auto'. There are three options:
             - 'lof' - Local Outlier Factor
             - 'itree' - Isolation Forest
             - 'auto' - Automatically best method based on runtime comparisons
@@ -41,7 +42,8 @@ class OutlierRemover(BaseEstimator):
         2. Calculate the interquartile range for each dimension
         3. Compute the per-dimension outlier region as x <= lower - 1.5*IQR and x >= upper + 1.5*IQR
         4. Find all entries that exist in the outlier region per-dimension
-        5. Mark examples with at least 50% of its features as outliers to be potential multidimensional outliers
+        5. Mark examples with at least 50% of its features as outliers to be potential
+        multidimensional outliers
         6. Return the ratio of these potential outliers in the region
 
         Args:

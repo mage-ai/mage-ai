@@ -1,0 +1,32 @@
+---
+title: "Airtable"
+---
+
+
+![Airtable](https://1000logos.net/wp-content/uploads/2022/05/Airtable-Logo.png)
+
+<br/>
+
+## Configuration
+
+To set up the Airtable source, provide the following configuration parameters:
+
+| Key           | Description                                                                    | Sample Value   | Required |
+| ------------- | ------------------------------------------------------------------------------ | -------------- | -------- |
+| `token`       | Airtable personal access token with access to your desired tables.             | `pat...`       | ✅        |
+| `base_id`     | The ID of the Airtable base (application) you want to access.                  | `app...`       | ✅        |
+| `table_name`  | The name or ID of the table to sync. If not specified, all tables will sync.    | `tbl...`       |          |
+
+> **Find your Personal Access Token:**  
+> See Airtable’s [guide](https://airtable.com/developers/web/guides/personal-access-tokens) for generating a personal access token.
+
+<br/>
+
+## Required Scopes
+
+Ensure your Airtable personal access token has the following scopes:
+
+- `data.records:read`
+- `schema.bases:read`
+
+<br/>

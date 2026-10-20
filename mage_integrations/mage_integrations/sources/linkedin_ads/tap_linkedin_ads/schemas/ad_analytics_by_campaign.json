@@ -1,0 +1,501 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "approximate_unique_impressions": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "card_clicks": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "card_impressions": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "comment_likes": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "viral_card_clicks": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "viral_card_impressions": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "viral_comment_likes": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "campaign": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "campaign_id": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "start_at": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "end_at": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "action_clicks": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "ad_unit_clicks": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "clicks": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "comments": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "company_page_clicks": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "conversion_value_in_local_currency": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "singer.decimal"
+    },
+    "cost_in_local_currency": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "singer.decimal"
+    },
+    "cost_in_usd": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "singer.decimal"
+    },
+    "date_range": {
+      "type": [
+        "null",
+        "object"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "end": {
+          "type": [
+            "null",
+            "object"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "day": {
+              "type": [
+                "null",
+                "integer"
+              ]
+            },
+            "month": {
+              "type": [
+                "null",
+                "integer"
+              ]
+            },
+            "year": {
+              "type": [
+                "null",
+                "integer"
+              ]
+            }
+          }
+        },
+        "start": {
+          "type": [
+            "null",
+            "object"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "day": {
+              "type": [
+                "null",
+                "integer"
+              ]
+            },
+            "month": {
+              "type": [
+                "null",
+                "integer"
+              ]
+            },
+            "year": {
+              "type": [
+                "null",
+                "integer"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "external_website_conversions": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "external_website_post_click_conversions": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "external_website_post_view_conversions": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "follows": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "full_screen_plays": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "impressions": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "landing_page_clicks": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "lead_generation_mail_contact_info_shares": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "lead_generation_mail_interest_clicks": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "likes": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "one_click_lead_form_opens": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "one_click_leads": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "opens": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "other_engagements": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "pivot": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "pivot_value": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "pivot_values": {
+      "anyOf": [
+        {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "reactions": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "sends": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "shares": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "text_url_clicks": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "total_engagements": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "video_completions": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "video_first_quartile_completions": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "video_midpoint_completions": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "video_starts": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "video_third_quartile_completions": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "video_views": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "viral_clicks": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "viral_comments": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "viral_company_page_clicks": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "viral_external_website_conversions": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "viral_external_website_post_click_conversions": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "viral_external_website_post_view_conversions": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "viral_follows": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "viral_full_screen_plays": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "viral_impressions": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "viral_landing_page_clicks": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "viral_likes": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "viral_one_click_lead_form_opens": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "viral_one_click_leads": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "viral_other_engagements": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "viral_reactions": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "viral_shares": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "viral_total_engagements": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "viral_video_completions": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "viral_video_first_quartile_completions": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "viral_video_midpoint_completions": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "viral_video_starts": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "viral_video_third_quartile_completions": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "viral_video_views": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    }
+  }
+}

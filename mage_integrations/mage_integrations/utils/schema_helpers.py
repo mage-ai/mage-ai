@@ -4,7 +4,7 @@ from mage_integrations.sources.constants import (
     METADATA_KEY_INCLUSION,
     METADATA_KEY_SELECTED,
 )
-from typing import List
+from typing import Dict, List
 
 
 def extract_selected_columns(metadata_array: List[dict]) -> List[str]:
@@ -19,11 +19,19 @@ def extract_selected_columns(metadata_array: List[dict]) -> List[str]:
            breadcrumb[0] == 'properties':
             column = breadcrumb[1]
             selected = metadata.get(METADATA_KEY_SELECTED, False)
-            inclusion = metadata.get(METADATA_KEY_INCLUSION, INCLUSION_UNSUPPORTED)
-            if INCLUSION_AUTOMATIC == inclusion:
-                selected = True
 
             if selected:
                 columns.append(column)
 
     return columns
+
+
+def filter_columns(columns: List[str], properties: Dict, column_types: List[str]):
+    filtered_columns = []
+    for col in columns:
+        if col not in properties:
+            continue
+        types = properties[col]['type']
+        if any(t in column_types for t in types):
+            filtered_columns.append(col)
+    return filtered_columns

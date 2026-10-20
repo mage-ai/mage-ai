@@ -1,7 +1,7 @@
 import multiprocessing
 
 
-def start_session_and_run(*target_args):
+def start_session_and_run(*target_args, **kwargs):
     from mage_ai.orchestration.db import db_connection
 
     if len(target_args) == 0:
@@ -11,9 +11,10 @@ def start_session_and_run(*target_args):
 
     db_connection.start_session(force=True)
 
-    results = target(*args)
-
-    db_connection.close_session()
+    try:
+        results = target(*args)
+    finally:
+        db_connection.close_session()
     return results
 
 

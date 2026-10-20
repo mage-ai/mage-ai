@@ -1,0 +1,16 @@
+@import './variables';
+
+@mixin transition {
+  transition: 0.2s all ease-in-out;
+}
+
+@mixin transition-fast {
+  transition: 0.15s all linear;
+}
+
+@mixin gradient($angle, $start-color, $end-color, $start-percentage: 0%, $end-percentage: 100%) {
+  background-image: -webkit-linear-gradient($angle, $start-color $start-percentage, $end-color $end-percentage);
+  background-image: -moz-linear-gradient($angle, $start-color $start-percentage, $end-color $end-percentage);
+  background-image: -o-linear-gradient($angle, $start-color $start-percentage, $end-color $end-percentage);
+  background-image: linear-gradient($angle, $start-color $start-percentage, $end-color $end-percentage);
+}

@@ -1,0 +1,95 @@
+---
+title: "SFTP"
+---
+
+## Configuration
+
+Connect securely to an SFTP server and load files into your Mage pipelines by providing the following configuration parameters:
+
+| Key                | Description                                                            | Sample Value             |
+| ------------------ | ---------------------------------------------------------------------- | ------------------------ |
+| `host`             | Hostname or IP address of the SFTP server.                             | `sftp.example.com`        |
+| `port`             | Port number for the SFTP server.                                        | `22`                      |
+| `username`         | Username to authenticate with the SFTP server.                         | `myuser`                  |
+| `password`         | Password for authentication (optional if using private key).           | `mypassword`              |
+| `private_key_file` | Path to the private key file for key-based authentication (optional).   | `/home/user/.ssh/id_rsa`  |
+| `start_date`       | Earliest file date to synchronize (`YYYY-MM-DD` format).                | `2021-01-28`              |
+| `tables`           | An array defining table configurations for loading files (required).   | See table config below    |
+| `decryption_config`| Configuration for decrypting GPG-encrypted files (optional).            | See decryption config below |
+
+<br/>
+
+## Tables Configuration
+
+Define how files are processed and structured into tables:
+
+### Required Parameters
+
+| Key               | Description                                                                                          | Sample Value             |
+| ----------------- | ---------------------------------------------------------------------------------------------------- | ------------------------ |
+| `table_name`       | Name assigned to the table (stream).                                                                | `customer_orders`         |
+| `search_prefix`    | Directory path where the target files are located.                                                  | `/Export/SubFolder`       |
+| `search_pattern`   | Regex pattern to match filenames for ingestion.                                                     | `MyExportData.*\\.zip.gpg$`|
+| `delimiter`        | Delimiter used to separate fields (default is `,`).                                                 | `,`                       |
+
+### Optional Parameters
+
+| Key                      | Description                                                                                     | Sample Value               |
+| ------------------------ | ----------------------------------------------------------------------------------------------- | --------------------------- |
+| `key_properties`          | Array of unique keys for the table. Defaults to `['_sdc_source_file', '_sdc_source_lineno']`.    | `["_sdc_source_file"]`       |
+| `encoding`                | Character encoding of the file (default: `utf-8`).                                              | `utf-8`                      |
+| `sanitize_header`         | Clean up header names for SQL compatibility (default: `False`).                                 | `True` or `False`            |
+| `skip_rows`               | Number of header or metadata rows to skip at the top of the file (default: `0`).                | `0`                          |
+| `auto_generate_field_names`<br/>*(Pro only)* | Automatically generate column names (`col_0`, `col_1`, etc.) if headers are missing (default: `false`). | `true` or `false`            |
+| `schema_discovery_sample_rows`<br/>*(Pro only)* | Number of rows to sample to infer schema (default: `100`). Not applicable for encrypted files. | `100`                        |
+
+<br/>
+
+## Decryption Configuration (Optional)
+
+If your files are encrypted with GPG, specify the following:
+
+| Key              | Description                                                             | Sample Value               |
+| ---------------- | ----------------------------------------------------------------------- | --------------------------- |
+| `SSM_key_name`    | AWS SSM parameter key name storing the GPG private key passphrase.      | `SSM_PARAMETER_KEY_NAME`     |
+| `gnupghome`       | Path to your `.gnupg` directory containing GPG keys.                    | `/home/.gnupg`               |
+| `passphrase`      | Passphrase for decrypting GPG files.                                   | `mysecretpassphrase`         |
+
+<br/>
+
+## Mage Pro Enhancements 🚀
+
+With **Mage Pro**, the SFTP source is enhanced for improved performance, usability, and scalability.  
+The following features are **available in Mage Pro only**:
+
+- **Auto-Generate Field Names**:  
+  Automatically generate column names (`col_0`, `col_1`, ..., `col_N`) when headers are missing by setting `auto_generate_field_names: true`.
+- **Schema Discovery Sample Rows**:  
+  Speed up schema inference by limiting how many rows are sampled with `schema_discovery_sample_rows`.
+- **Improved Logging**:  
+  Enhanced, structured logging for better traceability and debugging.
+- **TableSpec Schema Support**:  
+  Define detailed table specifications for schema generation and validation.
+- **Selective Column Extraction**:  
+  Write only the selected columns to the schema to reduce size and improve performance.
+- **Better Code Quality and Documentation**:  
+  Cleaner, more robust code and fully updated documentation for enterprise use.
+
+<br/>
+
+## What is SFTP?
+
+**SFTP (Secure File Transfer Protocol)** is a secure method for transferring files over an encrypted SSH connection.  
+It provides encrypted file access, transfer, and management across a reliable, secure channel.
+
+<br/>
+
+## Why Use SFTP with Mage?
+
+- **Secure and encrypted**: Safely ingest sensitive files over SSH-secured channels.
+- **Seamless ETL workflows**: Automate file ingestion into your data warehouse or lake.
+- **Support for encrypted files**: Easily decrypt GPG-protected files during ingestion.
+- **High performance**: Faster schema discovery, selective column loading, and large file handling.
+- **Enterprise-ready**: Built for scale with advanced logging, security, and performance features.
+
+<br/>

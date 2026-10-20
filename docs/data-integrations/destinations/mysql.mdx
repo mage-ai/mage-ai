@@ -1,0 +1,63 @@
+---
+title: MySQL
+description: How to configure MySQL as a destination in Mage to write pipeline data to a MySQL table with optional SSH tunneling and connection parameters.
+---
+
+![MySQL logo](https://user-images.githubusercontent.com/78053898/198754276-a4524211-aafa-40b2-a95a-1d8f08ba6835.png)
+
+---
+
+## Overview
+
+Use **MySQL** as a destination in Mage to write pipeline data into structured tables within a MySQL database. This integration supports both direct connections and **SSH tunneling** for secure access to remote or private databases.
+
+Each record from the Mage pipeline is inserted as a row in the configured table. Mage supports optional connection customization and SSL settings through connection keyword arguments.
+
+---
+
+## Configuration Parameters
+
+You must provide the following parameters when configuring the MySQL destination:
+
+| Key                 | Description                                                                                                                       | Example Value                                | Required |
+|----------------------|-----------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------|----------|
+| `database`           | Name of the MySQL database where data will be written.                                                                            | `demo`                                         | ✅        |
+| `host`               | Hostname or IP address of the MySQL server.                                                                                       | `mage.abc.us-west-2.rds.amazonaws.com`         | ✅        |
+| `port`               | Port number used by MySQL (typically `3306`).                                                                                     | `3306`                                         | ✅        |
+| `username`           | Username with permission to access the database and target schema.                                                                | `root`                                         | ✅        |
+| `password`           | Password for the MySQL user.                                                                                                       | `abc123...`                                    | ✅        |
+| `table`              | Name of the destination table that Mage will write to.                                                                             | `dim_users_v1`                                 | ✅        |
+| `connection_method`  | Method used to connect to the MySQL server: `direct` or `ssh_tunnel`.                                                             | `direct` or `ssh_tunnel`                      | ✅        |
+| `ssh_host`           | *(Optional)* Host of the bastion or jump server for SSH tunnel access.                                                            | `123.45.67.89`                                 | ❌        |
+| `ssh_port`           | *(Optional)* SSH port on the bastion host. Default is `22`.                                                                       | `22`                                           | ❌        |
+| `ssh_username`       | *(Optional)* SSH username for authentication.                                                                                     | `username`                                     | ❌        |
+| `ssh_password`       | *(Optional)* SSH password. Required if not using a private key.                                                                   | `password`                                     | ❌        |
+| `ssh_pkey`           | *(Optional)* Path to or content of the private key file used for SSH authentication.                                              | `/path/to/private/key.pem`                    | ❌        |
+| `conn_kwargs`        | *(Optional)* Additional [MySQL connection parameters](https://dev.mysql.com/doc/connector-python/en/connector-python-connectargs.html) in dictionary format. | `{"ssl_ca": "CARoot.pem"}`       | ❌        |
+| `use_lowercase`      | *(Optional)* Whether to convert all column names to lowercase.                                                                    | `true` or `false`                             | ❌        |
+
+---
+
+## Optional Configs
+
+| Key                  | Description                                                                                                                                                       | Example Value |
+|------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------|
+| `skip_schema_creation`| If `true`, Mage will skip running the `CREATE SCHEMA` command. Useful when the schema already exists. [See related issue](https://github.com/mage-ai/mage-ai/issues/3416) | `true`         |
+| `lower_case`           | If `true`, all column names will be forced to lowercase. Default is `true`.                                                                                      | `true`         |
+
+---
+
+## Notes
+
+- For cloud-hosted MySQL (e.g., Amazon RDS, Azure Database for MySQL), ensure proper firewall rules and access control.
+- Use `ssh_tunnel` mode when connecting to databases hosted in private networks or VPCs.
+- The `conn_kwargs` parameter is useful for enabling SSL/TLS and advanced options (e.g., `ssl_ca`, `ssl_cert`, `connect_timeout`).
+- Mage automatically creates the destination table unless `skip_schema_creation` is set to `true`.
+
+---
+
+## Related Resources
+
+- [MySQL Documentation](https://dev.mysql.com/doc/)
+- [MySQL Connector/Python Connect Arguments](https://dev.mysql.com/doc/connector-python/en/connector-python-connectargs.html)
+- [SSH Tunneling Explained](https://www.ssh.com/academy/ssh/tunneling)

@@ -1,0 +1,52 @@
+---
+title: OracleDB
+description: How to configure Oracle Database (OracleDB) as a destination in Mage to write data to a specified schema using the thin or thick client.
+---
+
+## Overview
+
+Use **OracleDB** as a destination in Mage to write pipeline data directly into a table within an Oracle database. Mage supports both **thin** and **thick** connection modes, allowing flexibility for local clients, instant clients, or full Oracle installations.
+
+This destination is ideal for enterprise data integration with existing Oracle systems, including Oracle XE, Oracle Cloud Infrastructure (OCI), and on-premise Oracle servers.
+
+---
+
+## Configuration Parameters
+
+You must provide the following credentials when configuring the OracleDB destination:
+
+| Key         | Description                                                                                                         | Example Value            | Required |
+|--------------|---------------------------------------------------------------------------------------------------------------------|---------------------------|----------|
+| `host`       | Hostname or IP address of the Oracle database server.                                                              | `oracledb.example.com`    | ✅        |
+| `port`       | Port on which the Oracle listener accepts client connections. Typically `1521`.                                   | `1521`                    | ✅        |
+| `service`    | Oracle **service name** (not SID). The listener uses this to direct connections to the correct pluggable database. | `xepdb1`                  | ✅        |
+| `user`       | Username with permission to connect and write to the target schema.                                                | `oracle_user`             | ✅        |
+| `password`   | Password for the Oracle user.                                                                                       | `xyz123`                  | ✅        |
+| `database`   | Name of the Oracle database where the table will be created or updated.                                            | `orcl`                    | ✅        |
+| `mode`       | Oracle client mode. Set to either `thin` (default) or `thick` depending on the installed driver.                   | `thin` or `thick`         | ✅        |
+
+---
+
+## Optional Parameters
+
+| Key           | Description                                                                                   | Example Value |
+|----------------|-----------------------------------------------------------------------------------------------|---------------|
+| `lower_case`   | If `true`, all column names will be converted to lowercase. Default is `true`.                | `true`        |
+
+---
+
+## Notes
+
+- The `mode` parameter determines how the Oracle client connects:
+  - Use `thin` for lightweight connections (e.g., with the Oracle Instant Client).
+  - Use `thick` when a full Oracle client is installed and native libraries are required.
+- Ensure the Oracle listener is correctly configured to accept service name–based connections.
+- Use of the `service` name is preferred over SID in modern Oracle setups, especially with pluggable databases (PDBs).
+
+---
+
+## Related Resources
+
+- [Oracle Net Services Overview](https://docs.oracle.com/en/database/oracle/oracle-database/19/netag/introduction-to-oracle-net-services.html)
+- [Oracle Instant Client Installation Guide](https://www.oracle.com/database/technologies/instant-client.html)
+- [Oracle Database Connection Strings](https://docs.oracle.com/en/database/oracle/oracle-database/19/jjdbc/data-sources-and-url-connection-strings.html)

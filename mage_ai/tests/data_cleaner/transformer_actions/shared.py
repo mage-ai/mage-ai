@@ -1,7 +1,8 @@
 TEST_ACTION = dict(
     action_type='filter',
     axis='row',
-    action_code='%{1}.%{1_1} == True and (%{1}.%{1_2} == \"The Quant\" or %{1}.%{1_2} == \"Yield\")',
+    action_code='%{1}.%{1_1} == True and (%{1}.%{1_2} == \"The Quant\" or %{1}.%{1_2} == '
+                '\"Yield\")',
     action_arguments=[
         '%{1}.%{1_1}',
         '%{2}.%{2_1}',
@@ -20,7 +21,9 @@ TEST_ACTION = dict(
         '1_1': dict(type='feature', feature=dict(column_type='number', uuid='deposited')),
         '1_2': dict(type='feature', feature=dict(column_type='category', uuid='fund')),
         '1_3': dict(type='feature', feature=dict(column_type='category', uuid='delivered_at')),
-        '1_4': dict(type='feature', feature=dict(column_type='number_with_decimals', uuid='amount')),
+        '1_4': dict(
+            type='feature',
+            feature=dict(column_type='number_with_decimals', uuid='amount')),
         '2': dict(type='feature_set_version', feature_set_version=dict(
             feature_set=dict(column_type='category', uuid='magic'),
         )),

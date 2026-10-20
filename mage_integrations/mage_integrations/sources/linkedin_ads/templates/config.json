@@ -1,0 +1,9 @@
+{
+  "client_id": "",
+  "client_secret": "",
+  "refresh_token": "",
+  "accounts": "",
+  "request_timeout": 300,
+  "start_date": "2023-01-01T00:00:00Z",
+  "user_agent": ""
+}

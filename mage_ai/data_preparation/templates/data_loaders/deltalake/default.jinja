@@ -1,0 +1,25 @@
+{% extends "data_loaders/default.jinja" %}
+{% block imports %}
+from deltalake import DeltaTable
+{{ super() -}}
+{% endblock %}
+
+
+{% block content %}
+@data_loader
+def load_table(*args, **kwargs):
+    """
+    Load a Delta Table
+
+    Docs: https://delta-io.github.io/delta-rs/python/usage.html#loading-a-delta-table
+    """
+    {% block storage_options %}
+    {% endblock %}
+
+    {% block uri %}
+    {% endblock %}
+
+    dt = DeltaTable(uri, storage_options=storage_options)
+
+    return dt.to_pandas()
+{% endblock %}

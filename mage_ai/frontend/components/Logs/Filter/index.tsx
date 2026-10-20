@@ -1,5 +1,5 @@
 import { ThemeContext } from 'styled-components';
-import { useCallback, useMemo, useContext } from 'react';
+import { useMemo, useContext } from 'react';
 
 import BlockType from '@interfaces/BlockType';
 import Button from '@oracle/elements/Button';
@@ -17,17 +17,25 @@ import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { capitalize } from '@utils/string';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
-import { goToWithQuery } from '@utils/routing';
-import { remove } from '@utils/array';
+import { goToWithFilters } from '@utils/routing';
+
+export enum FilterQueryParamEnum {
+  BLOCK_RUN_ID = 'block_run_id[]',
+  BLOCK_TYPE = 'block_type[]',
+  BLOCK_UUID = 'block_uuid[]',
+  LEVEL = 'level[]',
+  PIPELINE_RUN_ID = 'pipeline_run_id[]',
+  PIPELINE_SCHEDULE_ID = 'pipeline_schedule_id[]',
+}
 
 export type FilterQueryType = {
-  'block_run_id[]'?: string[];
-  'block_type[]'?: string[];
-  'block_uuid[]'?: string[];
+  [FilterQueryParamEnum.BLOCK_RUN_ID]?: string[];
+  [FilterQueryParamEnum.BLOCK_TYPE]?: string[];
+  [FilterQueryParamEnum.BLOCK_UUID]?: string[];
+  [FilterQueryParamEnum.LEVEL]?: string[];
+  [FilterQueryParamEnum.PIPELINE_RUN_ID]?: string[];
+  [FilterQueryParamEnum.PIPELINE_SCHEDULE_ID]?: string[];
   end_timestamp?: string;
-  'level[]'?: string[];
-  'pipeline_run_id[]'?: string[];
-  'pipeline_schedule_id[]'?: string[];
   start_timestamp?: string;
 };
 
@@ -41,44 +49,13 @@ function Filter({
   query,
 }: FilterProps) {
   const themeContext = useContext(ThemeContext);
-  const goTo = useCallback((q1, { isList }) => {
-    let q2 = { ...query };
-
-    if (isList) {
-      Object.entries(q1).forEach(([k1, v]) => {
-        const value = String(v);
-        const k2 = `${k1}[]`;
-        let arr = q2[k2];
-        if (arr && Array.isArray(arr)) {
-          arr = arr.map(String);
-          if (arr.includes(value)) {
-            q2[k2] = remove(arr, val => val === value);
-          } else {
-            q2[k2] = arr.concat(value);
-          }
-        } else {
-          q2[k2] = [value];
-        }
-      });
-    } else {
-      q2 = {
-        ...q2,
-        ...q1,
-      };
-    }
-
-    goToWithQuery(q2);
-  }, [
-    query,
-  ]);
-
-  const queryLevels: string[] = useMemo(() => query['level[]'], [query]);
-  const queryBlockTypes: string[] = useMemo(() => query['block_type[]'], [query]);
-  const queryBlockUUIDs: string[] = useMemo(() => query['block_uuid[]'], [query]);
+  const queryLevels: string[] = useMemo(() => query[FilterQueryParamEnum.LEVEL], [query]);
+  const queryBlockTypes: string[] = useMemo(() => query[FilterQueryParamEnum.BLOCK_TYPE], [query]);
+  const queryBlockUUIDs: string[] = useMemo(() => query[FilterQueryParamEnum.BLOCK_UUID], [query]);
   const queryPipelineScheduleIDs: string[] =
-    useMemo(() => query['pipeline_schedule_id[]'], [query]);
-  const queryPipelineRunIDs: string[] = useMemo(() => query['pipeline_run_id[]'], [query]);
-  const queryBlockRunIDs: string[] = useMemo(() => query['block_run_id[]'], [query]);
+    useMemo(() => query[FilterQueryParamEnum.PIPELINE_SCHEDULE_ID], [query]);
+  const queryPipelineRunIDs: string[] = useMemo(() => query[FilterQueryParamEnum.PIPELINE_RUN_ID], [query]);
+  const queryBlockRunIDs: string[] = useMemo(() => query[FilterQueryParamEnum.BLOCK_RUN_ID], [query]);
 
   return (
     <BeforeStyle>
@@ -96,7 +73,7 @@ function Filter({
               noBackground
               noBorder
               noPadding
-              onClick={() => goTo({ level }, { isList: true })}
+              onClick={() => goToWithFilters(query, { level }, { isList: true })}
             >
               <FilterRowStyle>
                 <FlexContainer alignItems="center">
@@ -132,7 +109,7 @@ function Filter({
               noBackground
               noBorder
               noPadding
-              onClick={() => goTo({ block_type: blockType }, { isList: true })}
+              onClick={() => goToWithFilters(query, { block_type: blockType }, { isList: true })}
             >
               <FilterRowStyle>
                 <FlexContainer alignItems="center">
@@ -170,7 +147,11 @@ function Filter({
               noBackground
               noBorder
               noPadding
-              onClick={() => goTo({ block_uuid: block.uuid }, { isList: true })}
+              onClick={() => goToWithFilters(
+                query,
+                { block_uuid: block.uuid },
+                { isList: true, resetLimitParams: true },
+              )}
             >
               <FilterRowStyle>
                 <FlexContainer alignItems="center">
@@ -181,7 +162,10 @@ function Filter({
                   />
                   <Spacing mr={1} />
                   <Circle
-                    color={getColorsForBlockType(block.type, { theme: themeContext }).accent}
+                    color={getColorsForBlockType(
+                      block.type,
+                      { blockColor: block.color, theme: themeContext },
+                    ).accent}
                     size={UNIT * 1.5}
                     square
                   />
@@ -209,7 +193,7 @@ function Filter({
                 noBorder
                 noPadding
                 key={`pipeline-schedule-${pipelineScheduleID}`}
-                onClick={() => goTo({ pipeline_schedule_id: pipelineScheduleID }, { isList: true })}
+                onClick={() => goToWithFilters(query, { pipeline_schedule_id: pipelineScheduleID }, { isList: true })}
               >
                 <FilterRowStyle>
                   <FlexContainer alignItems="center">
@@ -243,7 +227,7 @@ function Filter({
                 noBackground
                 noBorder
                 noPadding
-                onClick={() => goTo({ pipeline_run_id: id }, { isList: true })}
+                onClick={() => goToWithFilters(query, { pipeline_run_id: id }, { isList: true })}
               >
                 <FilterRowStyle>
                   <FlexContainer alignItems="center">
@@ -277,7 +261,7 @@ function Filter({
                 noBackground
                 noBorder
                 noPadding
-                onClick={() => goTo({ block_run_id: id }, { isList: true })}
+                onClick={() => goToWithFilters(query, { block_run_id: id }, { isList: true })}
               >
                 <FilterRowStyle>
                   <FlexContainer alignItems="center">

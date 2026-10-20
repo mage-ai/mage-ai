@@ -1,0 +1,56 @@
+---
+title: "Compute management for Spark"
+sidebarTitle: "Management"
+icon: "space-station-moon-construction"
+description: "Manage your Spark compute resources and track Spark pipeline execution metrics."
+---
+
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+import { urls } from '/snippets/variables/urls.mdx';
+
+<ProOnly source="compute-management" />
+
+<Steps>
+  <Step title="Setup"><Frame><img src="https://mage-ai.github.io/assets/pro/features/compute/management/setup.png" /></Frame></Step>
+  <Step title="Resources"><Frame><img src="https://mage-ai.github.io/assets/pro/features/compute/management/resources.png" /></Frame></Step>
+  <Step title="Clusters"><Frame><img src="https://mage-ai.github.io/assets/pro/features/compute/management/clusters.png" /></Frame></Step>
+  <Step title="Manage"><Frame><img src="https://mage-ai.github.io/assets/pro/features/compute/management/clusters-detail.png" /></Frame></Step>
+  <Step title="Monitoring"><Frame><img src="https://mage-ai.github.io/assets/pro/features/compute/management/monitoring-jobs-stages-detail.png" /></Frame></Step>
+  <Step title="Monitoring jobs"><Frame><img src="https://mage-ai.github.io/assets/pro/features/compute/management/monitoring-jobs.png" /></Frame></Step>
+  <Step title="Monitor job stages"><Frame><img src="https://mage-ai.github.io/assets/pro/features/compute/management/monitoring-stages.png" /></Frame></Step>
+  <Step title="Monitoring job stage tasks"><Frame><img src="https://mage-ai.github.io/assets/pro/features/compute/management/monitoring-jobs-detail.png" /></Frame></Step>
+  <Step title="Monitor SQL execution"><Frame><img src="https://mage-ai.github.io/assets/pro/features/compute/management/monitoring-sql.png" /></Frame></Step>
+  <Step title="System"><Frame><img src="https://mage-ai.github.io/assets/pro/features/compute/management/monitoring-system.png" /></Frame></Step>
+  <Step title="Authenticate"><Frame><img src="https://mage-ai.github.io/assets/pro/features/compute/management/ssh-tunnel.png" /></Frame></Step>
+  <Step title="Connect to remote cluster"><Frame><img src="https://mage-ai.github.io/assets/pro/features/compute/management/pipeline-subheader.png" /></Frame></Step>
+  <Step title="Monitor block execution"><Frame><img src="https://mage-ai.github.io/assets/pro/features/compute/management/block-tabs.png" /></Frame></Step>
+  <Step title="Block execution jobs"><Frame><img src="https://mage-ai.github.io/assets/pro/features/compute/management/block-jobs.png" /></Frame></Step>
+  <Step title="Block execution stages and tasks"><Frame><img src="https://mage-ai.github.io/assets/pro/features/compute/management/block-stages.png" /></Frame></Step>
+  <Step title="Block execution SQL"><Frame><img src="https://mage-ai.github.io/assets/pro/features/compute/management/block-sql.png" /></Frame></Step>
+</Steps>
+
+---
+
+<Card
+  title="Get started for free"
+  href={`${urls.pro}?source=cloud-infrastructure`}
+>
+  <img
+    src="https://mage-ai.github.io/assets/pro/banner-light.png"
+    className="hidden dark:block"
+    noZoom
+  />
+  <img
+    src="https://mage-ai.github.io/assets/pro/banner-dark.png"
+    className="block dark:hidden"
+    noZoom
+  />
+
+  <br />
+
+  A fully managed service, where we maintain the infrastructure, guarantee uptime,
+  automatically scale your workloads to handle any volume of pipeline runs,
+  automatically upgrade new versions of Mage Pro only features,
+  monitor your production pipelines, and provide enterprise level support.
+</Card>

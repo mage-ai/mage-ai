@@ -42,8 +42,9 @@ class BaseStream:
     parent = None
     data_key = None
 
-    def __init__(self, client: IntercomClient):
+    def __init__(self, client: IntercomClient, logger=LOGGER):
         self.client = client
+        self.logger = logger
 
     def get_records(self, bookmark_datetime: datetime = None, is_parent: bool = False) -> list:
         """
@@ -116,7 +117,7 @@ class IncrementalStream(BaseStream):
                                          self.replication_key,
                                          config['start_date'])
 
-        LOGGER.info("Stream: {}, initial max_bookmark_value: {}".format(self.tap_stream_id, start_date))
+        self.logger.info(f'Stream: {self.tap_stream_id}, initial max_bookmark_value: {start_date}')
         bookmark_datetime = singer.utils.strptime_to_utc(start_date)
         max_datetime = bookmark_datetime
 
@@ -129,7 +130,7 @@ class IncrementalStream(BaseStream):
                 record_datetime = singer.utils.strptime_to_utc(
                     self.epoch_milliseconds_to_dt_str(
                         record[self.replication_key])
-                    )
+                )
 
                 if record_datetime >= bookmark_datetime:
                     transformed_record = transform(record,
@@ -141,9 +142,9 @@ class IncrementalStream(BaseStream):
                     counter.increment()
                     max_datetime = max(record_datetime, max_datetime)
             bookmark_date = singer.utils.strftime(max_datetime)
-            LOGGER.info("FINISHED Syncing: {}, total_records: {}.".format(self.tap_stream_id, counter.value))
+            self.logger.info(f'FINISHED Syncing: {self.tap_stream_id}, total_records: {counter.value}.')
 
-        LOGGER.info("Stream: {}, writing final bookmark".format(self.tap_stream_id))
+        self.logger.info(f'Stream: {self.tap_stream_id}, writing final bookmark')
         state = singer.write_bookmark(state,
                                       self.tap_stream_id,
                                       self.replication_key,
@@ -199,10 +200,8 @@ class FullTableStream(BaseStream):
                 )
                 counter.increment()
 
-            LOGGER.info("FINISHED Syncing: {}, total_records: {}.".format(
-                self.tap_stream_id,
-                counter.value,
-            ))
+            self.logger.info(
+                f'FINISHED Syncing: {self.tap_stream_id}, total_records: {counter.value}.')
 
         return state
 
@@ -223,7 +222,7 @@ class AdminList(FullTableStream):
         response = self.client.get(self.path)
 
         if not response.get(self.data_key):
-            LOGGER.critical('response is empty for {} stream'.format(self.tap_stream_id))
+            self.logger.critical(f'Response is empty for {self.tap_stream_id} stream')
             raise IntercomError
 
         # Only yield records when called by child streams
@@ -244,7 +243,7 @@ class Admins(FullTableStream):
     parent = AdminList
 
     def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
-        LOGGER.info("Syncing: {}".format(self.tap_stream_id))
+        self.logger.info("Syncing: {}".format(self.tap_stream_id))
         admins = []
 
         for record in self.get_parent_data():
@@ -272,22 +271,22 @@ class Companies(IncrementalStream):
     def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
         scrolling = True
         params = {}
-        LOGGER.info("Syncing: {}".format(self.tap_stream_id))
+        self.logger.info("Syncing: {}".format(self.tap_stream_id))
 
         while scrolling:
             response = self.client.get(self.path, params=params)
 
             if response.get(self.data_key) is None:
-                LOGGER.warning('response is empty for "{}" stream'.format(self.tap_stream_id))
+                self.logger.warning('response is empty for "{}" stream'.format(self.tap_stream_id))
 
             records = transform_json(response, self.tap_stream_id, self.data_key)
-            LOGGER.info("Synced: {}, records: {}".format(self.tap_stream_id, len(records)))
+            self.logger.info("Synced: {}, records: {}".format(self.tap_stream_id, len(records)))
 
             # stop scrolling if 'data' array is empty
             if 'scroll_param' in response and response.get(self.data_key):
                 scroll_param = response.get('scroll_param')
                 params = {'scroll_param': scroll_param}
-                LOGGER.info("Syncing next page")
+                self.logger.info("Syncing next page")
             else:
                 scrolling = False
 
@@ -309,23 +308,23 @@ class CompanyAttributes(FullTableStream):
     def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
         paging = True
         next_page = None
-        LOGGER.info("Syncing: {}".format(self.tap_stream_id))
+        self.logger.info("Syncing: {}".format(self.tap_stream_id))
 
         while paging:
             response = self.client.get(self.path, url=next_page, params=self.params)
 
-            LOGGER.info("Synced: {}, records: {}".format(
+            self.logger.info("Synced: {}, records: {}".format(
                 self.tap_stream_id,
                 len(response.get(self.data_key, [])),
             ))
             if 'pages' in response and response.get('pages', {}).get('next'):
                 next_page = response.get('pages', {}).get('next')
                 self.path = None
-                LOGGER.info("Syncing next page")
+                self.logger.info("Syncing next page")
             else:
                 paging = False
 
-            yield from response.get(self.data_key,  [])
+            yield from response.get(self.data_key, [])
 
 
 class CompnaySegments(IncrementalStream):
@@ -342,22 +341,23 @@ class CompnaySegments(IncrementalStream):
     params = {
         'type': 'company',
         'include_count': 'true'
-        }
+    }
     data_key = 'segments'
 
     def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
         paging = True
         next_page = None
-        LOGGER.info("Syncing: {}".format(self.tap_stream_id))
+        self.logger.info(f'Syncing: {self.tap_stream_id}')
 
         while paging:
             response = self.client.get(self.path, url=next_page, params=self.params)
 
-            LOGGER.info("Synced: {}, records: {}".format(self.tap_stream_id, len(response.get(self.data_key, []))))
+            self.logger.info(
+                f'Synced: {self.tap_stream_id}, records: {len(response.get(self.data_key, []))}')
             if 'pages' in response and response.get('pages', {}).get('next'):
                 next_page = response.get('pages', {}).get('next')
                 self.path = None
-                LOGGER.info("Syncing next page")
+                self.logger.info('Syncing next page')
             else:
                 paging = False
 
@@ -388,23 +388,25 @@ class Conversations(IncrementalStream):
             },
             'query': {
                 'operator': 'OR',
-                'value': [{
-                    'field': self.replication_key,
-                    'operator': '>',
-                    'value': self.dt_to_epoch_seconds(bookmark_datetime)
+                'value': [
+                    {
+                        'field': self.replication_key,
+                        'operator': '>',
+                        'value': self.dt_to_epoch_seconds(bookmark_datetime)
                     },
                     {
-                    'field': self.replication_key,
-                    'operator': '=',
-                    'value': self.dt_to_epoch_seconds(bookmark_datetime)
-                    }]
-                },
+                        'field': self.replication_key,
+                        'operator': '=',
+                        'value': self.dt_to_epoch_seconds(bookmark_datetime)
+                    },
+                ],
+            },
             "sort": {
                 "field": self.replication_key,
                 "order": "ascending"
             }
         }
-        LOGGER.info("Syncing: {}".format(self.tap_stream_id))
+        self.logger.info(f'Syncing: {self.tap_stream_id}')
 
         while paging:
             response = self.client.post(self.path, json=search_query)
@@ -416,7 +418,7 @@ class Conversations(IncrementalStream):
                 paging = False
 
             records = transform_json(response, self.tap_stream_id, self.data_key)
-            LOGGER.info("Synced: {} for page: {}, records: {}".format(
+            self.logger.info('Synced: {} for page: {}, records: {}'.format(
                     self.tap_stream_id,
                     response.get('pages', {}).get('page'),
                     len(records),
@@ -479,7 +481,7 @@ class ConversationParts(BaseStream):
         with metrics.record_counter(self.tap_stream_id) as counter:
             # Iterate over conversation_parts records
             for record in self.get_records(bookmark_datetime, state):
-                transform_times(record, schema_datetimes) # Transfrom datetimes fields of record
+                transform_times(record, schema_datetimes)   # Transfrom datetimes fields of record
 
                 transformed_record = transform(
                     record,
@@ -490,7 +492,7 @@ class ConversationParts(BaseStream):
                 singer.write_record(self.tap_stream_id, transformed_record, time_extracted=singer.utils.now())
                 counter.increment()
 
-            LOGGER.info("FINISHED Syncing: {}, total_records: {}.".format(self.tap_stream_id, counter.value))
+            self.logger.info(f'FINISHED Syncing: {self.tap_stream_id}, total_records: {counter.value}.')
         return state
 
     # pylint: disable=dangerous-default-value
@@ -501,7 +503,7 @@ class ConversationParts(BaseStream):
         # Iterate over conversations
         for record in parent.get_records(bookmark_datetime):
             # Iterate through parent's records
-            LOGGER.info("Syncing: {}, parent_stream: {}, parent_id: {}".format(
+            self.logger.info("Syncing: {}, parent_stream: {}, parent_id: {}".format(
                 self.tap_stream_id,
                 self.parent.tap_stream_id,
                 record['id']))
@@ -510,13 +512,16 @@ class ConversationParts(BaseStream):
 
             data_for_transform = {self.data_key: [response]}
 
-            transformed_records = transform_json(data_for_transform, self.tap_stream_id, self.data_key)
-            LOGGER.info("Synced: {}, parent_id: {}, records: {}".format(self.tap_stream_id, record['id'], len(transformed_records)))
+            transformed_records = transform_json(
+                data_for_transform, self.tap_stream_id, self.data_key)
+            self.logger.info('Synced: {}, parent_id: {}, records: {}'.format(
+                self.tap_stream_id, record['id'], len(transformed_records)))
             yield from transformed_records
 
             # Conversations(parent) are coming in ascending order
             # so write state with updated_at of conversation after yielding conversation_parts for it.
-            parent_bookmark_value = self.epoch_milliseconds_to_dt_str(record[self.parent.replication_key] * 1000)
+            parent_bookmark_value = self.epoch_milliseconds_to_dt_str(
+                record[self.parent.replication_key] * 1000)
             state = singer.write_bookmark(state,
                                           self.tap_stream_id,
                                           self.replication_key,
@@ -537,21 +542,19 @@ class ContactAttributes(FullTableStream):
     data_key = 'data'
 
     def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
-        LOGGER.info("Syncing: {}".format(self.tap_stream_id))
+        self.logger.info(f'Syncing: {self.tap_stream_id}')
         paging = True
         next_page = None
 
         while paging:
             response = self.client.get(self.path, url=next_page, params=self.params)
 
-            LOGGER.info("Synced: {}, records: {}".format(
-                self.tap_stream_id,
-                len(response.get(self.data_key, [])),
-            ))
+            self.logger.info(
+                f'Synced: {self.tap_stream_id}, records: {len(response.get(self.data_key, []))}')
             if 'pages' in response and response.get('pages', {}).get('next'):
                 next_page = response.get('pages', {}).get('next')
                 self.path = None
-                LOGGER.info("Syncing next page")
+                self.logger.info('Syncing next page')
             else:
                 paging = False
 
@@ -581,23 +584,25 @@ class Contacts(IncrementalStream):
             },
             'query': {
                 'operator': 'OR',
-                'value': [{
-                    'field': self.replication_key,
-                    'operator': '>',
-                    'value': self.dt_to_epoch_seconds(bookmark_datetime)
+                'value': [
+                    {
+                        'field': self.replication_key,
+                        'operator': '>',
+                        'value': self.dt_to_epoch_seconds(bookmark_datetime)
                     },
                     {
-                    'field': self.replication_key,
-                    'operator': '=',
-                    'value': self.dt_to_epoch_seconds(bookmark_datetime)
-                    }]
-                },
+                        'field': self.replication_key,
+                        'operator': '=',
+                        'value': self.dt_to_epoch_seconds(bookmark_datetime)
+                    },
+                ],
+            },
             'sort': {
                 'field': self.replication_key,
                 'order': 'ascending'
-                }
+            }
         }
-        LOGGER.info("Syncing: {}".format(self.tap_stream_id))
+        self.logger.info(f'Syncing: {self.tap_stream_id}')
 
         while paging:
             response = self.client.post(self.path, json=search_query)
@@ -609,7 +614,7 @@ class Contacts(IncrementalStream):
                 paging = False
 
             records = transform_json(response, self.tap_stream_id, self.data_key)
-            LOGGER.info("Synced: {} for page: {}, records: {}".format(
+            self.logger.info("Synced: {} for page: {}, records: {}".format(
                 self.tap_stream_id,
                 response.get('pages', {}).get('page'),
                 len(records),
@@ -635,20 +640,21 @@ class Segments(IncrementalStream):
     def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
         paging = True
         next_page = None
-        LOGGER.info("Syncing: {}".format(self.tap_stream_id))
+        self.logger.info("Syncing: {}".format(self.tap_stream_id))
 
         while paging:
             response = self.client.get(self.path, url=next_page, params=self.params)
 
-            LOGGER.info("Synced: {}, records: {}".format(self.tap_stream_id, len(response.get(self.data_key, []))))
+            self.logger.info('Synced: {}, records: {}'.format(
+                self.tap_stream_id, len(response.get(self.data_key, []))))
             if 'pages' in response and response.get('pages', {}).get('next'):
                 next_page = response.get('pages', {}).get('next')
                 self.path = None
-                LOGGER.info("Syncing next page")
+                self.logger.info("Syncing next page")
             else:
                 paging = False
 
-            yield from response.get(self.data_key,  [])
+            yield from response.get(self.data_key, [])
 
 
 class Tags(FullTableStream):
@@ -665,23 +671,23 @@ class Tags(FullTableStream):
     def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
         paging = True
         next_page = None
-        LOGGER.info("Syncing: {}".format(self.tap_stream_id))
+        self.logger.info(f'Syncing: {self.tap_stream_id}')
 
         while paging:
             response = self.client.get(self.path, url=next_page, params=self.params)
 
-            LOGGER.info("Synced: {}, records: {}".format(
+            self.logger.info('Synced: {}, records: {}'.format(
                 self.tap_stream_id,
                 len(response.get(self.data_key, [])),
             ))
             if 'pages' in response and response.get('pages', {}).get('next'):
                 next_page = response.get('pages', {}).get('next')
                 self.path = None
-                LOGGER.info("Syncing next page")
+                self.logger.info('Syncing next page')
             else:
                 paging = False
 
-            yield from response.get(self.data_key,  [])
+            yield from response.get(self.data_key, [])
 
 
 class Teams(FullTableStream):
@@ -698,36 +704,36 @@ class Teams(FullTableStream):
     def get_records(self, bookmark_datetime=None, is_parent=False) -> Iterator[list]:
         paging = True
         next_page = None
-        LOGGER.info("Syncing: {}".format(self.tap_stream_id))
+        self.logger.info(f'Syncing: {self.tap_stream_id}')
 
         while paging:
             response = self.client.get(self.path, url=next_page, params=self.params)
 
-            LOGGER.info("Synced: {}, records: {}".format(
+            self.logger.info('Synced: {}, records: {}'.format(
                 self.tap_stream_id,
                 len(response.get(self.data_key, [])),
             ))
             if 'pages' in response and response.get('pages', {}).get('next'):
                 next_page = response.get('pages', {}).get('next')
                 self.path = None
-                LOGGER.info("Syncing next page")
+                self.logger.info("Syncing next page")
             else:
                 paging = False
 
-            yield from response.get(self.data_key,  [])
+            yield from response.get(self.data_key, [])
 
 
 STREAMS = {
-    "admin_list": AdminList,
-    "admins": Admins,
-    "companies": Companies,
-    "company_attributes": CompanyAttributes,
-    "company_segments": CompnaySegments,
-    "conversations": Conversations,
-    "conversation_parts": ConversationParts,
-    "contact_attributes": ContactAttributes,
-    "contacts": Contacts,
-    "segments": Segments,
-    "tags": Tags,
-    "teams": Teams
+    'admin_list': AdminList,
+    'admins': Admins,
+    'companies': Companies,
+    'company_attributes': CompanyAttributes,
+    'company_segments': CompnaySegments,
+    'conversations': Conversations,
+    'conversation_parts': ConversationParts,
+    'contact_attributes': ContactAttributes,
+    'contacts': Contacts,
+    'segments': Segments,
+    'tags': Tags,
+    'teams': Teams,
 }

@@ -1,0 +1,82 @@
+---
+title: BigQuery
+description: How to configure BigQuery as a destination in Mage for loading data into your Google Cloud BigQuery datasets.
+---
+
+Use **BigQuery** as a Mage destination to load structured data into Google Cloud’s fully-managed, serverless data warehouse.
+
+---
+
+## Configuration Parameters
+
+When configuring BigQuery as a destination, provide the following parameters:
+
+| Key                          | Description                                                                                                                                                                                                                              | Example Value                                  | Required |
+|------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------|----------|
+| `path_to_credentials_json_file` | Absolute path to your Google Cloud service account credentials file (JSON). If Mage is running on a GCP instance, leave this as `null` to use the instance's service account.                                                     | `/path/to/credentials.json`                    | ✅        |
+| `project_id`                 | The GCP project ID where your BigQuery dataset exists.                                                                                                                                                                                   | `example_project`                              | ✅        |
+| `dataset`                    | Name of the BigQuery dataset where data will be written.                                                                                                                                                                                 | `example_dataset`                              | ✅        |
+| `location`                   | (Optional) The region of your BigQuery dataset. If not set, BigQuery may infer it automatically.                                                                                                                                        | `us-west1`                                     | ❌        |
+| `disable_update_column_types`| If `false`, Mage will alter existing BigQuery column types to match the schema when necessary. If `true`, existing types will not be modified.                                                                                          | `false` (default)                              | ❌        |
+| `use_batch_load`             | Use BigQuery **load jobs** instead of the streaming API. Recommended for better performance and cost efficiency.                                                                                                                         | `true` (default)                               | ❌        |
+| `credentials_info`           | Alternative to `path_to_credentials_json_file`. Directly embed your credentials JSON as a dictionary (useful for environment-based configs).                                                                                             | See structure below                            | ❌        |
+
+### `credentials_info` Structure
+
+If you're passing credentials inline instead of a path, structure it like this:
+
+```yaml
+auth_provider_x509_cert_url: str
+auth_uri: str
+client_email: str
+client_id: str
+client_x509_cert_url: str
+private_key: str
+private_key_id: str
+project_id: str
+token_uri: str
+type: str
+```
+---
+
+## Optional Configuration
+
+| Key               | Description                                                                                                                   | Example Value | Default |
+|-------------------|-------------------------------------------------------------------------------------------------------------------------------|---------------|---------|
+| `skip_schema_creation` | If `true`, Mage will **not** run a `CREATE SCHEMA` command. Useful if the schema already exists. See [issue #3416](https://github.com/mage-ai/mage-ai/issues/3416). | `true`        | `false` |
+| `lower_case`      | If `true`, column names will be automatically converted to lowercase before writing to BigQuery.                             | `true`        | `true`  |
+
+
+## Mage Pro Features
+
+The following features are available only in [**Mage Pro**](https://cloud.mage.ai):
+
+### Advanced Configuration (Mage Pro only)
+
+| Key                              | Description                                                                                                              | Default |
+|----------------------------------|--------------------------------------------------------------------------------------------------------------------------|---------|
+| `truncate_table_before_full_table_sync` | If `true`, Mage will truncate (empty) the destination table before performing a full table sync. This ensures no old data remains. | `false`  |
+
+---
+
+## Required Permissions
+
+Your GCP service account or user must have the following permissions to use BigQuery as a destination:
+
+```text
+bigquery.datasets.create
+bigquery.jobs.create
+bigquery.readsessions.create
+bigquery.readsessions.getData
+```
+Additionally, the account must have the **BigQuery Data Editor** role on the target dataset:
+
+- Role: `roles/bigquery.dataEditor`
+
+---
+
+## Related Resources
+
+- [BigQuery API Overview](https://cloud.google.com/bigquery/docs/reference/rest)
+- [Google Cloud IAM Roles](https://cloud.google.com/bigquery/docs/access-control)
+- [Mage GitHub Issue #3416](https://github.com/mage-ai/mage-ai/issues/3416)

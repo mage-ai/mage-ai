@@ -9,6 +9,7 @@ class GoogleSearchConsole(Connection):
     def __init__(
         self,
         credentials_info: CredentialsInfoType = None,
+        email: str = None,
         path_to_credentials_json_file: str = None,
     ):
         if not credentials_info and not path_to_credentials_json_file:
@@ -17,6 +18,7 @@ class GoogleSearchConsole(Connection):
 
         super().__init__()
         self.credentials_info = credentials_info
+        self.email = email
         self.path_to_credentials_json_file = path_to_credentials_json_file
 
     def connect(self):
@@ -34,6 +36,9 @@ class GoogleSearchConsole(Connection):
             )
         else:
             credentials = self.credentials_info
+
+        if self.email:
+            credentials = credentials.with_subject(self.email)
         return build(
             'webmasters',
             'v3',

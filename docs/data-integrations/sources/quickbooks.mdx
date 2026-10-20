@@ -1,0 +1,39 @@
+---
+title: "QuickBooks"
+---
+
+import { ProButton } from '/snippets/pro/button.mdx';
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="data-integration" />
+
+## Configuration
+
+To set up the QuickBooks source, provide the following configuration parameters:
+
+| Key              | Description                                                                                   | Sample Value            | Required |
+| ---------------- | --------------------------------------------------------------------------------------------- | ----------------------- | -------- |
+| `client_id`      | Client ID associated with your QuickBooks app.                                                 | `123456`                | ✅        |
+| `client_secret`  | Client secret generated when you create your QuickBooks app.                                   | `abcdefg`               | ✅        |
+| `start_date`     | The start date for syncing data. Format: `YYYY-MM-DDTHH:MM:SSZ`.                               | `2021-01-01T00:00:00Z`   | ✅        |
+| `user_agent`     | User agent name registered for your QuickBooks app.                                            | `agent_name`            | ✅        |
+| `realm_id`       | Realm ID associated with your QuickBooks company account.                                      | `123456`                | ✅        |
+| `refresh_token`  | Refresh token used to renew the access token after expiration (requires `offline_access` scope). | `abcdefg`             | ✅        |
+
+<br/>
+
+## How to Generate Credentials
+
+Follow QuickBooks' [OAuth 2.0 Authentication Playground guide](https://developer.intuit.com/app/developer/qbo/docs/develop/authentication-and-authorization/oauth-2.0-playground) to generate the required credentials:
+
+1. Register a new QuickBooks app to get your `client_id` and `client_secret`.
+2. Configure the OAuth scopes required by your app.
+3. Use the OAuth 2.0 playground to complete authentication and retrieve your `refresh_token` and `realm_id`.
+
+<br/>
+
+## Additional Notes
+
+- The `start_date` determines how far back data will be synced.
+- Ensure that the `offline_access` scope is enabled to obtain a `refresh_token`.
+- Tokens expire after a set period; use the `refresh_token` to obtain new access credentials automatically.

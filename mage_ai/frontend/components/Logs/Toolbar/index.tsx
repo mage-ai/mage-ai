@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
 
 import Button from '@oracle/elements/Button';
 import Calendar, { TimeType } from '@oracle/components/Calendar';
@@ -12,12 +13,12 @@ import TextInput from '@oracle/elements/Inputs/TextInput';
 import usePrevious from '@utils/usePrevious';
 import { LogRangeEnum } from '@interfaces/LogType';
 import {
-  LOG_ITEMS_PER_PAGE,
+  LOG_FILE_COUNT_INTERVAL,
   LOG_RANGE_SEC_INTERVAL_MAPPING,
   SPECIFIC_LOG_RANGES,
 } from './constants';
+import { MetaQueryEnum } from '@api/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
-
 import { calculateStartTimestamp } from '@utils/number';
 import {
   getDatePartsFromUnixTimestamp,
@@ -26,9 +27,11 @@ import {
   unixTimestampFromDate,
   utcDateFromDateAndTime,
 } from '@utils/date';
+import { getLogScrollPositionLocalStorageKey } from '../utils';
 import { goToWithQuery } from '@utils/routing';
 import { isEqual } from '@utils/hash';
 import { queryFromUrl } from '@utils/url';
+import { set } from '@storage/localStorage';
 
 
 enum RangeQueryEnum {
@@ -37,18 +40,32 @@ enum RangeQueryEnum {
 }
 
 type LogToolbarProps = {
-  logCount: number;
-  logOffset: number;
+  allPastLogsLoaded: boolean;
+  loadNewerLogInterval: () => void;
+  loadPastLogInterval: () => void;
+  saveScrollPosition?: boolean;
   selectedRange: LogRangeEnum;
-  setLogOffset: (func: any) => void;
   setSelectedRange: (range: LogRangeEnum) => void;
 };
 
+const SHARED_LOG_QUERY_PARAMS = {
+  [MetaQueryEnum.LIMIT]: LOG_FILE_COUNT_INTERVAL,
+  [MetaQueryEnum.OFFSET]: 0,
+};
+
+export const SHARED_BUTTON_PROPS = {
+  blackBorder: true,
+  inline: true,
+  paddingBottom: UNIT * 0.75,
+  paddingTop: UNIT * 0.75,
+};
+
 function LogToolbar({
-  logCount,
-  logOffset,
+  allPastLogsLoaded,
+  loadNewerLogInterval,
+  loadPastLogInterval,
+  saveScrollPosition,
   selectedRange,
-  setLogOffset,
   setSelectedRange,
 }: LogToolbarProps) {
   const [showCalendarIndex, setShowCalendarIndex] = useState<number>(null);
@@ -59,8 +76,9 @@ function LogToolbar({
     hour: padTime(String(new Date().getUTCHours())),
     minute: padTime(String(new Date().getUTCMinutes())),
   });
-  const allLogsLoaded = logOffset >= logCount;
 
+  const router = useRouter();
+  const { pipeline: pipelineUUID }: any = router.query;
   const q = queryFromUrl();
   const qPrev = usePrevious(q);
   useEffect(() => {
@@ -101,24 +119,46 @@ function LogToolbar({
         });
       }
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     q,
     qPrev,
   ]);
 
+  const resetLogScrollPosition = useCallback(() => {
+    if (saveScrollPosition) {
+      const localStorageKey = getLogScrollPositionLocalStorageKey(pipelineUUID);
+      set(localStorageKey, 0);
+    }
+  }, [pipelineUUID, saveScrollPosition]);
+
   return (
     <Spacing py={1}>
       <FlexContainer alignItems="center">
         <KeyboardShortcutButton
-          blackBorder
-          disabled={allLogsLoaded}
-          inline
-          onClick={() => setLogOffset((prev: number) => prev + LOG_ITEMS_PER_PAGE)}
-          paddingBottom={UNIT * 0.75}
-          paddingTop={UNIT * 0.75}
+          {...SHARED_BUTTON_PROPS}
+          disabled={allPastLogsLoaded}
+          onClick={() => {
+            resetLogScrollPosition();
+            loadPastLogInterval();
+          }}
           uuid="logs/load_older_logs"
         >
-          {allLogsLoaded ? 'All logs within range loaded' : 'Load older logs'}
+          {allPastLogsLoaded ? 'All past logs within range loaded' : 'Load older logs'}
+        </KeyboardShortcutButton>
+
+        <Spacing mr={1} />
+
+        <KeyboardShortcutButton
+          {...SHARED_BUTTON_PROPS}
+          disabled={q?._offset <= 0}
+          onClick={() => {
+            resetLogScrollPosition();
+            loadNewerLogInterval();
+          }}
+          uuid="logs/load_newer_logs"
+        >
+          Load newer logs
         </KeyboardShortcutButton>
 
         <Spacing mr={2} />
@@ -129,6 +169,7 @@ function LogToolbar({
           onChange={e => {
             e.preventDefault();
             const range = e.target.value;
+            resetLogScrollPosition();
             setSelectedRange(range);
             if (SPECIFIC_LOG_RANGES.includes(range)) {
               const startTimestamp = calculateStartTimestamp(LOG_RANGE_SEC_INTERVAL_MAPPING[range]);
@@ -136,6 +177,7 @@ function LogToolbar({
                 {
                   [RangeQueryEnum.START]: startTimestamp,
                   [RangeQueryEnum.END]: null,
+                  ...SHARED_LOG_QUERY_PARAMS,
                 },
               );
             }
@@ -212,13 +254,15 @@ function LogToolbar({
             <Spacing mr={1} />
 
             <Button
-              borderRadius={UNIT / 2}
+              borderRadius={`${UNIT / 2}px`}
               onClick={() => {
+                resetLogScrollPosition();
                 const start = isoDateFormatFromDateParts(startDate, startTime.hour, startTime.minute);
                 const end = isoDateFormatFromDateParts(endDate, endTime.hour, endTime.minute);
                 goToWithQuery({
                   [RangeQueryEnum.START]: unixTimestampFromDate(start),
                   [RangeQueryEnum.END]: unixTimestampFromDate(end),
+                  ...SHARED_LOG_QUERY_PARAMS,
                 });
               }}
               padding={`${UNIT / 2}px`}

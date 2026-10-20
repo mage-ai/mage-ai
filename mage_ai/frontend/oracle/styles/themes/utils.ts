@@ -10,14 +10,14 @@ export const LOCAL_STORAGE_KEY_THEME: 'current_theme' = 'current_theme';
 const LOCAL_STORAGE_KEY_THEME_DARK: number = 0;
 const LOCAL_STORAGE_KEY_THEME_LIGHT: number = 1;
 
-export function getCurrentTheme(ctx, invertedTheme = 1) {
+export function getCurrentTheme(ctx: any, invertedTheme = 1) {
   let currentTheme;
 
   if (ctx) {
     const cookie = ServerCookie(ctx);
     currentTheme = cookie[LOCAL_STORAGE_KEY_THEME];
   } else {
-    currentTheme = Cookies.get(LOCAL_STORAGE_KEY_THEME, SHARED_OPTS);
+    currentTheme = Cookies.get(LOCAL_STORAGE_KEY_THEME);
   }
 
   if (Number(currentTheme) === invertedTheme) {
@@ -33,6 +33,8 @@ export function getCurrentTheme(ctx, invertedTheme = 1) {
   } else {
     return light;
   }
+
+  return dark;
 }
 
 export function getCurrentInvertedTheme(ctx) {
@@ -45,7 +47,7 @@ export function setCurrentTheme(theme) {
 }
 
 export function toggleTheme() {
-  const currentTheme = Cookies.get(LOCAL_STORAGE_KEY_THEME, SHARED_OPTS);
+  const currentTheme = Cookies.get(LOCAL_STORAGE_KEY_THEME);
 
   return setCurrentTheme(
     Number(currentTheme) === LOCAL_STORAGE_KEY_THEME_DARK || currentTheme === null

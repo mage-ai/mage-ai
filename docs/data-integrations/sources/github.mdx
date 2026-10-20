@@ -1,0 +1,61 @@
+---
+title: "GitHub"
+---
+
+![GitHub](https://github.githubassets.com/images/modules/logos_page/GitHub-Logo.png)
+
+<br/>
+
+## Configuration
+
+To set up the GitHub source, provide the following configuration parameters:
+
+| Key               | Description                                                                                   | Sample Value                                | Required |
+| ----------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------ | -------- |
+| `access_token`    | A GitHub access token containing credentials to access your desired repository.                | `abcdefghijklmnopqrstuvwxyz1234567890ABCD` | ✅        |
+| `repository`      | The repository path (everything after `github.com`).                                            | `mage-ai/mage-ai`                          | ✅        |
+| `start_date`      | A sync start date. Format: ISO8601 (`YYYY-MM-DDTHH:MM:SSZ`).                                    | `2021-01-01T00:00:00Z`                     | ✅        |
+| `request_timeout` | Request timeout value in seconds.                                                             | `300`                                      | ✅        |
+| `base_url`        | The base URL before the repository path (defaults to `https://api.github.com`).                 | `https://api.github.com`                   | ✅        |
+
+<br/>
+
+## Generating Credentials
+
+Follow [this guide](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) to generate a Personal Access Token (PAT).
+
+<br/>
+
+## Supported Endpoints
+
+This source pulls raw data from the GitHub REST API and extracts the following resources for a single repository:
+
+- Assignees
+- Collaborators
+- Commits
+- Commit Comments
+- Events
+- Issues
+- Issue Events
+- Issue Milestones
+- Projects
+- Project Cards
+- Project Columns
+- Pull Requests
+- PR Commits
+- Releases
+- Comments
+- Reviews
+- Review Comments
+- Stargazers
+- Teams
+- Team Members
+- Team Memberships
+
+It outputs the schema for each resource.
+
+> **Note:**  
+> Incremental sync is currently **not supported** for any endpoint.  
+> To add support, the `IncrementalStream` class in `./tap_github/streams.py` needs modifications to correctly handle bookmark values.
+
+<br/>

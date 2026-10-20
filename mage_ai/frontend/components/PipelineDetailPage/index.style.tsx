@@ -3,12 +3,6 @@ import styled from 'styled-components';
 import dark from '@oracle/styles/themes/dark';
 import { BORDER_RADIUS } from '@oracle/styles/units/borders';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { transition } from '@oracle/styles/mixins';
-
-type ContainerProps = {
-  noBorder?: boolean;
-  shadow?: boolean;
-};
 
 export const BannerStyle = styled.div<{
   background?: string;

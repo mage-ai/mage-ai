@@ -1,9 +1,11 @@
-from dataclasses import dataclass, field
-from mage_ai.shared.config import BaseConfig
-from typing import Dict, List
-import boto3
 import os
+from dataclasses import dataclass, field
+from typing import Dict, List, Union
+
+import boto3
 import requests
+
+from mage_ai.shared.config import BaseConfig
 
 ECS_CONTAINER_METADATA_URI_VAR = 'ECS_CONTAINER_METADATA_URI_V4'
 
@@ -15,9 +17,14 @@ class EcsConfig(BaseConfig):
     cluster: str
     security_groups: List[str]
     subnets: List[str]
-    tags: List = field(default_factory=list)
+    assign_public_ip: bool = True
     cpu: int = 512
+    enable_execute_command: bool = False
+    launch_type: str = 'FARGATE'
     memory: int = 1024
+    network_configuration: Dict = None
+    tags: List = field(default_factory=list)
+    wait_timeout: int = 600
 
     @classmethod
     def load_extra_config(self):
@@ -60,28 +67,34 @@ class EcsConfig(BaseConfig):
             container_name=container_name,
         )
 
-    def get_task_config(self, command: str = None) -> Dict:
-        task_config = dict(
-            taskDefinition=self.task_definition,
-            launchType='FARGATE',
-            cluster=self.cluster,
-            platformVersion='LATEST',
-            count=1,
-            networkConfiguration={
+    def get_task_config(self, command: Union[str, Dict] = None) -> Dict:
+        network_configuration = self.network_configuration
+        if network_configuration is None:
+            network_configuration = {
                 'awsvpcConfiguration': {
                     'subnets': self.subnets,
-                    'assignPublicIp': 'ENABLED',
+                    'assignPublicIp': 'ENABLED' if self.assign_public_ip else 'DISABLED',
                     'securityGroups': self.security_groups,
                 }
-            },
+            }
+
+        task_config = dict(
+            cluster=self.cluster,
+            count=1,
+            enableExecuteCommand=self.enable_execute_command,
+            launchType=self.launch_type,
+            networkConfiguration=network_configuration,
+            platformVersion='LATEST',
+            propagateTags='TASK_DEFINITION',
             tags=self.tags,
+            taskDefinition=self.task_definition,
         )
         if command is not None:
             task_config['overrides'] = {
                 'containerOverrides': [
                     {
                         'name': self.container_name,
-                        'command': command.split(' '),
+                        'command': command.split(' ') if isinstance(command, str) else command,
                         'cpu': self.cpu,
                         'memory': self.memory,
                     },

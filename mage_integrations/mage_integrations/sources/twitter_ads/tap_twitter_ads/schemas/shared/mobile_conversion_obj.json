@@ -1,0 +1,21 @@
+{
+    "type": ["null", "object"],
+    "additionalProperties": false,
+    "properties": {
+      "assisted": {
+        "type": ["null", "integer"]
+      },
+      "order_quantity": {
+        "type": ["null", "integer"]
+      },
+      "post_engagement": {
+        "type": ["null", "integer"]
+      },
+      "post_view": {
+        "type": ["null", "integer"]
+      },
+      "sale_amount": {
+        "type": ["null", "integer"]
+      }
+    }
+  }

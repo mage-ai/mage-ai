@@ -1,0 +1,80 @@
+---
+title: Salesforce
+description: How to configure Salesforce as a destination in Mage to write records using OAuth or username/password authentication with support for insert, update, upsert, and bulk actions.
+---
+
+![Salesforce logo](https://user-images.githubusercontent.com/78053898/198753571-7c033641-75a2-4338-b257-ee37a159915e.png)
+
+---
+
+## Overview
+
+Use **Salesforce** as a destination in Mage to export records into standard or custom Salesforce objects. Mage supports both **OAuth 2.0** and **username/password/token** authentication methods, and enables `insert`, `update`, `upsert`, `delete`, and `hard_delete` actions.
+
+You can also configure behavior for bulk failures, define external ID fields for upserts, and optionally override the source-to-object mapping using `table_name`.
+
+---
+
+## Configuration Parameters
+
+| Key               | Description                                                                                                          | Required |
+|--------------------|----------------------------------------------------------------------------------------------------------------------|----------|
+| `client_id`         | OAuth client ID from your Salesforce connected app.                                                                | Optional |
+| `client_secret`     | OAuth client secret from your connected app.                                                                       | Optional |
+| `refresh_token`     | OAuth refresh token. Used to obtain new access tokens.                                                              | Optional |
+| `username`          | Username used for Salesforce **username/password** authentication.                                                  | Optional |
+| `password`          | Corresponding Salesforce password.                                                                                  | Optional |
+| `security_token`    | Salesforce security token (needed with password-based login).                                                       | Optional |
+| `domain`            | Salesforce domain to authenticate against. Use `login` (default), `test` (sandbox), or a custom My Domain.          | ✅       |
+| `action`            | Default operation to perform on incoming records: `insert`, `update`, `upsert`, `delete`, or `hard_delete`.        | ✅       |
+| `external_id_name`  | External ID field for `upsert` operations. Default is `"Id"`.                                                       | Optional |
+| `allow_failures`    | If `true`, failed records will be skipped and processing will continue. Default is `false`.                         | Optional |
+| `table_name`        | Override the source stream name with a specific Salesforce object name (e.g., `Account`, `Contact`, `Opportunity`). | Optional |
+
+---
+
+## Authentication Options
+
+You can authenticate to Salesforce using either of the following methods:
+
+### Option 1: OAuth 2.0
+
+- Set `client_id`, `client_secret`, and `refresh_token`.
+- Recommended for connected apps and secure access with refreshable tokens.
+- [How to obtain credentials →](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/sources/salesforce/README.md#how-to-get-your-client_id-client_secret-and-refresh_token)
+
+### Option 2: Username / Password
+
+- Set `username`, `password`, and `security_token`.
+- Recommended for sandbox/testing environments.
+- Ensure that IP restrictions are disabled or add your Mage IP to the trusted IP list.
+
+---
+
+## Limitations
+
+To map a **non-default source stream** to a specific Salesforce object, you must explicitly set the `table_name` parameter in your configuration.
+
+- The value of `table_name` **must** match the API name of a Salesforce object (e.g., `Account`, `Lead`, `Opportunity`, or custom objects like `MyObject__c`).
+
+---
+
+## Allow Failures Behavior
+
+When `allow_failures` is set to `true`:
+
+- Records that are **eligible** (i.e., match the Salesforce object schema and are valid for the selected action) but **fail to commit** will be skipped.
+- The pipeline will continue processing other records.
+
+When `allow_failures` is set to `false`:
+
+- Any failed record will raise an error and halt the pipeline.
+
+---
+
+## Related Resources
+
+- [Salesforce API Documentation](https://developer.salesforce.com/docs)
+- [Salesforce Connected App Setup](https://help.salesforce.com/s/articleView?id=sf.connected_app_create.htm)
+- [Salesforce Bulk API](https://developer.salesforce.com/docs/atlas.en-us.api_asynch.meta/api_asynch/)
+- [Salesforce Object Reference](https://developer.salesforce.com/docs/atlas.en-us.object_reference.meta/object_reference/sforce_api_objects_concepts.htm)

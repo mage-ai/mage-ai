@@ -1,0 +1,25 @@
+@use '../../base/typography' as text;
+
+.text {
+  @include text.base;
+}
+
+.small {
+  @include text.base-sm;
+}
+
+.xsmall {
+  @include text.base-xs;
+}
+
+.monospace {
+  @include text.monospace;
+
+  &.small {
+    @include text.monospace-sm;
+  }
+
+  &.xsmall {
+    @include text.monospace-sm;
+  }
+}

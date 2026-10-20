@@ -1,0 +1,65 @@
+---
+title: ClickHouse
+description: How to configure ClickHouse as a destination in Mage to write data to a ClickHouse database.
+---
+
+Configure **ClickHouse** as a Mage destination to write tabular data into a ClickHouse database using the SQLAlchemy driver.
+
+---
+
+## Configuration Parameters
+
+Provide the following parameters to use ClickHouse as a destination:
+
+| Key             | Description                                                                                  | Example Value                                | Required |
+|------------------|----------------------------------------------------------------------------------------------|----------------------------------------------|----------|
+| `sqlalchemy_url` | SQLAlchemy connection string used to connect to ClickHouse. Includes host, user, password, etc. | `clickhouse://default:@localhost/default`    | ✅        |
+| `table_name`     | (Optional) Name of the destination table to write data into. If omitted, the stream name will be used. | `abc123`                                      | ❌        |
+
+---
+
+## SQLAlchemy URL Format
+
+The `sqlalchemy_url` should follow this structure:
+
+```
+clickhouse://<username>:<password>@<host>:<port>/<database>
+```
+
+**Examples:**
+
+- Without password (using default database):  
+  `clickhouse://default:@localhost/default`
+
+- With credentials:  
+  `clickhouse://user:pass123@127.0.0.1:9000/analytics_db`
+
+Ensure the database exists in ClickHouse before running the Mage pipeline.
+
+---
+
+## Requirements
+
+- The ClickHouse database must be reachable from the Mage environment.
+- Mage requires the [`clickhouse-connect`](https://pypi.org/project/clickhouse-connect/) Python package to be installed.
+- The target table should match the schema or allow dynamic schema creation depending on your setup.
+
+---
+
+## FAQs
+
+### Can I use a secure connection?
+
+Yes. To use HTTPS or TLS-secured connections, ensure your SQLAlchemy URL includes the appropriate protocol and port, and that your ClickHouse server supports it.
+
+### What happens if `table_name` is not provided?
+
+Mage will automatically use the stream name as the destination table name.
+
+---
+
+## Related Resources
+
+- [ClickHouse SQLAlchemy Docs](https://clickhouse.com/docs/en/integrations/sqlalchemy)
+- [ClickHouse Official Documentation](https://clickhouse.com/docs/en/)
+- [clickhouse-connect PyPI Package](https://pypi.org/project/clickhouse-connect/)

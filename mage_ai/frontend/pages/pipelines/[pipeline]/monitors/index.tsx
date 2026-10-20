@@ -1,23 +1,31 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import NextLink from 'next/link';
 import moment from 'moment';
 import styled from 'styled-components';
 
 import BarStackChart from '@components/charts/BarStack';
+import ErrorsType from '@interfaces/ErrorsType';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Headline from '@oracle/elements/Headline';
 import Link from '@oracle/elements/Link';
 import Monitor from '@components/Monitor';
 import PipelineType from '@interfaces/PipelineType';
+import PrivateRoute from '@components/shared/PrivateRoute';
 import Spacing from '@oracle/elements/Spacing';
 import Text from '@oracle/elements/Text';
 import api from '@api';
-import dark from '@oracle/styles/themes/dark';
+import {
+  BAR_STACK_COLORS,
+  BAR_STACK_STATUSES,
+  MonitorTypeEnum,
+  TOOLTIP_LEFT_OFFSET,
+} from '@components/Monitor/constants';
 import { ChevronRight } from '@oracle/icons';
-import { MonitorTypeEnum } from '@components/Monitor/constants';
 import { SCHEDULE_TYPE_TO_LABEL } from '@interfaces/PipelineScheduleType';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { capitalize } from '@utils/string';
+import { getAllPipelineRunData } from '@components/PipelineRun/shared/utils';
+import { getDateRange } from '@utils/date';
 
 const GradientTextStyle = styled.div<any>`
   background: linear-gradient(90deg, #7D55EC 28.12%, #2AB2FE 100%);
@@ -31,22 +39,14 @@ type PipelineRunsMonitorProps = {
   pipeline: PipelineType;
 };
 
-export const BAR_STACK_COLORS = [
-  dark.accent.warning,
-  dark.background.success,
-  dark.accent.negative,
-  dark.content.active,
-  dark.interactive.linkPrimary,
-];
-export const BAR_STACK_STATUSES = ['cancelled', 'completed', 'failed', 'initial', 'running'];
-
 function PipelineRunsMonitor({
   pipeline: pipelineProp,
 }: PipelineRunsMonitorProps) {
   const pipelineUUID = pipelineProp.uuid;
+  const [errors, setErrors] = useState<ErrorsType>(null);
 
   const { data: dataPipelineSchedules } = api.pipeline_schedules.pipelines.list(pipelineUUID);
-  const pipelineSchedules = useMemo( 
+  const pipelineSchedules = useMemo(
     () => dataPipelineSchedules?.pipeline_schedules,
     [dataPipelineSchedules],
   );
@@ -59,7 +59,12 @@ function PipelineRunsMonitor({
     {},
   ), [pipelineSchedules]);
 
-  const { data: dataPipeline } = api.pipelines.detail(pipelineUUID);
+  const { data: dataPipeline } = api.pipelines.detail(pipelineUUID, {
+    includes_content: false,
+    includes_outputs: false,
+  }, {
+    revalidateOnFocus: false,
+  });
   const pipeline = useMemo(() => ({
     ...dataPipeline?.pipeline,
     uuid: pipelineUUID,
@@ -77,55 +82,10 @@ function PipelineRunsMonitor({
 
   const {
     stats: monitorStats,
-  } = dataMonitor?.monitor_stats || {};
+  } = dataMonitor?.monitor_stat || {};
 
-  const dateRange = useMemo(() => {
-    let date = new Date()
-    const dateRange = []
-    for (let i = 0; i < 90; i++) {
-      dateRange.unshift(date.toISOString().split('T')[0]);
-      date.setDate(date.getDate() - 1);
-    }
-    return dateRange;
-  }, []);
-
-  const totalPipelineRunData = useMemo(() => {
-    if (monitorStats) {
-      const allPipelineRunData = Object.entries(monitorStats).reduce(
-        // @ts-ignore
-        (obj, [id, { data: scheduleStats }]) => {
-          const updated = {};
-          Object.entries(scheduleStats).forEach(([date, dateStats]) => {
-            let currentStats = {};
-            if (date in obj) {
-              currentStats = obj[date];
-            }
-            const updatedStats = {};
-            Object.entries(dateStats).forEach(([status, num]) => {
-              const currentNum = currentStats?.[status] ? currentStats[status] : 0;
-              updatedStats[status] = currentNum + num;
-            });
-            updated[date] = {
-              ...currentStats,
-              ...updatedStats,
-            };
-          });
-  
-          return {
-            ...obj,
-            ...updated,
-          };
-        },
-        {},
-      );
-      return dateRange.map(date => ({
-        date,
-        ...(allPipelineRunData[date] || {}),
-      }));
-    } else {
-      return [];
-    }
-  }, [
+  const dateRange = useMemo(() => getDateRange(), []);
+  const totalPipelineRunData = useMemo(() => getAllPipelineRunData(monitorStats, dateRange), [
     dateRange,
     monitorStats,
   ]);
@@ -161,16 +121,16 @@ function PipelineRunsMonitor({
     });
 
     return arr;
-  }, [
-    pipeline,
-  ]);
+  }, []);
 
   return (
     <Monitor
       breadcrumbs={breadcrumbs}
+      errors={errors}
       monitorType={MonitorTypeEnum.PIPELINE_RUNS}
       pipeline={pipeline}
-    > 
+      setErrors={setErrors}
+    >
       <Spacing mt={2} mx={2}>
         <Spacing ml={1}>
           <GradientTextStyle>
@@ -187,18 +147,19 @@ function PipelineRunsMonitor({
             height={200}
             keys={BAR_STACK_STATUSES}
             margin={{
-              top: 10,
               bottom: 30,
               left: 35,
-              right: 0
+              right: 0,
+              top: 10,
             }}
-            xLabelFormat={label => moment(label).format('MMM DD')}
+            tooltipLeftOffset={TOOLTIP_LEFT_OFFSET}
+            xLabelFormat={(label: number) => moment(label).format('MMM DD')}
           />
         </Spacing>
         {pipelineRunsData && Object.entries(pipelineRunsData).map(([id, stats]) => {
           const pipelineSchedule = pipelineSchedulesById?.[id];
           return (
-            <Spacing mt={3}>
+            <Spacing key={id} mt={3}>
               <FlexContainer alignItems="center">
                 <Spacing mx={1}>
                   <GradientTextStyle>
@@ -232,11 +193,12 @@ function PipelineRunsMonitor({
                   height={200}
                   keys={BAR_STACK_STATUSES}
                   margin={{
-                    top: 10,
                     bottom: 30,
                     left: 35,
-                    right: 0
+                    right: 0,
+                    top: 10,
                   }}
+                  tooltipLeftOffset={TOOLTIP_LEFT_OFFSET}
                   xLabelFormat={label => moment(label).format('MMM DD')}
                 />
               </Spacing>
@@ -245,7 +207,7 @@ function PipelineRunsMonitor({
         })}
       </Spacing>
     </Monitor>
-  )
+  );
 }
 
 PipelineRunsMonitor.getInitialProps = async (ctx: any) => {
@@ -262,4 +224,4 @@ PipelineRunsMonitor.getInitialProps = async (ctx: any) => {
   };
 };
 
-export default PipelineRunsMonitor;
+export default PrivateRoute(PipelineRunsMonitor);

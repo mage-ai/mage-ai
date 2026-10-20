@@ -1,0 +1,98 @@
+---
+title: "Cluster Management"
+sidebarTitle: "Cluster Management"
+icon: "door-open"
+description: "Manage all your Mage Pro clusters"
+---
+### Cluster Management Portal
+
+Mage Pro is split into two environments, the Cluster Manager, which supports keeping your clusters and schedulers turned on at all times, and a development environment. The Cluster Manager is where you can see consumption insights into your cluster, add and edit environment variables, and check out estimated pricing for the cluster. 
+
+### Add Cluster
+
+Adding a new cluster to your environment is simple in Mage Pro. Just click the “Lanch new cluster” button, provide it a name, and then click “Create cluster.” Your new cluster will take a few minutes to spin up. Once complete you can open the cluster to your development environment or
+
+<img
+    alt="SaaS Deployment"
+    src="https://raw.githubusercontent.com/mage-ai/assets/main/pro/cloud/create-new-cluster.png"
+/>
+
+### Environment variables
+
+Environment variables are key-value pairs stored in the operating system that can be accessed by applications running on that system. They provide a way to configure application behavior without changing code, which is particularly useful for:
+
+- Storing configuration settings
+- Managing credentials securely (without hardcoding them)
+- Controlling application behavior across different environments (development, testing, production)
+
+**Add or edit an environment variable** 
+After accessing the cluster management page by clicking the blue link under the Clusters column, you'll see a blue "Edit / Add variables" button. This section explains how to use this feature to configure your environment variables.
+
+- Navigate to the cluster management page
+- Locate and click the blue "Edit / Add variables" button
+- In the interface that appears, you can:
+    - Add new variables by specifying a name and value
+    - Edit existing variables by modifying their values
+    - Remove variables when they're no longer needed
+
+<img
+    alt="SaaS Deployment"
+    src="https://raw.githubusercontent.com/mage-ai/assets/main/pro/cloud/env-var.png"
+/>
+
+### Add users to cluster manager
+
+User management is a component of both the Mage Pro cluster manager and development environment. The cluster manager implements a simple permission system with only three distinct roles:
+
+- **Admin** - Full control to create and delete clusters, modify environment variables, and manage cluster operations (start/stop)
+- **Editor** - Limited permissions to modify aspects of the cluster within already created clusters.
+- **Viewer** - Read-only access to view cluster configuration and technical details
+
+These role-based permissions help teams maintain appropriate access controls while collaborating on data pipeline projects.
+
+### **How to add or edit user roles**:
+
+Team administrators can manage access permissions for cluster members through the cluster manager interface. Here's how to handle common user management tasks:
+
+**Inviting new users** 
+
+1. Navigate to the users page and click "Invite user"
+2. Enter the person's email address in the popup box
+3. Select the appropriate permission level from the dropdown menu
+4. Click "Invite user" to send the invitation
+
+**Modifying existing users**
+
+When you need to adjust permissions or remove someone:
+
+1. Find and click on the user's row in the members list
+2. Click the "Actions" button to reveal options
+3. Choose "Remove user" to revoke access completely, or
+4. Select "Change role" to modify their permissions
+5. If changing roles, select the new role from the dropdown
+6. Confirm by clicking "Change role"
+
+These straightforward controls help maintain proper access management as your team evolves.
+
+<img
+    alt="SaaS Deployment"
+    src="https://raw.githubusercontent.com/mage-ai/assets/main/pro/cloud/user-profile.png"
+/>
+
+### Monitor your costs and usage
+
+Keeping track of your resource usage and expenses is straightforward with Mage Pro's built-in monitoring tools. The insights dashboard gives you visibility into each cluster's financial and performance metrics.
+
+**Accessing Usage Metrics**
+
+1. Open your cluster by clicking its blue link in the "Clusters" column
+2. Select the "Insights" tab from the navigation menu
+3. The default view shows your estimated costs to date
+4. Toggle between views by clicking “Realtime cpu usage" or "Realtime memory usage" to check real-time resource utilization
+
+This visibility helps teams manage their infrastructure spending and identify potential performance bottlenecks before they impact operations. Regularly reviewing these metrics can help optimize your cluster configuration for both cost and performance.
+
+<img
+    alt="SaaS Deployment"
+    src="https://raw.githubusercontent.com/mage-ai/assets/main/pro/cloud/cluster-insights.png"
+/>

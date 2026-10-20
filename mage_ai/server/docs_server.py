@@ -1,11 +1,13 @@
-from http.server import SimpleHTTPRequestHandler
-from mage_ai.data_preparation.repo_manager import get_repo_path
 import os
 import socketserver
+from http.server import SimpleHTTPRequestHandler
+
+from mage_ai.settings.repo import get_repo_path
 
 
 def get_dbt_target_path():
-    return os.path.join(get_repo_path(), 'dbt/target')
+    return os.path.join(get_repo_path(), 'dbt', 'target')
+
 
 def run_docs_server():
     target_path = get_dbt_target_path()

@@ -1,0 +1,33 @@
+---
+title: "Google Cloud Storage"
+---
+
+## Configuration
+
+To set up the Google Cloud Storage source, provide the following configuration parameters:
+
+| Key                             | Description                                                                                                                                                               | Sample Value                                |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| `path_to_credentials_json_file` | Path to your Google service account credentials JSON file. If Mage is running on GCP, you can leave this `null` to use the instance’s service account.                   | `/path/to/service_account_credentials.json` |
+| `bucket`                        | Name of the Google Cloud Storage bucket to read data from.                                                                                                                | `my_bucket`                                |
+| `file_type`                     | Type of the files in the bucket. Supported values: `parquet`, `csv`.                                                                                                      | `parquet`                                  |
+| `credentials_info`              | Alternative way to specify Google service account credentials directly as a dictionary.                                                                                  | Structure shown below                     |
+| `prefix`                        | A prefix used to filter blobs in the bucket. Only blobs whose names start with this prefix will be included.                                                              | `sales_data_`                              |
+
+<br/>
+
+**`credentials_info` structure:**
+
+```yaml
+type: str
+project_id: str
+private_key_id: str
+private_key: str
+client_email: str
+client_id: str
+auth_uri: str
+token_uri: str
+auth_provider_x509_cert_url: str
+client_x509_cert_url: str
+universe_domain: str
+```

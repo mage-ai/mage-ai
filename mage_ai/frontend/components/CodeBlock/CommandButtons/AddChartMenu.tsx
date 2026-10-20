@@ -8,7 +8,10 @@ import {
   DEFAULT_SETTINGS_BY_CHART_TYPE,
 } from '@components/ChartBlock/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
-import { capitalizeRemoveUnderscoreLower, getNewUUID } from '@utils/string';
+import {
+  capitalizeRemoveUnderscoreLower,
+  randomSimpleHashGenerator,
+} from '@utils/string';
 
 type AddChartMenuProps = {
   addWidget: (widget: BlockType, opts?: {
@@ -20,7 +23,7 @@ type AddChartMenuProps = {
   onClickCallback: () => void;
   open: boolean;
   parentRef: any;
-  runBlock: (payload: {
+  runBlock?: (payload: {
     block: BlockType;
     code?: string;
     disableReset?: boolean;
@@ -58,30 +61,30 @@ function AddChartMenu({
 
     let widgetName = chartType;
     if (block) {
-      widgetName = `${widgetName} for ${block.uuid}`;
+      widgetName = `${block.uuid}_${widgetName}`;
     }
 
     return {
       label: () => capitalizeRemoveUnderscoreLower(chartType),
       onClick: () => addWidget({
         ...widget,
-        name: `${widgetName} ${getNewUUID()}`,
         configuration: {
           ...widget.configuration,
           ...configuration,
         },
         content,
+        name: `${widgetName}_${randomSimpleHashGenerator()}`,
       }, {
         onCreateCallback: (widget: BlockType) => {
           if (block && BlockLanguageEnum.SQL !== block.language) {
             if ([StatusTypeEnum.EXECUTED, StatusTypeEnum.UPDATED].includes(block.status)) {
-              runBlock({
+              runBlock?.({
                 block: widget,
                 code: content,
                 disableReset: true,
               });
             } else {
-              runBlock({
+              runBlock?.({
                 block,
                 runDownstream: true,
               });
@@ -92,7 +95,7 @@ function AddChartMenu({
       uuid: chartType,
     };
   }), [
-    CHART_TYPES,
+    addWidget,
     block,
     runBlock,
   ]);
@@ -115,13 +118,13 @@ function AddChartMenu({
         onCreateCallback: (widget: BlockType) => {
           if (block && BlockLanguageEnum.SQL !== block.language) {
             if ([StatusTypeEnum.EXECUTED, StatusTypeEnum.UPDATED].includes(block.status)) {
-              runBlock({
+              runBlock?.({
                 block: widget,
                 code: widget.content,
                 disableReset: true,
               });
             } else {
-              runBlock({
+              runBlock?.({
                 block,
                 runDownstream: true,
               });
@@ -132,7 +135,6 @@ function AddChartMenu({
       uuid: label(),
     };
   }), [
-    CHART_TEMPLATES,
     addWidget,
     block,
     runBlock,

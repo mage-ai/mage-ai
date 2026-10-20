@@ -1,5 +1,5 @@
 import React from 'react';
-import { Meta, Story } from '@storybook/react';
+import { Meta, StoryFn } from '@storybook/react';
 
 import Badge, { BadgeProps } from '@oracle/components/Badge';
 import ThemeBlock from '../../ThemeBlock';
@@ -15,7 +15,7 @@ const TemplateWithTheme = ({ ...props }) => (
   </ThemeBlock>
 );
 
-const Template: Story<BadgeProps> = (args) => <TemplateWithTheme {...args} />;
+const Template: StoryFn<BadgeProps> = (args) => <TemplateWithTheme {...args} />;
 
 export const Regular = Template.bind({});
 Regular.args = {

@@ -7,7 +7,7 @@ import React, {
 
 type ClickOutsideProps = {
   additionalRef?: any;
-  children: any;
+  children?: any;
   completeClickToClose?: boolean;
   disableClickOutside?: boolean;
   disableEscape?: boolean;

@@ -9,18 +9,55 @@ export type BuildSharedProps = {
   orientationVertical?: boolean;
   showTooltip?: any;
   width?: number;
-  yLabelFormat?: any;
+} & AxisLabelFormatProps;
+
+export type TooltipFormatProps = {
+  xTooltipFormat?: (
+    y: string | number,
+    x: string | number | null,
+    tooltip: TooltipData | {
+      values: number[];
+    },
+  ) => string | number;
+  yTooltipFormat?: (
+    y: string | number,
+    x: string | number | null,
+    tooltip: TooltipData | {
+      values?: number[];
+    },
+  ) => string | number;
+};
+
+export type AxisLabelFormatProps = {
+  yLabelFormat?: (
+    value: any,
+    index: number,
+    values?: {
+      value?: any;
+      index?: number;
+    }[],
+  ) => string | undefined;
+  xLabelFormat?: (
+    value: any,
+    index: number,
+    values?: {
+      value?: any;
+      index?: number;
+    }[],
+  ) => string | undefined;
 };
 
 export type SharedProps = {
   renderNoDataText?: () => string;
   renderTooltipContent?: (opts: any) => any | number | string;
+  tooltipFormat?: any;
   xAxisLabel?: string;
-  xLabelFormat?: any;
   xNumTicks?: number;
   yAxisLabel?: string;
   yNumTicks?: number;
-} & BuildSharedProps;
+} & BuildSharedProps &
+  TooltipFormatProps &
+  AxisLabelFormatProps;
 
 export type TooltipData = {
   bar: any;
@@ -28,6 +65,7 @@ export type TooltipData = {
   height: number;
   index: number;
   key: string;
+  values?: number[] | string[];
   width: number;
   x: number;
   y: number | string;

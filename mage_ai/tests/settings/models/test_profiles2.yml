@@ -1,0 +1,38 @@
+mage:
+  target: mysql
+  outputs:
+    mysql:
+      password: password
+      port: 3306
+      schema: materia_development
+      server: mage-development.1337.us-west-1.rds.amazonaws.com
+      ssl_disabled: True
+      type: mysql
+      username: root
+    redshift:
+      dbname: mage_feature_sets
+      host: mage-production.1337.us-west-1.redshift.amazonaws.com
+      password: password
+      port: 5439
+      schema: public
+      type: redshift
+      user: mage_user
+    snowflake:
+      account: nqa1337.us-west-2
+      database: DEMO_DB
+      password: super
+      query_tag: mage_dbt
+      schema: MAGE
+      threads: 1
+      type: snowflake
+      user: mage
+      warehouse: COMPUTE_WH
+    trino:
+      database: postgresql
+      host: host.docker.internal
+      port: 8080
+      retries: 3
+      schema: trino
+      threads: 1
+      type: trino
+      user: postgres

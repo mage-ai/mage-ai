@@ -1,0 +1,70 @@
+---
+title: "Deployment architecture overview"
+sidebarTitle: "Overview"
+icon: "network-wired"
+description: "Deploy Mage Pro in any environment"
+---
+
+This document provides technical details on the **four deployment architectures** available for Mage Pro. These options help technical teams identify which deployment best suits their use case, data governance policies, and operational constraints.
+
+---
+
+### Deployment Architecture Overview
+
+Mage Pro’s platform architecture consists of two primary components:
+
+1. **Control Plane**
+   - Handles deployment of Mage Pro clusters
+   - Manages cluster lifecycle: version upgrades, security patches, monitoring of cluster health
+   - Provides centralized governance and operational visibility
+
+2. **Data Plane (Mage Pro Cluster)**
+   - The **actual Mage Pro cluster** running inside Mage cloud or your environment
+   - Handles pipeline management and orchestration
+   - Executes pipelines and manages compute resources
+   - Provides secret management and metadata services
+   - Hosts the Mage Pro UI and APIs for day-to-day operations
+
+---
+
+### Deployment Options
+
+#### 1. **SaaS (Cloud-Hosted by Mage)**
+- **Control Plane & Data Plane**: Fully managed by Mage in a secure multi-tenant cloud environment.
+- **Best for**: Teams who want the fastest time-to-value and minimal operational overhead.
+- **Key benefits**: Automatic upgrades, lifecycle management, managed infrastructure, secure isolation, and 24/7 monitoring.
+- **Considerations**: Data leaves your environment (not suitable for strict data residency requirements).
+
+---
+
+#### 2. **Hybrid Cloud**
+- **Control Plane**: Hosted by Mage (SaaS).
+- **Data Plane**: Runs inside your private cloud or on-prem infrastructure.
+- **Best for**: Organizations that want Mage to manage cluster lifecycle while ensuring pipelines, secrets, and workloads stay in their own environment.
+- **Key benefits**: Compliance with data residency/security policies, reduced operational burden.
+- **Considerations**: Requires secure network connectivity (e.g., VPC peering, VPN, or private link).
+
+---
+
+#### 3. **Private Cloud (Customer-Managed)**
+- **Control Plane & Data Plane**: Fully deployed in your own cloud account (AWS, Azure, GCP, etc.).
+- **Best for**: Enterprises requiring strict compliance, tenant isolation, and cloud sovereignty.
+- **Key benefits**: Data never leaves your environment, full Mage Pro cluster (orchestration, secrets, pipelines, UI) runs inside your VPC, integrates with your cloud security controls (IAM, Key Vaults, etc.).
+- **Considerations**: Your team is responsible for lifecycle management, upgrades, and monitoring.
+
+---
+
+#### 4. **On-Premises**
+- **Control Plane & Data Plane**: Installed in your on-prem infrastructure (e.g., Kubernetes, Docker, bare-metal).
+- **Best for**: Highly regulated industries or air-gapped environments where no external connectivity is allowed.
+- **Key benefits**: Maximum control, full Mage Pro cluster deployed in your data center, compliance with strictest regulations, supports OpenShift and other enterprise Kubernetes distributions.
+- **Considerations**: Highest operational overhead (infrastructure, lifecycle management, monitoring, scaling, DR handled by your team).
+
+---
+
+### Choosing the Right Architecture
+
+- **Speed of deployment** → SaaS or Hybrid Cloud
+- **Strict data residency/compliance** → Private Cloud or On-Prem
+- **Operational simplicity** → SaaS
+- **Air-gapped or high-security environments** → On-Prem

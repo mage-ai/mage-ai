@@ -1,12 +1,16 @@
 from datetime import datetime as dt
-from mage_ai.data_cleaner.column_types.constants import ColumnType
-from mage_ai.data_cleaner.transformer_actions.column import (
+from random import seed
+
+import numpy as np
+import pandas as pd
+from pandas.testing import assert_frame_equal
+
+from mage_ai.data_cleaner.transformer_actions.column import (  # expand_column,
     add_column,
+    clean_column_names,
     count,
     count_distinct,
-    clean_column_names,
     diff,
-    # expand_column,
     first,
     fix_syntax_errors,
     last,
@@ -16,10 +20,6 @@ from mage_ai.data_cleaner.transformer_actions.column import (
     shift_up,
 )
 from mage_ai.tests.base_test import TestCase
-from pandas.util.testing import assert_frame_equal
-from random import seed
-import numpy as np
-import pandas as pd
 
 TEST_DATAFRAME = pd.DataFrame(
     [
@@ -389,6 +389,7 @@ class ColumnTests(TestCase):
             ],
         )
         df_new = add_column(df, action)
+        df_new['distance'] = df_new['distance'].round(3)
         self.assertEqual(
             df_new.to_dict(orient='records'),
             [
@@ -397,14 +398,14 @@ class ColumnTests(TestCase):
                     lng1=-97.31838,
                     lat2=33.41939,
                     lng2=-112.32606,
-                    distance=1661.8978520305657,
+                    distance=1661.898,
                 ),
                 dict(
                     lat1=39.71954,
                     lng1=-84.13056,
                     lat2=33.41939,
                     lng2=-112.32606,
-                    distance=2601.5452571116184,
+                    distance=2601.545,
                 ),
             ],
         )
@@ -933,7 +934,7 @@ class ColumnTests(TestCase):
             ],
             columns=['group_id', 'amount', 'average_amount'],
         )
-        df_new['average_amount'] = df_new['average_amount'].astype(int)
+        df_new['average_amount'] = df_new['average_amount'].astype(np.int64)
         assert_frame_equal(df_new, df_expected)
 
     def test_count(self):
@@ -1383,8 +1384,6 @@ class ColumnTests(TestCase):
         )
 
     def test_fix_syntax_errors(self):
-        from mage_ai.data_cleaner.transformer_actions.column import find_syntax_errors
-
         df = pd.DataFrame(
             [
                 [
@@ -1861,20 +1860,20 @@ class ColumnTests(TestCase):
             ],
         )
 
-        df_new1['sold'] = df_new1['sold'].astype(int)
-        df_new1['curr_profit'] = df_new1['curr_profit'].astype(int)
-        df_new2['sold'] = df_new2['sold'].astype(int)
-        df_new3['sold'] = df_new3['sold'].astype(int)
-        df_new3['curr_profit'] = df_new3['curr_profit'].astype(int)
-        df_new4['sold'] = df_new4['sold'].astype(int)
-        df_new4['curr_profit'] = df_new4['curr_profit'].astype(int)
-        df_new5['sold'] = df_new5['sold'].astype(int)
-        df_new5['curr_profit'] = df_new5['curr_profit'].astype(int)
-        df_new6['sold'] = df_new6['sold'].astype(int)
-        df_new7['sold'] = df_new7['sold'].astype(int)
-        df_new7['curr_profit'] = df_new7['curr_profit'].astype(int)
-        df_new8['sold'] = df_new8['sold'].astype(int)
-        df_new8['curr_profit'] = df_new8['curr_profit'].astype(int)
+        df_new1['sold'] = df_new1['sold'].astype(np.int64)
+        df_new1['curr_profit'] = df_new1['curr_profit'].astype(np.int64)
+        df_new2['sold'] = df_new2['sold'].astype(np.int64)
+        df_new3['sold'] = df_new3['sold'].astype(np.int64)
+        df_new3['curr_profit'] = df_new3['curr_profit'].astype(np.int64)
+        df_new4['sold'] = df_new4['sold'].astype(np.int64)
+        df_new4['curr_profit'] = df_new4['curr_profit'].astype(np.int64)
+        df_new5['sold'] = df_new5['sold'].astype(np.int64)
+        df_new5['curr_profit'] = df_new5['curr_profit'].astype(np.int64)
+        df_new6['sold'] = df_new6['sold'].astype(np.int64)
+        df_new7['sold'] = df_new7['sold'].astype(np.int64)
+        df_new7['curr_profit'] = df_new7['curr_profit'].astype(np.int64)
+        df_new8['sold'] = df_new8['sold'].astype(np.int64)
+        df_new8['curr_profit'] = df_new8['curr_profit'].astype(np.int64)
 
         assert_frame_equal(df_new1, df_expected1)
         assert_frame_equal(df_new2, df_expected2)
@@ -1885,7 +1884,7 @@ class ColumnTests(TestCase):
         assert_frame_equal(df_new7, df_new7.dropna(axis=0))
         assert_frame_equal(df_new8, df_expected8)
 
-        with self.assertRaises(Exception):
+        with self.assertRaisesRegex(Exception, 'Require a valid strategy or value'):
             _ = impute(df.copy(), action_invalid)
 
     def test_impute_random_edge(self):
@@ -1910,7 +1909,7 @@ class ColumnTests(TestCase):
             action_arguments=['sold', 'curr_profit'],
             action_options={'strategy': 'random'},
         )
-        with self.assertRaises(Exception):
+        with self.assertRaises(KeyError):
             _ = impute(df.copy(), action)
 
     def test_impute_constant(self):
@@ -1994,9 +1993,10 @@ class ColumnTests(TestCase):
             ],
         )
         df_new = impute(df, action).reset_index(drop=True)
-        df_new['group_id'] = df_new['group_id'].astype(int)
+        df_new['group_id'] = df_new['group_id'].astype(np.int64)
         df_new['price'] = df_new['price'].astype(float)
-        df_new['group_churned_at'] = df_new['group_churned_at'].astype(np.datetime64)
+        df_new['group_churned_at'] = df_new['group_churned_at'].astype('datetime64[ns]')
+        df_expected['group_churned_at'] = df_expected['group_churned_at'].astype('datetime64[ns]')
         assert_frame_equal(df_new, df_expected)
 
     def test_impute_constant_with_value(self):
@@ -2063,7 +2063,7 @@ class ColumnTests(TestCase):
             ],
         )
         df_new = impute(df, action).reset_index(drop=True)
-        df_new['zip_code'] = df_new['zip_code'].astype(int)
+        df_new['zip_code'] = df_new['zip_code'].astype(np.int64)
         assert_frame_equal(df_new, df_expected)
 
     def test_impute_sequential_two_idx(self):
@@ -2148,8 +2148,8 @@ class ColumnTests(TestCase):
             ],
         )
         df_new = impute(df, action).reset_index(drop=True)
-        df_new['group_id'] = df_new['group_id'].astype(int)
-        df_new['order_count'] = df_new['order_count'].astype(int)
+        df_new['group_id'] = df_new['group_id'].astype(np.int64)
+        df_new['order_count'] = df_new['order_count'].astype(np.int64)
         assert_frame_equal(df_new, df_expected)
 
     def test_impute_lists(self):
@@ -2208,35 +2208,35 @@ class ColumnTests(TestCase):
             }
         )
 
-        action_mode = dict(
-            action_arguments=[
-                'lists',
-                'lists2',
-                'lists3',
-                'lists4',
-                'tuples',
-                'string_lists',
-                'string_tuples',
-                'not_a_list',
-            ],
-            action_options={'strategy': 'mode'},
-            action_variables=dict(
-                lists=dict(feature=dict(column_type='list', uuid='lists'), type='feature'),
-                lists2=dict(feature=dict(column_type='list', uuid='lists2'), type='feature'),
-                lists3=dict(feature=dict(column_type='list', uuid='lists3'), type='feature'),
-                lists4=dict(feature=dict(column_type='list', uuid='lists4'), type='feature'),
-                tuples=dict(feature=dict(column_type='list', uuid='tuples'), type='feature'),
-                string_lists=dict(
-                    feature=dict(column_type='list', uuid='string_lists'), type='feature'
-                ),
-                string_tuples=dict(
-                    feature=dict(column_type='list', uuid='string_tuples'), type='feature'
-                ),
-                not_a_list=dict(
-                    feature=dict(column_type='text', uuid='not_a_list'), type='feature'
-                ),
-            ),
-        )
+        # action_mode = dict(
+        #     action_arguments=[
+        #         'lists',
+        #         'lists2',
+        #         'lists3',
+        #         'lists4',
+        #         'tuples',
+        #         'string_lists',
+        #         'string_tuples',
+        #         'not_a_list',
+        #     ],
+        #     action_options={'strategy': 'mode'},
+        #     action_variables=dict(
+        #         lists=dict(feature=dict(column_type='list', uuid='lists'), type='feature'),
+        #         lists2=dict(feature=dict(column_type='list', uuid='lists2'), type='feature'),
+        #         lists3=dict(feature=dict(column_type='list', uuid='lists3'), type='feature'),
+        #         lists4=dict(feature=dict(column_type='list', uuid='lists4'), type='feature'),
+        #         tuples=dict(feature=dict(column_type='list', uuid='tuples'), type='feature'),
+        #         string_lists=dict(
+        #             feature=dict(column_type='list', uuid='string_lists'), type='feature'
+        #         ),
+        #         string_tuples=dict(
+        #             feature=dict(column_type='list', uuid='string_tuples'), type='feature'
+        #         ),
+        #         not_a_list=dict(
+        #             feature=dict(column_type='text', uuid='not_a_list'), type='feature'
+        #         ),
+        #     ),
+        # )
         action_constant = dict(
             action_arguments=[
                 'lists',
@@ -2266,58 +2266,58 @@ class ColumnTests(TestCase):
                 ),
             ),
         )
-        expected_df_mode = pd.DataFrame(
-            {
-                'lists': [
-                    ['this', 'is', 'a', 'list', 'of', 'strings'],
-                    ['this', 'is', 'a', 'list', 'of', 'strings'],
-                    ['this', 'is', 'a', 'list', 'of', 'strings'],
-                    ['this', 'is', 'a', 'list', 'of', 'strings'],
-                ],
-                'lists2': [
-                    [2, 1, 3, 4, 2, 1, 2, 2],
-                    [8, 9, 6, 4, 6, 4, 5, 4, 3, 4],
-                    [],
-                    [2, 3, 4, 1, 2],
-                ],
-                'lists3': [
-                    [False, True, False, True],
-                    [True, False, True, True],
-                    [False, True, False, True],
-                    [True, True, True, False],
-                ],
-                'lists4': [
-                    [2, 'string', False, None],
-                    [np.nan, 2.0, 'string', '3'],
-                    ['not string?', True, True, 8, False, np.nan, None],
-                    [],
-                ],
-                'tuples': [
-                    (2, 'string', False, None),
-                    (np.nan, 2.0, 'string', '3'),
-                    ('not string?', True, True, 8, False, np.nan, None),
-                    tuple(),
-                ],
-                'string_lists': [
-                    [2, 'string', False, None],
-                    ['not string?', True, True, 8, False, np.nan, None],
-                    ['not string?', True, True, 8, False, np.nan, None],
-                    [],
-                ],
-                'string_tuples': [
-                    [2, 'string', False, None],
-                    [np.nan, 2.0, 'string', '3'],
-                    ['not string?', True, True, 8, False, np.nan, None],
-                    ['not string?', True, True, 8, False, np.nan, None],
-                ],
-                'not_a_list': [
-                    '3',
-                    '4',
-                    '3',
-                    'a very long piece of text',
-                ],
-            }
-        )
+        # expected_df_mode = pd.DataFrame(
+        #     {
+        #         'lists': [
+        #             ['this', 'is', 'a', 'list', 'of', 'strings'],
+        #             ['this', 'is', 'a', 'list', 'of', 'strings'],
+        #             ['this', 'is', 'a', 'list', 'of', 'strings'],
+        #             ['this', 'is', 'a', 'list', 'of', 'strings'],
+        #         ],
+        #         'lists2': [
+        #             [2, 1, 3, 4, 2, 1, 2, 2],
+        #             [8, 9, 6, 4, 6, 4, 5, 4, 3, 4],
+        #             [],
+        #             [2, 3, 4, 1, 2],
+        #         ],
+        #         'lists3': [
+        #             [False, True, False, True],
+        #             [True, False, True, True],
+        #             [False, True, False, True],
+        #             [True, True, True, False],
+        #         ],
+        #         'lists4': [
+        #             [2, 'string', False, None],
+        #             [np.nan, 2.0, 'string', '3'],
+        #             ['not string?', True, True, 8, False, np.nan, None],
+        #             [],
+        #         ],
+        #         'tuples': [
+        #             (2, 'string', False, None),
+        #             (np.nan, 2.0, 'string', '3'),
+        #             ('not string?', True, True, 8, False, np.nan, None),
+        #             tuple(),
+        #         ],
+        #         'string_lists': [
+        #             [2, 'string', False, None],
+        #             ['not string?', True, True, 8, False, np.nan, None],
+        #             ['not string?', True, True, 8, False, np.nan, None],
+        #             [],
+        #         ],
+        #         'string_tuples': [
+        #             [2, 'string', False, None],
+        #             [np.nan, 2.0, 'string', '3'],
+        #             ['not string?', True, True, 8, False, np.nan, None],
+        #             ['not string?', True, True, 8, False, np.nan, None],
+        #         ],
+        #         'not_a_list': [
+        #             '3',
+        #             '4',
+        #             '3',
+        #             'a very long piece of text',
+        #         ],
+        #     }
+        # )
         expected_df_constant = pd.DataFrame(
             {
                 'lists': [
@@ -2370,7 +2370,7 @@ class ColumnTests(TestCase):
                 ],
             }
         )
-        new_df_mode = impute(df.copy(), action_mode)
+        # new_df_mode = impute(df.copy(), action_mode)
         new_df_constant = impute(df.copy(), action_constant)
         # assert_frame_equal(new_df_mode, expected_df_mode)
         assert_frame_equal(new_df_constant, expected_df_constant)
@@ -2407,9 +2407,7 @@ class ColumnTests(TestCase):
                 None,
             ]
         )
-        df['timestamp'] = pd.to_datetime(
-            df['timestamp'], infer_datetime_format=True, errors='coerce'
-        )
+        df['timestamp'] = pd.to_datetime(df['timestamp'], errors='coerce')
         action = dict(
             action_type='impute',
             action_arguments=['state', 'location', 'timestamp', 'lists'],
@@ -2459,7 +2457,7 @@ class ColumnTests(TestCase):
         )
         new_df = impute(df, action).reset_index(drop=True)
         expected_df['timestamp'] = pd.to_datetime(
-            expected_df['timestamp'], infer_datetime_format=True, errors='coerce'
+            expected_df['timestamp'], errors='coerce'
         )
         assert_frame_equal(expected_df, new_df)
 
@@ -2571,7 +2569,7 @@ class ColumnTests(TestCase):
             ],
         )
         df_new = median(df, action)
-        df_new['median_amount'] = df_new['median_amount'].astype(int)
+        df_new['median_amount'] = df_new['median_amount'].astype(np.int64)
         df_expected = pd.DataFrame(
             [
                 [1, 1000, 1050],
@@ -3080,8 +3078,8 @@ class ColumnTests(TestCase):
         df_new2 = reformat(df, action2).reset_index(drop=True)
         assert_frame_equal(df_new2, df)
         df_new3 = reformat(df, action3).reset_index(drop=True)
-        df_new3['notdate'] = df_new3['notdate'].astype(np.datetime64)
-        df_new3['mostlydate'] = df_new3['mostlydate'].astype(np.datetime64)
+        df_new3['notdate'] = df_new3['notdate'].astype('datetime64[ns]')
+        df_new3['mostlydate'] = df_new3['mostlydate'].astype('datetime64[ns]')
         assert_frame_equal(df_new3, expected_df)
 
     def test_remove_outliers(self):

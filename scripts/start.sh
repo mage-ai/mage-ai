@@ -25,9 +25,10 @@ esac
 done
 set -- "${POSITIONAL[@]}" # restore positional parameters
 
-: "${HOST:=" "}"
-: "${PORT:=" "}"
-: "${PROJECT_NAME:=" "}"
+
+: "${HOST:="localhost"}"
+: "${PORT:="6789"}"
+: "${PROJECT_NAME:=""}"
 
 HOST=$HOST \
 PORT=$PORT \

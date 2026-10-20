@@ -1,11 +1,13 @@
+import re
+from typing import Any, List, Union
+
+import numpy as np
+import pandas as pd
+from pandas.core.indexes.frozen import FrozenList
+
 from mage_ai.data_cleaner.column_types.constants import NUMBER_TYPES, ColumnType
 from mage_ai.data_cleaner.transformer_actions.constants import CURRENCY_SYMBOLS
 from mage_ai.shared.custom_types import FrozenDict
-from pandas.core.indexes.frozen import FrozenList
-from typing import Any, List, Union
-import pandas as pd
-import numpy as np
-import re
 
 COLUMN_NAME_QUOTE_CHARS = '+=-*&^%$! ?~|<>(){}[],.'
 LIST_SPLIT = re.compile(r'\s*,\s*')
@@ -42,7 +44,7 @@ def clean_series(series, column_type, dropna=True):
             series_cleaned = series_cleaned.str.replace(' ', '')
         if column_type == ColumnType.NUMBER:
             try:
-                series_cleaned = series_cleaned.astype(int)
+                series_cleaned = series_cleaned.astype(np.int64)
             except ValueError:
                 series_cleaned = series_cleaned.astype(float)
         else:
@@ -50,7 +52,7 @@ def clean_series(series, column_type, dropna=True):
         if is_percent:
             series_cleaned /= 100
     elif column_type == ColumnType.DATETIME:
-        series_cleaned = pd.to_datetime(series_cleaned, errors='coerce', infer_datetime_format=True)
+        series_cleaned = pd.to_datetime(series_cleaned, errors='coerce', format='mixed')
     elif column_type == ColumnType.PHONE_NUMBER and dtype is not str:
         series_cleaned = series_cleaned.astype(str)
         series_cleaned = series_cleaned.str.replace(r'\.\d*', '', regex=True)
@@ -87,7 +89,7 @@ def __parse_element(element: str) -> Any:
     else:
         try:
             return __resolve_type(eval(element))
-        except:
+        except Exception:
             return None
 
 
