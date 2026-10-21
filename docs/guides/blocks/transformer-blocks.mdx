@@ -643,6 +643,66 @@ build_transformer_action(
 - **_arguments:_** The columns to Standardize.
   - If no columns are provided then no Standardization is performed
 
+## Encoding Actions
+
+### One Hot Encode
+
+Replace selected columns with zero/one indicator columns for their categories.
+In the transformer template picker, choose **Encoding → One Hot Encode Column**,
+then replace `arguments=[]` in the generated code with the column names to encode.
+The template picker does not fill in these names automatically.
+
+```python
+action = build_transformer_action(
+    df,
+    action_type=ActionType.ONE_HOT_ENCODE,
+    arguments=['color', 'size'],
+    axis=Axis.COLUMN,
+)
+
+return BaseAction(action).execute(df)
+```
+
+**Args**
+- **_arguments:_** A nonempty list of existing, unique column names. Selected
+  columns can contain text, pandas categorical values, or numeric category codes.
+  Numeric columns are encoded too when explicitly selected.
+
+**Output**
+- Selected source columns are removed. Unselected columns retain their values,
+  data types, and relative order. Indicator columns are appended in selected-column
+  order, with category order determined by pandas (including declared order for
+  categorical columns).
+- Names follow `<source_column>_<category>`, such as `color_blue` and `color_red`.
+  Indicator columns have `uint8` dtype and contain `0` or `1`.
+- Row order and the original index are preserved. The input DataFrame is not modified.
+- Missing values produce zeros in all indicators for that source column; no
+  separate missing-value indicator is added. An all-null column without declared
+  categories produces no indicator columns.
+- Empty DataFrames are returned unchanged through `BaseAction.execute`.
+- For nonempty input, an absent/empty selection, unknown column, duplicate source
+  name or selection, or conflicting generated column name raises `ValueError`
+  with guidance instead of returning ambiguous output.
+
+For example, encoding `color` in the following data:
+
+| color | quantity |
+| --- | --- |
+| red | 2 |
+| blue | 5 |
+| null | 1 |
+
+produces:
+
+| quantity | color_blue | color_red |
+| --- | --- | --- |
+| 2 | 0 | 1 |
+| 5 | 1 | 0 |
+| 1 | 0 | 0 |
+
+Categories are determined from each input DataFrame (or its declared categorical
+dtype). Separate datasets may therefore produce different indicator columns.
+
 ## Other Column Actions
 
 ### Difference
