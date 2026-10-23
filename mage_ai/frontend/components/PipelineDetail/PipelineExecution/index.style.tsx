@@ -9,7 +9,15 @@ export const OutputHeaderStyle = styled.div`
   overflow-x: auto;
 `;
 
-export const OutputContainerStyle = styled.div<{
+export const OutputContainerStyle = styled.div.attrs<{
+  height?: number;
+  maxHeight?: number;
+  noScrollbarTrackBackground?: boolean;
+}>(({ height }) => ({
+  style: {
+    height: height != null ? `${height}px` : undefined,
+  },
+}))<{
   height?: number;
   maxHeight?: number;
   noScrollbarTrackBackground?: boolean;
@@ -17,10 +25,6 @@ export const OutputContainerStyle = styled.div<{
   ${ScrollbarStyledCss}
 
   overflow-y: scroll;
-
-  ${props => props.height && `
-    height: ${props.height}px;
-  `}
 
   ${props => !props.height && `
     max-height: ${props.maxHeight || OUTPUT_HEIGHT}px;

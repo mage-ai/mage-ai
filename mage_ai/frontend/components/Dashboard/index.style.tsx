@@ -88,6 +88,7 @@ export function VerticalNavigationStyle({
   return (
     <VerticalNavigationStyleComponent
       aligned={aligned}
+      data-testid={`vertical-navigation${aligned ? `-${aligned}` : ''}`}
       borderless={borderless && !visible}
       onMouseEnter={showMore
         ? () => {
