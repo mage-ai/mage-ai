@@ -17,6 +17,7 @@ import { PADDING_UNITS } from '@oracle/styles/units/spacing';
 import { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import { getColorsForBlockType } from '../index.style';
 import { ignoreKeys, isObject } from '@utils/hash';
+import { imageMimeTypeForDataType, isImageOutputDataType } from '@utils/imageOutput';
 
 type OutputRendererProps = {
   block: BlockType;
@@ -142,8 +143,10 @@ function OutputRenderer({
         selected={selected}
       />
     );
-  } else if (DataTypeEnum.IMAGE_PNG === dataType) {
-    return <ImageOutput data={textValue} />;
+  } else if (isImageOutputDataType(dataType)) {
+    return (
+      <ImageOutput data={textValue} mimeType={imageMimeTypeForDataType(dataType)} />
+    );
   } else {
     const objectData = [data || textData]?.find(obj => obj && isObject(obj));
 
