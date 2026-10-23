@@ -174,16 +174,20 @@ def add_host_to_known_hosts(remote_repo_link: str) -> bool:
     if known_hosts_dir:
         os.makedirs(known_hosts_dir, exist_ok=True)
 
-    # Use list-form subprocess + Python-managed file handle: shell metacharacters
-    # in `hostname` cannot reach a shell. Defense in depth on top of the regex
-    # check above.
+    # Use a list-form subprocess: shell metacharacters in `hostname` cannot reach
+    # a shell. Capture the key first so a failed scan cannot leave partial data in
+    # known_hosts or be reported as successful.
+    result = subprocess.run(
+        ['ssh-keyscan', '-t', 'rsa', hostname],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    if result.returncode != 0 or not result.stdout:
+        return False
+
     with open(DEFAULT_KNOWN_HOSTS_FILE, 'ab') as known_hosts:
-        subprocess.run(
-            ['ssh-keyscan', '-t', 'rsa', hostname],
-            stdout=known_hosts,
-            stderr=subprocess.DEVNULL,
-            check=False,
-        )
+        known_hosts.write(result.stdout)
     return True
 
 
