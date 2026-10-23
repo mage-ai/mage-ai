@@ -1317,6 +1317,7 @@ function CodeOutput(
                         <Tooltip {...SHARED_TOOLTIP_PROPS} label="Expand table">
                           <Button
                             {...SHARED_BUTTON_PROPS}
+                            aria-label="Expand table"
                             onClick={() => {
                               addDataOutputBlockUUID(pipeline?.uuid, blockUUID);
                               openSidekickView?.(ViewKeyEnum.DATA);
