@@ -47,13 +47,43 @@ For AI actions that use direct OpenAI integration, add an OpenAI API key to your
     to get your API key.
 </Note>
 
-Once you have your OpenAI API key, go to project settings (click the "wizard" in the top right > Workspace > Preferences) and enter the OpenAI API key under the section labeled <b>OpenAI</b>.
+Once you have your OpenAI API key, open the account menu and select **Settings** → **Workspace** → **Preferences**. Under **AI services**, enter the key in **OpenAI Key**.
 
 ## AI Chat in Mage Pro
 
 <ProOnly source="ai-sidekick" />
 
 Mage Pro includes AI Chat for workspace assistance. Open AI Chat from Mage Pro, or visit `/ai/chat` in an authenticated workspace as a user with the Editor role or higher.
+
+### Build dbt workflows with AI Chat
+
+Ask AI Chat to inspect an existing dbt project, create or update models and tests, build Mage dbt blocks, or run and validate a workflow. For example:
+
+```text
+Create a dbt project for daily customer revenue, add tests for its final model,
+and create a Mage pipeline that runs the production reporting scope. Then run it
+and summarize the result.
+```
+
+AI Chat reuses matching projects, pipelines, and blocks when they already exist, so a follow-up request can update or validate the workflow without creating duplicates.
+
+### Models, selectors, and commands
+
+- When you ask to run one named model or one snapshot file, AI Chat creates a Mage SQL dbt block that points directly to that file.
+- When you ask for a selector, multiple models, tests, or bulk snapshots, it creates a Mage YAML dbt block with the requested scope. It includes upstream models only when they are needed for the requested block to run on its own.
+- `dbt docs generate` is not currently supported by Mage's native dbt blocks. AI Chat explains this limitation instead of creating a block that cannot run.
+
+### When AI Chat runs dbt
+
+Creating or editing a dbt workflow does not run it automatically, even when the request says to create a block that runs a model or to add tests. To run it in the same request, explicitly say **run**, **execute**, **test**, or **validate through execution**; no separate mid-request approval is needed.
+
+When you authorize execution, AI Chat runs the requested block or pipeline and reports the result only after it finishes. Its response includes the outcome, relevant run identifiers, and a redacted dbt command when available. If you explicitly ask to run, test, or validate again, it starts a fresh execution; if a repair flow is incomplete or fails safely, it retries the original run.
+
+### Credentials and production-quality work
+
+AI Chat does not display credentials, resolved environment-variable values, or raw dbt profile content. It asks for an adapter, profile name, or target only when that non-secret choice cannot be determined safely, and it tells you when it cannot verify that a project can run with its configured profile.
+
+Every dbt request uses existing project conventions, checks its changes, and explains assumptions. Requests for production readiness—or higher-risk work such as incremental models, snapshots, backfills, sensitive data, destructive schema changes, and large or costly workloads—also receive deeper design, data-quality, security, reliability, and operational checks. AI Chat may ask for a decision only when it is necessary for a safe implementation. A production-quality result requires an explicitly authorized fresh execution and all applicable checks to pass; asking for production-ready work alone does not start execution.
 
 For each chat turn, Mage captures the visible non-chat text from the current browser page, along with the page title and URL, so AI Chat can answer page-relative prompts such as "explain this page" or "what am I looking at?" The captured context is scoped to the authenticated user and chat session, excludes the chat UI, and is capped at 20,000 characters.
 
@@ -111,7 +141,7 @@ and finally export the dataframe to PostgreSQL.*
 
 <Note>
     You must turn on the feature named `add_new_block_v2`
-    in your project settings. (click the "wizard" in the top right > Workspace > Preferences)
+    in **Settings** → **Workspace** → **Preferences**, available from the account menu.
 </Note>
 
 When adding a new block, type in the description of what you want the block to do.

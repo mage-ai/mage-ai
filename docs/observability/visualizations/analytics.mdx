@@ -32,7 +32,7 @@ team should do next.
 
 ## Access Analytics
 
-Open Analytics from the Mage Pro app navigation, or go directly to:
+Select **Analytics** in the left navigation, or go directly to:
 
 ```text
 /apps/analytics/dashboards
@@ -132,6 +132,11 @@ deals by close date or invoices by paid date, need rows that represent the busin
 matching business date field. If the available output only contains run summaries or nested saved
 state, Sidekick should state that coverage before saving the chart.
 
+For pipeline and block output datasets, Analytics chart creation uses the real saved output data
+for the selected run or partitions. JSON-backed outputs use readable `data.json` backing data. Chart-backed
+datasets do not use `sample_data`, `sample=True` output reads, or `sample_data.json` preview
+artifacts to create or refresh charts.
+
 For large datasets, ask for the summary you need rather than every raw row. For example, ask for
 "weekly active users by plan for the last 12 weeks" or "top 20 accounts by expansion revenue" so
 the dashboard stays fast and readable. When a chart starts from a data preview, Analytics uses the
@@ -169,6 +174,10 @@ check, or recurring operational workflow.
 Analytics dashboards are meant to stay useful after the first version. When the source data
 changes, refresh the chart or dashboard so viewers see the latest available results.
 
+Charts with loaded data stay visible and dim while refreshing, so you can view the previous
+results until the new data is ready. A moving indicator marks the refresh; with reduced motion
+enabled, charts dim without animation.
+
 Refresh is useful for recurring reporting:
 
 1. Daily revenue and usage snapshots.
@@ -179,6 +188,56 @@ Refresh is useful for recurring reporting:
 
 If a refresh cannot complete, Mage keeps the previous dashboard view available so your team does
 not lose the last known good result.
+
+### Choose pipeline output partitions
+
+For a chart backed by pipeline block outputs, open the chart's **Data source** action to choose
+which partitions it reads when you refresh:
+
+| Selection | Refresh behavior |
+| --- | --- |
+| Fixed partition | Re-read the saved run or execution partition. New pipeline runs do not change the selected source. |
+| Latest partitions | Re-select the newest N distinct completed execution partitions. Set Partition count to `1` to follow the latest completed partition. |
+| All partitions | Re-select all completed execution partitions within the safety limits below. |
+
+Latest partitions and All partitions select partitions again on each explicit chart or dashboard
+**Refresh**, while keeping the chart's saved query and transformations. Reloading the page alone
+keeps the saved chart snapshot. Partitions are ordered by run completion time, newest first.
+Retries for the same execution partition
+count as one partition. These settings apply only to charts backed by pipeline block outputs;
+other data sources keep their existing refresh behavior. Existing charts also keep their saved
+source behavior until you change this setting.
+
+Choose Latest partitions when each partition contains a new batch of records. If each run produces
+a full snapshot, combining partitions can repeat records; use a count of `1` to chart the latest
+snapshot.
+
+Selection is limited to 1,000 partitions and 10,000 scanned runs. If selection exceeds a safety
+limit, or a selected output is missing or unreadable, refresh fails explicitly instead of silently
+showing an incomplete selection. Narrow the partition selection or restore the missing output,
+then refresh again. All partitions does not remove the chart dataset's separate row limits.
+
+You can also ask Sidekick to change a chart's partition selection:
+
+```text
+Make this chart use the latest completed partition whenever I refresh it.
+```
+
+```text
+Use the last 7 completed partitions from this block for this chart.
+```
+
+The saved source field is `source_ref.partition_selection`. Its `mode` is `fixed`, `last_n`, or
+`all`; `last_n` also requires a positive integer `count`, for example:
+
+```json
+{
+  "partition_selection": {
+    "mode": "last_n",
+    "count": 1
+  }
+}
+```
 
 ## Recommended dashboard patterns
 

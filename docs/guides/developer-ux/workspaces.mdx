@@ -870,6 +870,12 @@ Individual workspaces can have unique role settings. Workspace owners can:
 - Modify existing role assignments
 - Remove user access to their workspace
 
+In the workspace management cluster, authenticated users without a global or main-project role can use `/manage` to find workspaces where they have a workspace-specific Viewer, Editor, Admin, or Owner role. This directory access requires `REQUIRE_USER_AUTHENTICATION=true` and `REQUIRE_USER_PERMISSIONS=false` or unset. Users with a global or main-project role retain their existing workspace visibility; fine-grained permission mode retains its existing authorization rules.
+
+For users with only workspace-specific access, `/manage` lists only their authorized workspaces, hides **Create new workspace**, and shows only **Workspaces** in the management sidebar. **Open** is available when the workspace is running. The **Manage** link does not grant additional permissions: workspace details, configuration, and lifecycle actions continue to require the existing management permissions.
+
+If the user has no qualifying workspace assignments, the directory displays “No accessible workspaces.” Searching without a match displays “No records match the search.” A failed workspace request displays “Unable to load workspaces. Refresh to try again.” rather than an empty directory.
+
 <Frame>
     <p align="center">
         <img

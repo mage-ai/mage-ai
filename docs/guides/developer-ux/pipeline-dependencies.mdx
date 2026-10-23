@@ -73,6 +73,64 @@ pipeline code that calls helpers such as `trigger_pipeline`,
 When a pipeline is focused, highlighted graph edges show concise relationship
 labels such as **Trigger**, **Sensor**, and **Global data product**.
 
+## Trace dependencies between pipeline runs
+
+Open an individual pipeline run and select **Run lineage** in the right-side
+inspector. The inspector initially opens to **Dependency tree**; Mage requests
+lineage for only the current run when you select **Run lineage**. The tab groups
+the recorded relationship into:
+
+1. **Upstream run** shows the direct parent run, when one was recorded.
+1. **Downstream runs** shows up to five direct child runs created by the current
+   run.
+
+The summary reports the exact direct relationship totals, such as **1 upstream ·
+22 downstream**. For a related run in the current workspace, its pipeline name,
+run ID, and status are shown only when you can view that pipeline.
+
+When a persisted relationship points to another workspace, the tab shows only a
+minimal reference containing the persisted pipeline UUID and run ID. It does not
+include that run's status, timestamps, duration, schedule, or trigger metadata.
+The reference links to the related run in its workspace; opening that page uses
+the destination page's normal authorization and denies access when you cannot
+view the target pipeline.
+
+Current-workspace runs that you cannot view are not listed as nodes. Instead,
+the affected group reports an aggregate such as **4 additional downstream runs
+hidden by permissions.** A persisted relationship whose run or schedule is no
+longer available, or that cannot provide usable workspace navigation context,
+is also reported only as an unavailable aggregate without exposing its identity.
+
+The tab does not paginate. When more related direct children exist, the single
+dependency action reports how many are not displayed and opens the pipeline's
+full dependency page. For an unusually large fan-out that cannot be completely
+classified by the bounded lineage lookup, the action reports that additional
+downstream runs exist without estimating permission-hidden or unavailable
+categories. Use the dependency page to continue exploring the pipeline-level
+relationship.
+
+### Runtime lineage versus pipeline dependencies
+
+The **Run lineage** tab shows direct, persisted runtime trigger relationships
+between specific runs. Mage records these relationships when supported helpers
+such as `trigger_pipeline`, `trigger_pipeline_for_workspace`, or
+`trigger_workspace_pipeline` create a child run. This view does not infer a run
+relationship from the project graph, recurse through later descendants, or
+reconstruct relationships for historical runs.
+
+The project graph and pipeline **Dependencies** page describe relationships
+between pipeline definitions. They can include configured dependencies,
+sensors, global data products, and other evidence that does not identify a
+specific parent and child run. Use the graph to understand pipeline-level
+impact, and use the individual run view when you need the recorded execution-level
+provenance.
+
+Runs started by ordinary schedules or events, direct run creation, external
+orchestrators, and older executions without a persisted runtime trigger edge do
+not gain inferred lineage in this view. When no direct persisted relationship
+exists, the tab reports that no upstream or downstream runs were recorded for
+the run.
+
 ## Use diagnostics
 
 The graph reports diagnostics when dependency metadata is incomplete or

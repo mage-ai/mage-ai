@@ -6,14 +6,39 @@ description:
   "You can monitor many metrics for each of your pipelines and blocks."
 ---
 
-Use the Overview page to monitor aggregate pipeline run health across your
-project. The monitoring panels show recent run status, failing runs, active
-runs, and trigger activity for the selected time range.
+import { ProOnly } from '/snippets/pro/only.mdx';
 
-<img
-  alt="Monitoring"
-  src="https://mage-ai.github.io/assets/monitoring.jpg"
-/>
+In Mage OSS, use the **Overview** page to monitor aggregate pipeline run health
+across your project. In Mage Pro, select **Monitoring** in the left navigation. The
+monitoring panels show recent run status, failing runs, active runs, and trigger
+activity for the selected time range.
+
+In Mage Pro, the global Monitoring page supports rolling monitoring ranges for
+**Past 24 hours**, **Past 7 days**, and **Past 30 days**, plus a **Custom** UTC
+range. The selected range drives the overview metric tiles, run-health chart,
+failed runs, active runs, longest active runs, and AI Sidekick prompts. The global
+Monitoring page does not include an average-duration tile or completed-run duration
+trends; those runtime metrics remain available on individual pipeline monitoring
+pages. Custom ranges require the end time to be after the start time before
+they can be applied, and the selected range is preserved through refreshes and
+relevant navigation.
+
+For a custom range in Mage Pro, edit the UTC date and time segments directly in
+each `YYYY-MM-DD HH:mm` input, or choose them in the calendar and time picker.
+The input keeps separators in place and shows placeholders for missing digits.
+Complete valid values and picker selections stay in sync; incomplete entries
+or an invalid range prevent the range from being applied.
+Monitoring data availability can further limit the dates you can select.
+
+In Mage Pro, the **Longest active pipeline runs** chart at the bottom of the
+Monitoring page ranks non-streaming pipeline runs by elapsed runtime, with the
+longest run first. It shows five runs by default; use the **Show** selector to
+display 5, 10, 25, or 50 runs. The ranked list scrolls within the panel when
+needed. Each row shows the pipeline name, run ID, trigger name when available,
+and elapsed duration. Streaming pipelines are excluded. Durations refresh
+automatically, and selecting a pipeline name opens that run's details. If the
+initial request fails, use **Retry** in the panel. If a later refresh fails, the
+panel keeps the last loaded runs visible and shows a warning with **Retry**.
 
 ## Metrics
 
@@ -29,15 +54,31 @@ Here are the following metrics that are monitored for each pipeline and block:
 - _Data validation success for each block (coming soon)_
 - _Data validation failure for each block (coming soon)_
 
+In Mage Pro, the pipeline monitoring page includes runtime trends for performance
+debugging. **Pipeline runtime over time** shows the average duration of successfully
+completed pipeline runs, while **Block runtime by block** lets you select a block
+and chart the average duration of its completed samples. The existing **Runtime
+hot spots** list remains useful for finding blocks with the highest average and
+maximum runtimes before selecting one for its time-series breakdown.
+
+Runtime trends use the dashboard's selected UTC time range and trigger filter.
+The **Past 24 hours** view groups samples by hour; longer ranges group them by
+date. A chart needs completed samples in at least two time buckets, so a block or
+pipeline with fewer populated buckets shows an empty state instead of a trend
+line. If runtime data fails to load, use **Retry** in the affected chart.
+
 For pipelines that run with the Kubernetes executor in Mage Pro, the pipeline
 monitoring dashboard can show historical peak CPU and memory usage, sample
 counts, and copied resource request and limit recommendations based on stored
 run metrics. See [Monitoring with Prometheus](/observability/external/prometheus#kubernetes-resource-usage-in-mage-pro)
 to set up Prometheus as the preferred resource usage source.
 
-## Overview monitoring actions
+## Monitoring actions
 
-The Overview page includes actions for the monitoring panels:
+<ProOnly source="monitoring-actions" />
+
+The **Monitoring** page in Mage Pro includes actions for the monitoring panels.
+**Fix runs** and **Analyze runs** are available when AI Sidekick is enabled.
 
 - **Fix runs** opens AI Sidekick with a prompt to investigate failing runs for
   the selected time range.
@@ -45,3 +86,39 @@ The Overview page includes actions for the monitoring panels:
   the selected time range.
 - **View triggers** opens the trigger list, preserving the selected compute
   cluster filter when one is active.
+
+## Streaming health
+
+<ProOnly source="streaming-health" />
+
+Streaming pipelines in Mage Pro include a **Streaming health** view on the
+pipeline monitoring page. Use this view to check whether a running or recent
+stream is still accepting source records and whether Mage is writing those
+records to each destination.
+When no time range is specified in the URL, Streaming health opens to
+**Last day**.
+
+The Streaming health view shows:
+
+- Rows consumed from the streaming source.
+- Destination writes accepted by Mage, broken down by destination.
+- Failed writes for destinations that reported write errors.
+- Average processing latency when latency samples are available.
+- The last metric update time and the time bucket size.
+
+The throughput chart compares source consumption with destination writes over
+time. Source consumption is shown separately from destination writes because
+destination totals can be higher than consumed rows when a stream writes to more
+than one destination.
+
+For longer selected time ranges, Mage Pro rolls chart points into coarser time
+buckets before returning Streaming health metadata so the chart stays responsive
+while preserving the selected range totals.
+
+Destination rows include each destination block, its exported count, failed
+write count, and last successful write time.
+
+On the pipeline monitoring page, streaming runs are grouped by trigger. This is
+useful for long-running streaming triggers because Mage can create a replacement
+pipeline run for the same trigger after an exception. Trigger-level health keeps
+those automatic restarts visible as one operational stream.

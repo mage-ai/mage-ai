@@ -47,12 +47,11 @@ Use AI blocks when you want to:
 - turn upstream block outputs into plain-language recommendations
 - automate a decision step before the next pipeline block runs
 
-## Use Sidekick as an Agent
+## Use an Agent Block
 
-Set `type: agent` when you want the AI block to run through Mage Pro AI Sidekick. Agent mode is useful when the block should understand pipeline context, inspect upstream block outputs, and produce a final answer with the same project awareness users expect from Sidekick.
+Create an Agent block when you want a Mage Pro pipeline step to run through Mage Pro AI Sidekick. Agent blocks are useful when the block should understand pipeline context, inspect upstream block outputs, and produce a final answer with the same project awareness users expect from Sidekick.
 
 ```yaml
-type: agent
 prompt: |
   Use the upstream customer rows to summarize churn risk.
 message: Summarize the highest-risk customers and recommend next steps.
@@ -64,9 +63,9 @@ runtime:
   report_name: weekly_churn_review
 ```
 
-Agent mode is still an AI block. It runs as part of the pipeline and returns the final Sidekick answer as the block output. While Sidekick works, Mage prints progress and streamed response events to the block logs so users can see that the agent is running.
+Agent blocks use the block type `agent` and are saved as YAML under the `agents/` folder. New Agent block YAML does not need a top-level `type: agent` field; existing AI blocks that already use YAML `type: agent` still run for compatibility. Agent blocks run as part of the pipeline and return the final Sidekick answer as the block output. While Sidekick works, Mage prints progress and streamed response events to the block logs so users can see that the agent is running.
 
-Use agent mode when the task benefits from pipeline context:
+Use Agent blocks when the task benefits from pipeline context:
 
 - "Read the upstream customer output and explain the highest churn risk."
 - "Review this pipeline run's logs and summarize what failed."
@@ -75,9 +74,9 @@ Use agent mode when the task benefits from pipeline context:
 
 ## Fields
 
-### `prompt`
+### `prompt` and `instructions`
 
-The main instruction for the AI block. Keep it clear and specific. Multi-line prompts are easier to read and maintain.
+The main instruction for a standard AI block is `prompt`. YAML-backed Agents use `instructions` for the saved default prompt stored in the `agents/` folder. Keep either field clear and specific. Multi-line prompts are easier to read and maintain.
 
 ```yaml
 prompt: |
@@ -85,12 +84,17 @@ prompt: |
   Include one recommended action for the revenue team.
 ```
 
-### `message`
-
-An optional user-style request for `type: agent` blocks. Use `prompt` for standing instructions and `message` for the specific request to answer on this run.
-
 ```yaml
 type: agent
+instructions: |
+  You are a customer retention analyst.
+```
+
+### `message`
+
+An optional user-style request for `type: agent` blocks. Use `instructions` for saved standing instructions on YAML-backed Agents, or `prompt` on standalone AI blocks, and use `message` for the specific request to answer on this run.
+
+```yaml
 prompt: |
   You are a customer retention analyst.
 message: Which accounts need attention this week?
@@ -119,14 +123,13 @@ runtime:
 
 Use `output` when you need the response to follow a predictable shape or control agent block logs.
 
-For `type: agent` blocks, `output.level` controls how much Sidekick runtime output Mage prints while the block runs:
+For Agent blocks, `output.level` controls how much Sidekick runtime output Mage prints while the block runs:
 
 - `default`: print streamed answer, narration/status, tool call, and error events.
 - `all`: print every runtime event, including completion and other low-level events.
 - `none`: do not print Sidekick runtime output; the final answer still becomes the block output.
 
 ```yaml
-type: agent
 prompt: Review the upstream data and summarize the result.
 message: What changed since the last run?
 output:
@@ -181,10 +184,9 @@ tools:
 
 ## Upstream Data
 
-AI blocks can sit downstream of regular Mage blocks. In agent mode, Sidekick receives references to upstream block outputs and can inspect those outputs through Mage instead of copying raw datasets into the prompt.
+AI and Agent blocks can sit downstream of regular Mage blocks. For Agent blocks, Sidekick receives references to upstream block outputs and can inspect those outputs through Mage instead of copying raw datasets into the prompt.
 
 ```yaml
-type: agent
 prompt: |
   Read the upstream customer scores and event history.
   Explain the biggest churn risk in plain English.
@@ -227,7 +229,6 @@ output:
 ### Agent Block With Upstream Outputs
 
 ```yaml
-type: agent
 prompt: |
   You are reviewing customer health data from upstream blocks.
   Use the available customer scores and recent events to identify retention risk.
@@ -241,7 +242,6 @@ runtime:
 ### Agent Block With No Message
 
 ```yaml
-type: agent
 prompt: |
   Use the upstream rows to produce a short operational summary.
 settings:
@@ -253,9 +253,9 @@ Use this pattern when the prompt itself is the complete request.
 ## Best Practices
 
 - Give the block one clear job.
-- Put reusable instructions in `prompt`.
-- Put the run-specific ask in `message` for agent blocks.
+- Put reusable instructions in `instructions` for YAML-backed Agents or `prompt` for standalone AI blocks.
+- Put the run-specific ask in `message` for Agent blocks.
 - Use upstream blocks for data and the AI block for interpretation.
 - Use structured output when downstream blocks need predictable fields.
 - Keep runtime context business-focused, such as segment, audience, or report name.
-- Use agent mode when project context or upstream block output matters.
+- Use Agent blocks when project context or upstream block output matters.

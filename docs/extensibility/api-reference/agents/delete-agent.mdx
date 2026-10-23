@@ -1,0 +1,15 @@
+---
+title: 'Delete agent'
+sidebarTitle: 'Delete agent'
+description: 'Delete an agent YAML file.'
+---
+
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="agents-api" />
+
+```http
+DELETE /api/agents/{agent_uuid}
+```
+
+Deletes the YAML file under `agents/`. The backing pipeline is not deleted by this endpoint.

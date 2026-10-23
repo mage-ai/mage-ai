@@ -47,7 +47,8 @@ the saved project metadata, or set retries to `0` to explicitly disable global
 automatic retries. Retry count, delay, and max delay must be non-negative
 integers; retries can be up to `100`, and delay/max delay can be up to `86400`
 seconds. `0` is accepted for numeric retry fields. If `exponential_backoff` is
-omitted, Mage uses the default enabled backoff behavior.
+omitted, Mage uses the default enabled backoff behavior. Select **Save Settings**
+below the retry controls to persist your changes.
 
 You can also edit the project's `metadata.yaml` directly:
 
@@ -106,11 +107,14 @@ The retry logs show in the same block run log page.
 
 ## Retry incomplete blocks
 
+<ProOnly source="retry-incomplete-blocks" />
+
 - Supported pipeline types: Standard, Streaming, and Integration pipelines
 - If a pipeline run fails, you can retry from the failed block
 run instead of restarting the entire pipeline run. In Mage Pro, open the failed
-run's actions menu from the pipeline's **Runs** table and select **Retry incomplete
-blocks**. The separate **Retry pipeline run** action restarts the entire pipeline run.
+run's actions menu from the pipeline's **Runs** table, or select its failed status chip,
+and choose **Retry incomplete blocks**. The status-menu option is disabled for runs that
+cannot be retried. The separate **Retry pipeline run** action restarts the entire pipeline run.
 For Streaming pipelines, **Retry incomplete blocks** reuses the existing pipeline
 run, resets its incomplete block runs, and resumes it instead of creating a new run.
 - You can also retry incomplete blocks from the individual pipeline run page
@@ -143,6 +147,11 @@ pipeline run.
 - Select a block run row, and a blue `Retry from selected block` button should appear.
 - Note that the `Retry from selected block` button will only appear if the pipeline
 run is not currently running.
+- In Mage Pro, for Standard pipelines, selecting a generated dynamic child block run retries
+that child and downstream block runs that depend on it. Unaffected generated siblings
+and unrelated branches stay unchanged. If downstream blocks consume a reduced collection
+or a shared ordinary block output affected by the retry, all rows that depend on that
+collection or output rerun.
 - For Integration pipelines, selecting a block run in a completed pipeline run keeps
 the existing selected-block retry behavior. Selecting a stream in an incomplete
 run uses the specific stream retry described above.

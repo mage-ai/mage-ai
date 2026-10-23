@@ -1,6 +1,6 @@
 ---
 title: "IDE Integration"
-description: "Connect Cursor, Claude Code, OpenAI Codex CLI, or another MCP-compatible AI client to your Mage Pro cluster via MCP."
+description: "Connect Cursor, Claude Code, Claude Desktop, OpenAI Codex CLI, or another MCP-compatible AI client to your Mage Pro cluster via MCP."
 ---
 
 import { ProOnly } from '/snippets/pro/only.mdx';
@@ -11,7 +11,12 @@ mage-agent exposes a [Model Context Protocol](https://modelcontextprotocol.io) (
 
 ## Prerequisites
 
-Complete [Installation](/agent/installation) and [Authentication](/agent/authentication) before setting up IDE integration.
+For manual MCP configuration, complete [Installation](/agent/installation)
+and [Authentication](/agent/authentication) before setting up IDE integration.
+
+For Claude Desktop, use the [bundled Desktop extension](/agent/mage-agent-plugin#claude-desktop)
+and its setup flow. It includes the executable and does not require the Claude
+Code CLI or a Python installation.
 
 ---
 
@@ -118,7 +123,9 @@ which mage-agent
 
 ## Skill resources
 
-When connected, your AI assistant can also read four Markdown guidance resources that describe how to interact with Mage:
+When connected, your AI assistant can read bundled Markdown guidance through
+MCP resources. The catalog includes pipeline, execution, data preview, and chart
+guidance. Examples:
 
 | Resource URI | Content |
 |---|---|
@@ -126,5 +133,9 @@ When connected, your AI assistant can also read four Markdown guidance resources
 | `skill://blocks` | Block inspection and editing guidance |
 | `skill://executions` | Run triggers and log retrieval |
 | `skill://sync` | Sync operations and conflict handling |
-
-These are loaded automatically from your cluster at login time (with bundled fallbacks if the cluster is unreachable).
+| `skill://data_previews` | Explore Data discovery and preview guidance |
+| `skill://visualization_charts` | Saved chart configuration and analysis |
+Installed clients expose AI-ready data tools and guidance without a local
+`AI_READY_DATA_ENABLED` flag. Operations still require support, configuration,
+and permissions on the connected cluster; unsupported or disabled calls can
+return API errors. Clients decide how to display or load MCP resources.

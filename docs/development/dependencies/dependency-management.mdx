@@ -29,7 +29,7 @@ You can manage dependencies in three ways:
 
 The easiest way to manage your project dependencies is through the Mage UI:
 
-1. **Navigate to the Editor page** in your Mage workspace
+1. Open **Tools** in the left navigation, then select **Editor**
 
 2. **Open your requirements file**: Browse to `/home/src/[project_path]/requirements.txt` and open it in the editor
 
@@ -52,7 +52,7 @@ The system will intelligently install only the packages that need to be added or
 
 For more control, you can run `mage deps` commands directly in the Mage terminal:
 
-1. **Open the Terminal page** in your Mage workspace
+1. Open **Tools** in the left navigation, then select **Terminal**
 
 2. **Run dependency commands**:
    ```bash
@@ -85,6 +85,47 @@ When you restart your Mage cluster, the dependency management system automatical
 3. **Activates the environment**: Makes it available for all pipeline executions
 
 This ensures your dependencies are always synchronized with your `requirements.txt` after each cluster restart, with no manual intervention required.
+
+## Repair Pipeline Dependency Failures with AI Chat
+
+When a failed pipeline run reports a Python import or package-resolution error,
+select **Fix with AI** from the run or its logs. AI Chat investigates using its
+existing run-log and log-search tools. When the evidence indicates a dependency
+issue, it uses the dependency skill to distinguish missing packages, optional
+extras, incompatible versions, and differences between the Mage server and the
+pipeline executor. Other errors continue through ordinary failure investigation.
+If the skill cannot be loaded, AI Chat discloses that limitation and can continue
+an evidence-supported repair using its built-in dependency guidance; it does not
+claim to have loaded the skill.
+
+AI Chat's run-log and log-search tools redact sensitive evidence before returning
+it to the model. Run diagnostics read bounded excerpts from stored logs. If an
+excerpt is incomplete, AI Chat should report that limitation and inspect more
+specific evidence before proposing a dependency change.
+
+AI Chat explains each action and reports its result:
+
+1. Review the diagnosis and proposed `requirements.txt` diff. AI Chat states the
+   intended change before applying it and follows the environment's action policy.
+   If that policy requests confirmation, AI Chat waits for it. After an authorized
+   write, Mage records the edit as a file version.
+2. Track installation as a separate operation and reported state. Updating
+   `requirements.txt` does not install packages by itself; AI Chat states which
+   project requirements it will install, follows the environment's action policy,
+   and reports the resolver result. The host may request confirmation, but the
+   flow does not require a new confirmation between every authorized step.
+3. Verify the repair in the environment that executes the pipeline. A successful
+   package check or import in the Mage server or terminal does not prove that a
+   Kubernetes, streaming, Spark, or other remote executor has the same packages.
+   Restart or redeploy an executor separately when its environment requires it.
+4. After verification, retry the failed block or pipeline run manually from the
+   pipeline UI. The dependency-repair workflow reports its repair and verification
+   results but does not automatically retry the run. See
+   [Retrying block runs from a pipeline run](/orchestration/pipeline-runs/retrying-block-runs).
+
+If AI Sidekick is disabled for the project, **Fix with AI** is unavailable and
+the normal dependency-management controls continue to work without sending a
+request to AI Sidekick or an AI model.
 
 ## How It Works
 

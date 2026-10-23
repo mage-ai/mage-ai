@@ -1,30 +1,38 @@
 ---
 title: "Personalize your workspace"
 sidebarTitle: "Personalize"
-description: "Customize workspace themes, personalize accounts, and re-configure UI component layouts."
+description: "Customize workspace themes and re-configure UI component layouts."
 icon: "person-from-portal"
 ---
 
-import { ProButton } from '/snippets/pro/button.mdx';
 import { ProOnly } from '/snippets/pro/only.mdx';
 
 <ProOnly source="personalize" />
 
 ## Themes
 
-<Frame caption="Light theme">
-  <img
-    alt="Mage Pro Personalize workspace light"
-    src="https://mage-ai.github.io/assets/pro/features/personalize-light.jpg"
-  />
-</Frame>
+Choose how Mage and its code editors look:
 
-<Frame caption="Dark theme">
-  <img
-    alt="Mage Pro Personalize workspace dark"
-    src="https://mage-ai.github.io/assets/pro/features/personalize-dark.jpg"
-  />
-</Frame>
+1. Open your account menu and use the **Theme** submenu to select **System**,
+   **Light**, or **Dark**. You can also make the same selection under **Color
+   mode** on this personalization page. **System** follows your device
+   appearance and is the default when you have not chosen a mode.
+2. Under **Dark syntax theme** and **Light syntax theme**, choose the editor
+   colors Mage should use in each mode.
+
+Mage applies the matching syntax theme automatically when you change color
+modes. The setting also applies to the source and destination YAML configuration
+editors in data integration pipelines.
+
+When **System** is selected, Mage updates as soon as your operating system or
+browser appearance changes. Mage listens for that browser preference instead of
+polling or calculating a day/night schedule. Selecting **Light** or **Dark**
+keeps that mode active regardless of later device appearance changes.
+
+Your **System**, **Light**, or **Dark** selection is saved in this browser and
+preserved when you reload Mage or sign out, so the sign-in page keeps your last
+selection. Signing in loads that account's saved preference. If you clear the
+site's cookies, the signed-out page defaults to **System**.
 
 ---
 

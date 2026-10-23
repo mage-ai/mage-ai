@@ -61,6 +61,15 @@ blocks, testing code, and visualizing data with charts.
 
 View all the runs for every pipeline in your current project.
 
+In Mage Pro, select **Custom UTC range** to filter runs by a specific time
+range. Edit the year, month, day, hour, and minute directly in the
+`YYYY-MM-DD HH:mm` input, or use the calendar and time picker. The input keeps
+the separators in place, shows placeholders for missing digits, and restricts
+each segment to its allowed range. Complete valid values update the picker,
+and picker selections update the input. Complete both inputs with a valid range
+before applying it.
+Dates run from 1970 through the end of the current UTC year plus ten years.
+
 > Core abstraction: [Run](/design/core-abstractions#run)
 >
 > A run record stores information about when it was started, its status, when it

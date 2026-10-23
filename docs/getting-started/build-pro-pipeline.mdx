@@ -5,6 +5,10 @@ icon: "code-fork"
 description: "Build your first Mage Pro data pipeline"
 ---
 
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="build-pro-pipeline" />
+
 Mage makes building data pipelines intuitive through its block-based architecture. Instead of writing complex scripts, you create  blocks that handle specific parts of your data workflow. Mage offers a complete data pipeline workflow architecture so you can extract, transform, and load your data to a target in one tool.
 
 **Pipeline Types:**
@@ -38,7 +42,7 @@ You’ll notice that you can select from the three main data engineering use cas
     src="https://raw.githubusercontent.com/mage-ai/assets/main/pro/cloud/create-new-pipeline.png"
 />
 
-After you filled in the Name, and optionally completed the Description and Tags click the blue “Create new pipeline” button at the top of the Page. This will take you to the pipeline editor page where we will create our first data_loader block.
+After you fill in the Name and optionally complete the Description and Tags, click the blue **Create pipeline** button. Pipeline names must be unique; if the name is already in use, the form shows **A pipeline with this name already exists.** and does not overwrite the existing pipeline. After creation, Mage takes you to the pipeline editor page where we will create our first data loader block.
 
 **Extract data from source systems**
 
@@ -55,7 +59,7 @@ The first block we’ll add to out data pipeline is a data loader block. the dat
 
 **Step 2**: A drop down menu will appear, just hover over “Loader“ then select the “Base template (generic)” block under Python.
 
-**Step 3**: A popup will appear, give the block a name, something like “fetch data” and then click “Save and add”.
+**Step 3**: The **Block name** dialog will appear. Enter a name such as “fetch data,” then click **Save**.
 
 This will add a new generic Python block to your pipeline. Once the block appears in your pipeline editor UI add the code below and click the “Run code” button located in the top right portion of the block.
 
@@ -134,4 +138,4 @@ def export_data(data, *args, **kwargs):
 
 
 
-You did it, you created your first pipeline in Mage. Wasn’t it fun? Mage was created with developers in mind and we pride ourselves on an experience that is both easy and fun for developers. But, we’re not done yet. Next we need to schedule this pipeline so we can automate our workflow. 
+You did it, you created your first pipeline in Mage. Wasn’t it fun? Mage was created with developers in mind and we pride ourselves on an experience that is both easy and fun for developers. But, we’re not done yet. Next we need to schedule this pipeline so we can automate our workflow.

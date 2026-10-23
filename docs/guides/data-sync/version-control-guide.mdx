@@ -2,7 +2,7 @@
 title: "Mage Pro Version Control"
 sidebarTitle: "Version control guide"
 icon: "code"
-description: "Connect your data pipelines to Git repositories and deploy code seamlessly. Authenticate with GitHub, BitBucket, or GitLab, manage code with Git commands, and deploy from commits to your Mage Pro cluster."
+description: "Connect Mage Pro to GitHub, Bitbucket, GitLab, or Azure DevOps using OAuth, HTTPS with a personal access token, or SSH, then deploy commits and manage code from the Version control terminal."
 ---
 
 import { ProButton } from '/snippets/pro/button.mdx';
@@ -32,7 +32,7 @@ If you change authentication type, **save authentication settings** before conti
 
 ### Open the connection UI
 
-From the Home page, select **Deployments** in the left-hand navigation menu to access the Deployments interface.
+From the Home page, open **Tools** in the left navigation and select **Deploy** to access the Deployments interface.
 
 Click the **Setup connection** button to begin syncing with your code repository.
 Mage Pro provides two main applications for version control and deployment:
@@ -50,7 +50,7 @@ First, authenticate with your Git provider in the Deployments application to ena
 
 #### Access Deployments
 
-From the Home page, select **Deployments** in the left-hand navigation menu to access the Deployments interface.
+From the Home page, open **Tools** in the left navigation and select **Deploy** to access the Deployments interface.
 
 Click the Setup connection button to begin syncing with your code repository.
 
@@ -456,12 +456,12 @@ Mage Pro images include GitHub CLI (`gh`) for optional GitHub auth helper and st
 
 ### Access the Git terminal
 
-- From the home page, open the left navigation and select **Terminal**.
+- From the home page, open **Tools** in the left navigation and select **Terminal**.
 - When the page loads, type Git commands in the terminal and press **Enter** to run them.
 - If the terminal header shows **Authenticate Git**, Mage has not detected usable Git authentication for the repository. Select it to open the repository connection page for the current project, complete Git OAuth in Deployments, and then return to the terminal. If you authenticate Git directly in the terminal, Mage hides the action after it detects that Git authentication is available.
 - Use tabs to keep multiple shell sessions open. Each tab keeps its own terminal session and working directory, so closing one tab does not interrupt the other tabs.
 - The terminal status row shows the active folder, Git branch, and working tree change counts. Autocomplete appears while typing and suggests shell commands, Git subcommands, files, folders, executable commands, and recent command history from the active working directory.
-- Terminal prompt timestamps and shell commands use UTC by default. If **Display local timezone** is enabled for the workspace, new terminal sessions use your browser's local IANA timezone for the prompt timestamp and the session `TZ` environment variable.
+- Terminal prompt timestamps and shell commands use UTC by default. If **Use local timezone** is enabled for the workspace, new terminal sessions use your browser's local IANA timezone for the prompt timestamp and the session `TZ` environment variable.
 
 ### Essential Git commands
 

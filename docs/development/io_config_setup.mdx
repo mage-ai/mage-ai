@@ -94,7 +94,7 @@ For security, it's recommended to use environment variables and other secret man
 | `{{ aws_secret_var('secret') }}` | Get secret from AWS Secrets Manager |
 | `{{ azure_secret_var('secret') }}` | Get secret from Azure Key Vault |
 | `{{ gcp_secret_var('secret') }}` | Get secret from Google Cloud Secret Manager (Mage Pro only) |
-| `{{ doppler_secret_var('secret') }}` | Get secret from Doppler |
+| `{{ doppler_secret_var('secret') }}` | Get secret from [Doppler](/production/deploying-to-cloud/secrets/Doppler) (Mage Pro only) |
 | `{{ json_value(json_obj, 'key') }}` | Extract value from a JSON string |
 | `{{ file('path/to/file.txt') }}` | Load contents of a local file (Mage Pro only) |
 
@@ -140,7 +140,7 @@ default:
   SNOWFLAKE_PASSWORD: "{{ gcp_secret_var('snowflake-password') }}"
 ```
 
-**Doppler:**
+**Doppler (Mage Pro only):**
 ```yaml
 version: 0.1.1
 default:
@@ -148,7 +148,7 @@ default:
   SNOWFLAKE_PASSWORD: "{{ doppler_secret_var('SNOWFLAKE_PASSWORD') }}"
 ```
 
-To use Doppler, configure the Mage runtime with `DOPPLER_TOKEN`, `DOPPLER_PROJECT`, and `DOPPLER_CONFIG`. Mage caches Doppler secrets in memory for `DOPPLER_SECRETS_CACHE_TTL_SECONDS` seconds, defaulting to `10`. Set the TTL to `0` to refresh on every lookup. Secret changes are picked up on the next config render after the TTL expires; already-open connections may continue using the previous value until recreated.
+To use Doppler, configure the Mage runtime with `DOPPLER_TOKEN`, `DOPPLER_PROJECT`, and `DOPPLER_CONFIG`. See [Doppler secrets](/production/deploying-to-cloud/secrets/Doppler) for setup, cache behavior, per-reference project and config overrides, and troubleshooting.
 
 **File Content (Mage Pro only):**
 ```yaml
@@ -198,7 +198,7 @@ You can create, update, delete, and test `io_config.yaml` profiles from the Mage
 
 1. Open **Settings**.
 2. In **Workspace**, select **Data connections**.
-3. Select an existing profile or choose **Add profile**. You can also open `/settings/workspace/io-config` directly.
+3. Select an existing profile or choose **Create New** next to the profile dropdown. You can also open `/settings/workspace/io-config` directly.
 
 Viewers can inspect profiles with masked credentials. Creating, renaming, saving, deleting, and testing requires Editor access plus notebook edit access; otherwise, the page is read-only.
 

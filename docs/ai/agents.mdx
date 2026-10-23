@@ -1,0 +1,69 @@
+---
+title: 'Agents'
+sidebarTitle: 'Agents'
+description: 'Create YAML-backed AI agents with a backing pipeline and API endpoint.'
+icon: 'user-robot'
+---
+
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="agents" />
+
+Agents are AI blocks stored as YAML files under the project `agents/` folder. Each agent YAML file is the source of truth for the agent name, description, default instructions, backing pipeline, saved actions, status, and published endpoint metadata.
+
+Creating an agent from the Agents page or Agents API creates one backing pipeline named after the agent and one YAML block file in `agents/`. When a UUID is omitted, Mage derives it from the cleaned agent name. If that UUID already exists, the request is rejected so you can choose a different name or UUID.
+
+```yaml
+type: agent
+uuid: customer_support_agent_a1b2
+name: Customer support agent
+description: Routes support questions.
+instructions: |
+  Classify the request and recommend the next support workflow.
+pipeline_uuid: customer_support_agent
+actions:
+  - pipeline_uuid: support_workflows
+    block_uuid: triage_ticket
+status: draft
+endpoint: {}
+```
+
+## Fields
+
+Use `instructions` for the saved default prompt. Runtime requests use `message`, which can be sent when running the agent. Existing `type: agent` AI blocks can still use `message` as the per-run user request.
+
+- `name`: Display name for the agent.
+- `description`: Short summary shown in the Agents list and detail view.
+- `instructions`: Default instructions stored with the agent.
+- `pipeline_uuid`: Backing pipeline used to execute and publish the agent.
+- `actions`: List of action references. Mage stores this list but runtime handling is defined separately.
+- `status`: `draft`, `published`, or `paused`.
+- `endpoint`: API trigger metadata written when the agent is published.
+
+Only YAML files with `type: agent` and `pipeline_uuid` appear in the Agents list. This keeps standalone agent blocks hidden unless they are associated with a backing pipeline.
+
+## Publishing
+
+Publishing an agent marks it live by upserting an API trigger on the backing pipeline. Mage stores the trigger metadata in the agent YAML under `endpoint`, including the schedule ID and streaming run path.
+
+Publishing is idempotent. Re-publishing the same agent reuses the existing API trigger when possible instead of creating duplicate triggers.
+
+## Running
+
+Publish the agent to enable its streaming endpoint. On the agent's **Endpoint** page, edit the JSON request body, then select **Run agent**. Set `pipeline_run.variables.message` to the request for this run and add any other runtime variables your agent needs:
+
+```json
+{
+  "pipeline_run": {
+    "variables": {
+      "message": "Summarize yesterday's support tickets."
+    }
+  }
+}
+```
+
+The button POSTs that payload to the displayed streaming endpoint and displays the server-sent events (SSE) from the same response. The endpoint still creates a backing pipeline run, so its run ID and execution history remain available. See [Run agent](/extensibility/api-reference/agents/run-agent) for authentication and API examples.
+
+## Chatting with an agent
+
+**Chat with agent** opens a Sidekick conversation with the agent's saved instructions and allowed actions. The conversation carries out the agent's work directly; it does not start the agent's own backing pipeline. When an action is needed, Sidekick can execute the configured action pipeline and report its run separately. Asking the agent to run does not make every assigned action mandatory: the agent chooses actions based on its instructions and the available data.

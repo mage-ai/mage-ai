@@ -1,0 +1,59 @@
+---
+title: 'Run agent'
+sidebarTitle: 'Run agent'
+description: 'Trigger an agent backing pipeline and receive stream metadata.'
+---
+
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="agents-api" />
+
+## Stream a published agent
+
+The agent's **Endpoint** page shows the streaming POST URL after an API trigger is available. Edit the JSON request body on that page and select **Run agent** to submit it to this endpoint and follow the response stream in the UI:
+
+```http
+POST /api/triggers/{pipeline_schedule_id}/streams
+Authorization: Bearer <trigger_token>
+Content-Type: application/json
+```
+
+```json
+{
+  "pipeline_run": {
+    "variables": {
+      "message": "Summarize yesterday's support tickets."
+    }
+  }
+}
+```
+
+Use the active API trigger's schedule ID and token. This request runs the backing pipeline's last agent block and returns server-sent events (SSE), including run metadata and agent output, on the same connection. Include your deployment's URL prefix before `/api` when applicable.
+
+## Start a run with a Mage session
+
+```http
+POST /api/agents/{agent_uuid}/runs
+```
+
+```json
+{
+  "agent_run": {
+    "message": "Summarize yesterday's support tickets."
+  }
+}
+```
+
+The response includes the pipeline run ID, schedule ID, and stream URL.
+
+```json
+{
+  "agent_run": {
+    "agent_uuid": "customer_support_agent_a1b2",
+    "pipeline_run_id": 7,
+    "pipeline_schedule_id": 42,
+    "run_id": 7,
+    "stream_url": "/api/pipeline_schedules/42/pipeline_runs/7/streams"
+  }
+}
+```

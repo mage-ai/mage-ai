@@ -3,7 +3,6 @@ title: "OpenSearch log search"
 sidebarTitle: "OpenSearch"
 ---
 
-import { ProButton } from '/snippets/pro/button.mdx';
 import { ProOnly } from '/snippets/pro/only.mdx';
 
 <ProOnly source="log-search-opensearch" />
@@ -11,6 +10,13 @@ import { ProOnly } from '/snippets/pro/only.mdx';
 Use OpenSearch-backed log search when you want Mage to search pipeline, block,
 trigger, and run logs across log files instead of only reading the latest files
 from disk.
+
+Search includes the standard log message and block identifier. For grouped
+Python and dbt exception entries, Mage Pro also searches the redacted structured
+exception summary, exception type and message, stack trace text, dbt command,
+and dbt model or node context when those fields are present. The Logs page keeps
+those grouped exception entries together when you filter, open details, or
+download matching logs.
 
 For Mage Pro SaaS and Hybrid Cloud deployments, OpenSearch log search is enabled
 automatically. No Helm chart changes or Kubernetes objects are required.
@@ -251,8 +257,48 @@ If OpenSearch uses auth or TLS, include the matching `curl` flags for your
 cluster, for example `-u '<username>:<password>'`, `https://localhost:9200`, and
 `-k` or `--cacert`.
 
-Finally, open a pipeline's **Logs** page in Mage and search for text that appears
-in a recent pipeline or block run.
+Finally, open a pipeline's **Logs** page in Mage and enter text that appears in a
+recent pipeline or block run. Typing filters the displayed logs; click **Search**
+or press **Enter** to search all matching logs across the full time range.
+
+For a **Custom UTC range**, choose the start and end dates and times, then click
+**Apply Range**. The button appears for unapplied changes and disappears once
+the selected range is applied. Invalid or incomplete ranges cannot be applied.
+
+If logs have already loaded and a later refresh fails, Mage keeps the most
+recent loaded results visible and shows **Retry refresh**. A failure before any
+results load instead shows a blocking **Retry** action.
+
+When AI Sidekick is enabled, an issue card can appear below the log count.
+Click the affected block name to open its editor. Users with edit access can
+click **Resolve ✦** to open AI Sidekick with the relevant log context; viewers
+see the issue context without the resolve action.
+
+## Filter log sources
+
+On a pipeline's **Logs** page in Mage Pro, use the **Log sources** filters to
+narrow results by where each log entry came from.
+
+- Available source rows are **User code**, **Mage scheduler**, **Executor**,
+  **Connector/library**, **Kubernetes**, and **System**.
+- All source rows are checked by default; unchecking a row hides that source
+  without changing the original INFO, WARNING, or ERROR level.
+- **Infrastructure logs** controls Mage scheduler, executor, Kubernetes, and
+  system together, and shows a partial state when only some child rows are
+  checked.
+- **Reset filters** is disabled when no filters are applied. It removes active
+  source query state and returns to the complete authorized log view with all
+  selectable source rows checked.
+- Downloads include active filter context so filtered exports are not mistaken
+  for complete unfiltered log files.
+
+Kubernetes executor runtime and job-manager status entries are tagged as
+**Kubernetes**. Legacy OpenSearch documents are classified from conservative
+structured fields when possible; entries that cannot be classified safely remain
+unknown-source, stay visible in unfiltered results, and do not appear as a
+separate filter-panel row. If Mage falls back to loaded disk rows while source
+filters are active, the API response metadata and export header disclose that
+source filters are limited to those fallback rows.
 
 ## Troubleshooting
 
@@ -269,6 +315,9 @@ If searches return no results, check these items first:
   and the OpenSearch cluster.
 - The `logSearch.persistence.existingClaim` and `subPath` point at the same
   project files that Mage writes logs into.
+- Any `source_category` or `exclude_source_category` values in the URL use the
+  supported source identifiers. Unsupported values return no OpenSearch-backed
+  rows until the invalid filter is removed.
 - If `opensearch.enabled=false`, `logSearch.opensearch.host` is set. The chart
   fails rendering when log search is enabled for an external OpenSearch cluster
   without a host.

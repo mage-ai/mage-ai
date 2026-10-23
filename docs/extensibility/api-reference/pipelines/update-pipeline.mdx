@@ -18,6 +18,21 @@ All default attributes for a pipeline may be updated in addition to the followin
   Array of [callback](/development/blocks/callbacks) block objects. Same shape as `blocks`.
 </ParamField>
 
+<ParamField query="pipeline_callbacks" type="array of objects">
+  Mage Pro only. Pipeline-level callback configuration for callback blocks that should run once
+  after the pipeline run reaches a terminal status. Callback decorators inside the callback block
+  determine the behavior for success, failure, and cancellation.
+
+  <Expandable title="properties">
+    <ParamField query="callback_block_uuid" type="string" required>
+      UUID of a callback block in the pipeline.
+    </ParamField>
+    <ParamField query="enabled" type="boolean">
+      If `false`, the pipeline-level callback is saved but not dispatched.
+    </ParamField>
+  </Expandable>
+</ParamField>
+
 <ParamField query="conditionals" type="array of objects">
   Array of [conditional](/development/blocks/conditionals/) block objects. Same shape as `blocks`.
 </ParamField>
@@ -65,6 +80,7 @@ curl --request PUT
     "spark_config": {},
     "blocks": [],
     "callbacks": [],
+    "pipeline_callbacks": [],
     "conditionals": [],
     "widgets": [],
     "extensions": {}

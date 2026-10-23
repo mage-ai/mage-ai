@@ -6,6 +6,8 @@ description: "Here are the high level steps to build a data integration pipeline
 "og:image": "https://media4.giphy.com/media/XIHD0EB1dXarS/giphy.gif"
 ---
 
+import { ProOnly } from '/snippets/pro/only.mdx';
+
 ## Demo video
 
 <video controls className="w-full aspect-video" src="https://user-images.githubusercontent.com/1066980/196870752-6d1b0219-8fc0-419c-99d7-677bdcf3fc0a.mp4"></video>
@@ -23,6 +25,24 @@ dependencies required for data integrations that can be challenging to install u
 
 1. Open Mage in your browser and click the **`[+ New pipeline]`** button.
 2. Click the dropdown menu option **Data integration**.
+
+---
+
+## Use connector documentation in Mage Pro
+
+<ProOnly source="data-integration-documentation-sidekick" />
+
+Keep connector guidance open without leaving the pipeline editor:
+
+1. Find **Configuration** under the source or destination.
+2. Click **Show documentation** to open that connector's guide in the right
+   sidekick. You can continue editing the YAML configuration while the guide is
+   open.
+3. Click **Hide documentation** when you need more room for the editor.
+
+When the documentation sidekick is already open, clicking **View and select
+streams** switches the guide back to the source connector. If you previously
+hid the documentation, opening stream selection leaves it hidden.
 
 ---
 
@@ -66,6 +86,28 @@ dependencies required for data integrations that can be challenging to install u
 4. Shortly after clicking the above button, click the new dropdown menu under
    the section labeled **Select stream**. Then, choose the stream (aka table)
    you want to load data from.
+
+   **Add newly discovered fields in Mage Pro**
+
+   New fields are excluded from an existing catalog by default. If a selected
+   stream has new fields:
+
+   1. Find the stream's **Catalog changes** column.
+   2. Select **Include in catalog** for that stream.
+   3. Confirm the stream selection.
+
+   The option adds only that stream's newly discovered fields. Existing catalog
+   settings—including bookmarks, replication methods, unique constraints, and
+   selected fields—remain unchanged. Streams you do not opt in keep their current
+   catalog unchanged. When the catalog content changes, confirming updates
+   `data_integration_catalog.json` and creates a file version that you can inspect
+   or restore later.
+
+   **Edit the saved catalog in Mage Pro**
+
+   Open **Edit** → **Data integration catalog file** to view or edit the saved
+   JSON. **Format JSON** reformats valid JSON in the editor without saving it.
+   Select **Save** to persist your changes and create a file version.
 
 ### Configure stream
 
@@ -139,8 +181,8 @@ sync process if you have a large number of streams.
 
 1. Click the dropdown menu under **Select destination** and choose the option
    you want to export data to (e.g. Snowflake).
-2. Depending on the chosen source, you’ll need to enter credentials and options
-   into the section labeled **Configuration**. For example, if you chose
+2. Depending on the chosen destination, you’ll need to enter credentials and
+   options into the section labeled **Configuration**. For example, if you chose
    Snowflake, you’ll need to enter credentials like this:
 
    ```yaml

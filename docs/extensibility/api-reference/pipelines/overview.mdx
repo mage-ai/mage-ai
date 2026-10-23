@@ -32,6 +32,12 @@ block dependencies."
   "description": null,
   "extensions": {},
   "name": "example_pipeline",
+  "pipeline_callbacks": [
+    {
+      "callback_block_uuid": "notify_stakeholders",
+      "enabled": true
+    }
+  ],
   "schedules": [
     {
       "created_at": "2023-03-14T23:24:17.814478+00:00",
@@ -70,6 +76,21 @@ block dependencies."
 
 <ResponseField name="name" type="string" required>
   Human friendly name of the pipeline.
+</ResponseField>
+
+<ResponseField name="pipeline_callbacks" type="array of objects">
+  Mage Pro only. Pipeline-level callback configuration for callback blocks that should run once
+  after the pipeline run reaches a terminal status. Callback decorators inside the callback block
+  determine the behavior for success, failure, and cancellation.
+
+  <Expandable title="properties">
+  <ResponseField name="callback_block_uuid" type="string" required>
+    UUID of a callback block in the pipeline.
+  </ResponseField>
+  <ResponseField name="enabled" type="boolean">
+    If `false`, the pipeline-level callback is saved but not dispatched.
+  </ResponseField>
+  </Expandable>
 </ResponseField>
 
 <ResponseField name="schedules" type="array of objects" required>

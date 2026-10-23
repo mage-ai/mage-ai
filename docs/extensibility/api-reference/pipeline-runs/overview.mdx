@@ -20,6 +20,20 @@ description: "Status and metrics for an individual run of a pipeline."
       "started_at": "2023-02-16 06:40:48.816197+00:00",
       "status": "completed",
       "updated_at": "2023-02-16 06:40:48.873526+00:00"
+    },
+    {
+      "block_uuid": "notify_stakeholders",
+      "completed_at": "2023-02-16 06:41:21.249956+00:00",
+      "created_at": "2023-02-16 06:41:19.301144+00:00",
+      "id": 34,
+      "is_pipeline_callback": true,
+      "metrics": {
+        "block_type": "pipeline_callback"
+      },
+      "pipeline_run_id": 23,
+      "started_at": "2023-02-16 06:41:19.301144+00:00",
+      "status": "completed",
+      "updated_at": "2023-02-16 06:41:21.249956+00:00"
     }
   ],
   "block_runs_count": 4,
@@ -67,7 +81,11 @@ description: "Status and metrics for an individual run of a pipeline."
     </ResponseField>
 
     <ResponseField name="metrics" type="object">
-      Various metrics related to the block run; e.g. error messages.
+      Various metrics related to the block run; e.g. error messages. For failed Mage Pro
+      pipeline-level callbacks, the redacted callback error is available as `metrics.error.message`.
+    </ResponseField>
+    <ResponseField name="is_pipeline_callback" type="boolean">
+      Whether this block run represents a Mage Pro pipeline-level callback execution.
     </ResponseField>
 
     <ResponseField name="pipeline_run_id" type="integer" required>
@@ -89,7 +107,8 @@ description: "Status and metrics for an individual run of a pipeline."
 </ResponseField>
 
 <ResponseField name="block_runs_count" type="integer" required>
-  Number of block runs for this pipeline run.
+  Number of normal block runs for this pipeline run. Mage Pro pipeline-level callback executions
+  may also appear in `block_runs`, but they are not counted here.
 </ResponseField>
 
 <ResponseField name="completed_at" type="datetime">

@@ -1,0 +1,240 @@
+---
+title: "Remote blocks"
+sidebarTitle: "Remote blocks"
+description: "Use outputs from blocks in another pipeline run as inputs to downstream blocks."
+icon: "block-brick"
+---
+
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="remote-blocks" />
+
+## Overview
+
+Remote blocks let one pipeline pass references to block outputs from another pipeline run.
+Mage stores a reference to the source block, source pipeline, source repository path, and execution
+partition, then resolves that reference when a downstream block runs.
+
+Remote blocks are used by [global data products](/extensibility/global-data-products/overview) and
+can also be returned when triggering a pipeline from code.
+
+Use remote blocks when a downstream pipeline needs data that was already produced by an upstream
+pipeline run. This avoids copying the data into runtime variables and lets Mage read the saved block
+variables from the source pipeline partition.
+
+## How it works
+
+A remote block reference contains:
+
+| Field | Description |
+| --- | --- |
+| `block_uuid` | The block whose saved output variables should be read. |
+| `pipeline_uuid` | The pipeline that owns the block. |
+| `repo_path` | The repository path for the workspace that owns the source pipeline. Mage Pro supports one project repository per workspace. |
+| `execution_partition` | The partition for the source pipeline run. Mage reads the block variables from this partition. |
+
+When the receiving block executes, Mage replaces each reference with that remote block's saved
+outputs and makes them available in `kwargs['remote_blocks']`.
+
+The resulting shape is a list of remote block output groups:
+
+```python
+[
+    [
+        output_from_first_remote_block,
+        another_output_from_first_remote_block,
+    ],
+    [
+        output_from_second_remote_block,
+    ],
+]
+```
+
+Each inner list contains the saved output variables from one referenced block.
+
+## Use with global data products
+
+When a pipeline uses a global data product block, Mage triggers or reuses the source pipeline run
+for that data product. After the source run is available, Mage returns remote block references for
+the configured output blocks in that global data product.
+
+Downstream blocks can read those outputs from `kwargs['remote_blocks']`:
+
+```python
+import pandas as pd
+
+
+@transformer
+def combine_remote_outputs(*args, **kwargs):
+    remote_blocks = kwargs.get('remote_blocks') or []
+    frames = []
+
+    for remote_block_outputs in remote_blocks:
+        for output in remote_block_outputs:
+            if output is not None:
+                frames.append(output)
+
+    if not frames:
+        return pd.DataFrame()
+
+    return pd.concat(frames, ignore_index=True)
+```
+
+If the source block returns more than one value, each value appears in the inner list for that
+remote block.
+
+## Pass remote blocks to another pipeline
+
+Remote blocks do not require a global data product. If the current pipeline has already produced
+outputs that another pipeline should consume, build remote block references from the current
+pipeline context and pass them to `trigger_pipeline`.
+
+For example, this data exporter triggers another pipeline and passes outputs from five blocks in
+the current pipeline run:
+
+```python
+from mage_ai.orchestration.triggers.api import trigger_pipeline
+
+
+if 'data_exporter' not in globals():
+    from mage_ai.data_preparation.decorators import data_exporter
+
+
+@data_exporter
+def trigger_downstream_pipeline(*args, **kwargs):
+    current_pipeline_uuid = kwargs['pipeline_uuid']
+    execution_partition = kwargs.get('execution_partition')
+
+    remote_blocks = [
+        {
+            'block_uuid': 'load_orders',
+            'pipeline_uuid': current_pipeline_uuid,
+            'execution_partition': execution_partition,
+        },
+        {
+            'block_uuid': 'summarize_orders',
+            'pipeline_uuid': current_pipeline_uuid,
+            'execution_partition': execution_partition,
+        },
+        {
+            'block_uuid': 'load_customers',
+            'pipeline_uuid': current_pipeline_uuid,
+            'execution_partition': execution_partition,
+        },
+        {
+            'block_uuid': 'load_products',
+            'pipeline_uuid': current_pipeline_uuid,
+            'execution_partition': execution_partition,
+        },
+        {
+            'block_uuid': 'build_order_details',
+            'pipeline_uuid': current_pipeline_uuid,
+            'execution_partition': execution_partition,
+        },
+    ]
+
+    trigger_pipeline(
+        'downstream_pipeline_uuid',
+        variables={},
+        check_status=False,
+        error_on_failure=False,
+        poll_interval=60,
+        poll_timeout=None,
+        verbose=True,
+        remote_blocks=remote_blocks,
+    )
+```
+
+In the downstream pipeline, add a block that reads the resolved outputs from
+`kwargs['remote_blocks']`. The order matches the order of the references passed to
+`trigger_pipeline`.
+
+```python
+if 'custom' not in globals():
+    from mage_ai.data_preparation.decorators import custom
+
+
+@custom
+def read_remote_outputs(*args, **kwargs):
+    remote_blocks = kwargs.get('remote_blocks')
+    if not remote_blocks:
+        return {}
+
+    (
+        load_orders,
+        summarize_orders,
+        load_customers,
+        load_products,
+        build_order_details,
+    ) = remote_blocks
+
+    return {
+        'orders': load_orders[0],
+        'order_summary': summarize_orders[0],
+        'customers': load_customers[0],
+        'products': load_products[0],
+        'order_details': build_order_details[0],
+    }
+```
+
+Each item in `remote_blocks` is a list because a source block can save multiple output variables.
+Use index `0` when the source block returns a single output.
+
+## Trigger a pipeline and return remote blocks
+
+You can also request remote block references when triggering a pipeline from code:
+
+```python
+from mage_ai.orchestration.triggers.api import trigger_pipeline
+
+
+remote_block_payload = trigger_pipeline(
+    'source_pipeline_uuid',
+    check_status=True,
+    error_on_failure=True,
+    return_remote_blocks=True,
+)
+```
+
+When `return_remote_blocks=True`, Mage returns a payload containing `remote_blocks` for the blocks in
+the triggered pipeline run. Pass that payload into another pipeline trigger to make those outputs
+available to the downstream pipeline:
+
+```python
+from mage_ai.orchestration.triggers.api import trigger_pipeline
+
+
+remote_block_payload = trigger_pipeline(
+    'source_pipeline_uuid',
+    check_status=True,
+    error_on_failure=True,
+    return_remote_blocks=True,
+)
+
+trigger_pipeline(
+    'downstream_pipeline_uuid',
+    check_status=True,
+    error_on_failure=True,
+    remote_blocks=remote_block_payload[0]['remote_blocks'],
+)
+```
+
+In blocks inside `downstream_pipeline_uuid`, read the resolved outputs from
+`kwargs['remote_blocks']`.
+
+## Notes and limitations
+
+- Remote blocks read saved block variables. The source block must have completed and saved outputs
+  for the referenced execution partition.
+- `pipeline_uuid` and `execution_partition` are not filled in automatically when you build remote
+  block references manually. Use the current block context, such as `kwargs['pipeline_uuid']` and
+  `kwargs.get('execution_partition')`, when passing outputs from the current pipeline run.
+- `execution_partition` pins the downstream read to the source pipeline run that produced the
+  referenced outputs. If it is omitted, Mage reads from the unpartitioned variable path.
+- Remote blocks pass data into block code through keyword arguments, not positional upstream
+  arguments.
+- Global data product blocks pass remote block references while the global data product block
+  itself is executing. Downstream blocks receive the resolved outputs.
+- The `partitions` setting for a global data product controls how many completed source run
+  partitions are included when reading outputs through the global data product API. Remote block
+  references point to the source run partition returned by the trigger path.

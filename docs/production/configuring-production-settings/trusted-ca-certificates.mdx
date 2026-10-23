@@ -1,0 +1,101 @@
+---
+title: "Trust internal certificate authorities"
+sidebarTitle: "Internal CA certificates"
+icon: "shield-check"
+description: "Configure Mage runtimes to trust internal certificate authorities for outbound TLS connections."
+---
+
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="trusted-ca-certificates" />
+
+Use `TRUSTED_CA_CERTS_PATH` to trust internal certificate authorities without disabling TLS certificate verification. Mage reads the certificates when its process starts, merges them with the default CA bundle, and configures common Python and command-line HTTPS clients to use the merged bundle.
+
+## Prepare the certificate directory
+
+`TRUSTED_CA_CERTS_PATH` must point to a directory containing the trusted root and any required intermediate CA certificates.
+
+Certificate files must:
+
+- Use a `.crt`, `.pem`, or `.cer` filename, or have no extension.
+- Be PEM encoded and contain one or more `-----BEGIN CERTIFICATE-----` blocks. DER-encoded `.cer` files are not supported.
+
+Mage ignores hidden files and certificate files that do not contain a complete PEM certificate block.
+
+## Configure Docker
+
+Mount the certificate directory in the Mage container and set `TRUSTED_CA_CERTS_PATH` to the container path. For Docker Compose, merge the following settings into the Mage service:
+
+```yaml
+services:
+  mage:
+    environment:
+      TRUSTED_CA_CERTS_PATH: /etc/mage/trusted-ca
+    volumes:
+      - ./trusted-ca:/etc/mage/trusted-ca:ro
+```
+
+Restart the Mage container after changing the mount or environment variable.
+
+## Configure Kubernetes with Helm
+
+Create a Kubernetes Secret containing the CA certificate files, then add the volume, mount, and environment variable to the Mage Helm `values.yaml`:
+
+```yaml
+extraVolumes:
+  - name: internal-ca
+    secret:
+      secretName: <ca-secret-name>
+
+extraVolumeMounts:
+  - name: internal-ca
+    mountPath: /etc/mage/trusted-ca
+    readOnly: true
+
+config:
+  TRUSTED_CA_CERTS_PATH: /etc/mage/trusted-ca
+```
+
+Apply the Helm upgrade and restart the affected Mage runtimes so they load the certificate directory during startup.
+
+### Kubernetes workspaces
+
+For Mage Pro workspaces, also configure the workspace manager to inherit the CA volume into workspace pods:
+
+```yaml
+config:
+  TRUSTED_CA_CERTS_PATH: /etc/mage/trusted-ca
+  WORKSPACE_INHERIT_VOLUMES: internal-ca
+```
+
+`WORKSPACE_INHERIT_VOLUMES` is a comma-separated list of Kubernetes volume names to copy, with their matching mounts, from the workspace manager into workspace pod specifications. Use the volume name (`internal-ca` in this example), not the Kubernetes Secret name.
+
+After upgrading the Helm release, restart the workspace manager and update or recreate affected workspaces so Mage regenerates their pod specifications. Restarting an existing workspace pod alone does not add a missing volume.
+
+## Confirm the trust bundle loaded
+
+When Mage starts successfully in Docker or Kubernetes, its logs include:
+
+```text
+Trust store updated: added <number> custom CA(s) from /etc/mage/trusted-ca
+```
+
+Mage sets `REQUESTS_CA_BUNDLE`, `SSL_CERT_FILE`, and `CURL_CA_BUNDLE` inside its process to the generated merged bundle. A shell opened separately in the same container does not necessarily inherit those values, so validate the connection through the Mage runtime that executes the pipeline.
+
+## Verify certificate trust
+
+Test a read-only internal HTTPS endpoint from a Mage block:
+
+```python
+import requests
+
+response = requests.get(
+    'https://<internal-host>/<read-only-endpoint>',
+    timeout=30,
+)
+response.raise_for_status()
+```
+
+Keep certificate verification enabled. Do not use `verify=False` or explicitly set `verify=certifi.where()`, because either option disables or bypasses the merged Mage trust bundle.
+
+If verification still fails, confirm that the certificate directory is mounted in the runtime executing the request, the Mage startup log reports the expected certificates, and the server presents its required intermediate certificate chain.

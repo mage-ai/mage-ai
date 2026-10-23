@@ -1,0 +1,31 @@
+---
+title: 'Update agent'
+sidebarTitle: 'Update agent'
+description: 'Update the YAML source of truth for an agent.'
+---
+
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="agents-api" />
+
+```http
+PUT /api/agents/{agent_uuid}
+```
+
+```json
+{
+  "agent": {
+    "name": "Customer support agent",
+    "description": "Routes urgent support questions.",
+    "instructions": "Classify the request and recommend escalation.",
+    "actions": [
+      {
+        "pipeline_uuid": "support_workflows",
+        "block_uuid": "triage_ticket"
+      }
+    ]
+  }
+}
+```
+
+Updates write directly to the agent YAML file. Agent versions and rollback records are not created.

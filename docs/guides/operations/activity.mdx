@@ -1,0 +1,79 @@
+---
+title: "Activity"
+sidebarTitle: "Activity"
+icon: "list-check"
+description: "Review workspace audit logs in Mage Pro."
+---
+
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="activity" />
+
+The Activity page gives administrators a searchable audit log for the selected Mage Pro workspace. Use it to investigate pipeline changes, review access and security events, confirm integration activity, and export the current set of visible audit records.
+
+## Access Activity
+
+Open **Tools** in the left navigation and select **Activity** while you are inside a workspace. Activity is available to administrators only. Users without administrator access cannot view the page, and sharing an Activity URL does not grant access to anyone who is not already authorized.
+
+Activity is scoped to the selected workspace. Switch workspaces to review audit events for a different environment.
+
+## Choose an activity category
+
+Select a tab to focus the audit log on a category of workspace activity:
+
+| Category | What it contains |
+| --- | --- |
+| **Pipeline Activity** | Pipeline, block, run, trigger, schedule, tag, variable, template, and execution activity. |
+| **Terminal** | Terminal command activity. |
+| **AI/LLM** | AI Sidekick prompts and responses, and LLM tool calls and outcomes. |
+| **Access & Security** | User, role, permission, secret, OAuth, token, and session activity. |
+| **Integrations & API** | Data provider, integration source, integration destination, sync, webhook, event, and API-related activity. |
+| **Infrastructure** | Workspace, project, deployment, Git, compute, kernel, job, and Spark activity. |
+
+Changing tabs resets the current search, filters, and page so the list starts from the beginning of the selected category.
+
+## Search and filter events
+
+Use the search field to find events by action, target, source, event details, or actor. Actor search matches the displayed full name, username, and email address, so searching for a user's first and last name returns events shown under that actor.
+
+Combine search with filters to narrow the audit log:
+
+| Filter | Use it to |
+| --- | --- |
+| **Time** | Limit the list to recent activity, such as the last hour, day, or three days. |
+| **Result** | Show only successful, failed, warning, or error events. |
+| **Source** | Separate events created from the UI, API, Terminal, AI Sidekick, LLM, system processes, webhooks, or other sources. |
+| **Actor** | Review events created by a specific user. |
+
+Filters are combined together. For example, search for a pipeline name, choose **API** as the source, and choose **Failure** as the result to review failed API changes related to that pipeline.
+
+## Review event details
+
+The table shows each event's time, source, action, actor, target, and result. Select a row to open the detail panel and inspect the full details available for that record. AI/LLM events can include model, prompt, response, response time, tool, tool input and output, token usage, pipeline, routine run, session, turn, approval, outcome, and error fields when those values are available. JSON-shaped detail values are shown as formatted JSON so nested tool inputs, outputs, and errors are easier to review. Expand long JSON or chart-shaped values to inspect them in a scrollable modal.
+
+Use **Download** in the detail panel to export the selected event details to CSV. The detail export includes the common event metadata and any category-specific fields, including AI/LLM details for AI Sidekick and LLM audit events.
+
+If you change tabs, search, filter, or move to a page where the selected event is no longer visible, Mage clears the detail panel so it does not show a stale event.
+
+## Page through results
+
+Activity shows 30 events per page. The toolbar shows the current range and total number of matching events, such as **1-30 of 228 events**. Use the pagination controls below the table to move between pages.
+
+Searches and filters apply across all matching audit events in the selected category, not only the currently visible page. When you change a tab, search, or filter, Activity returns to the first page of the new result set.
+
+## Save or share a view
+
+The selected category, search term, filters, and page are stored in the browser URL. You can refresh the page, use browser back and forward, or share the URL with another authorized administrator to reopen the same view.
+
+## Export visible events
+
+Use **Download page** to export the currently displayed page of events to CSV. The export reflects the active category, search, filters, and page, but it does not export every matching page at once.
+
+## Scope and limitations
+
+- Activity shows audit events for the selected workspace only.
+- Activity requires administrator access.
+- URL-backed views preserve the selected view, but they do not bypass permissions.
+- **Download page** exports only the visible page of results.
+- AI/LLM audit metadata is sanitized before it is written. Sensitive keys and common token or secret patterns are redacted, and oversized values are generally truncated. AI response text is the exception: after redaction, the full response is retained for audit export even when the UI shows only a preview, so prompt, response, tool-call, and approval exports should still be treated as sensitive operational data.
+- If no events match the selected category, search, and filters, Activity shows an empty result state.
