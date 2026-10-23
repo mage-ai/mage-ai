@@ -7,11 +7,9 @@ def is_model_sklearn(data: Any) -> bool:
         return False
 
     try:
-        from sklearn.base import BaseEstimator, is_classifier, is_regressor
+        from sklearn.base import BaseEstimator
 
-        return (
-            is_classifier(data) or is_regressor(data) or isinstance(data, BaseEstimator)
-        )
+        return isinstance(data, BaseEstimator)
     except ImportError as err:
         print(f"Error importing sklearn: {err}")
         return False
