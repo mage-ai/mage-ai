@@ -134,7 +134,11 @@ function LogToolbar({
 
   return (
     <Spacing py={1}>
-      <FlexContainer alignItems="center">
+      <FlexContainer
+        alignItems="center"
+        flexWrap="wrap"
+        style={{ gap: UNIT }}
+      >
         <KeyboardShortcutButton
           {...SHARED_BUTTON_PROPS}
           disabled={allPastLogsLoaded}
@@ -147,8 +151,6 @@ function LogToolbar({
           {allPastLogsLoaded ? 'All past logs within range loaded' : 'Load older logs'}
         </KeyboardShortcutButton>
 
-        <Spacing mr={1} />
-
         <KeyboardShortcutButton
           {...SHARED_BUTTON_PROPS}
           disabled={q?._offset <= 0}
@@ -160,8 +162,6 @@ function LogToolbar({
         >
           Load newer logs
         </KeyboardShortcutButton>
-
-        <Spacing mr={2} />
 
         <Select
           compact
@@ -184,7 +184,7 @@ function LogToolbar({
           }}
           paddingRight={UNIT * 4}
           placeholder="Select time range"
-          value={selectedRange}
+          value={selectedRange || ''}
         >
           {Object.values(LogRangeEnum).map(range => (
             <option key={range} value={range}>
@@ -192,8 +192,6 @@ function LogToolbar({
             </option>
           ))}
         </Select>
-
-        <Spacing mr={1} />
 
         {selectedRange === LogRangeEnum.CUSTOM_RANGE && (
           <>
