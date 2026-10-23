@@ -242,7 +242,7 @@ class PipelineRunProjectPlatformMixin:
             extra_variables = dict()
 
         pipeline_run_variables = self.variables or {}
-        event_variables = self.event_variables or {}
+        event_variables = self.event_variables if self.event_variables is not None else {}
 
         variables = merge_dict(
             merge_dict(
@@ -255,17 +255,26 @@ class PipelineRunProjectPlatformMixin:
             pipeline_run_variables,
         )
 
-        # For backwards compatibility
-        for k, v in event_variables.items():
-            if k not in variables:
-                variables[k] = v
+        # For backwards compatibility, object event payloads are also exposed as top-level
+        # variables. Non-object payloads remain available through the event variable below.
+        if isinstance(event_variables, dict):
+            for k, v in event_variables.items():
+                if k not in variables:
+                    variables[k] = v
 
         if self.execution_date:
             variables['ds'] = self.execution_date.strftime('%Y-%m-%d')
             variables['hr'] = self.execution_date.strftime('%H')
 
         variables['env'] = ENV_PROD
-        variables['event'] = merge_dict(variables.get('event', {}), event_variables)
+        if isinstance(event_variables, dict):
+            event = variables.get('event', {})
+            variables['event'] = merge_dict(
+                event if isinstance(event, dict) else {},
+                event_variables,
+            )
+        else:
+            variables['event'] = event_variables
         variables['execution_date'] = self.execution_date
         variables['execution_partition'] = self.execution_partition
 
