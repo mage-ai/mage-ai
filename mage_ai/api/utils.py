@@ -131,26 +131,32 @@ def parse_cookie_header(cookies_raw):
     return cookies
 
 
-def get_query_timestamps(query_arg) -> Tuple[datetime, datetime]:
-    start_timestamp = query_arg.get('start_timestamp', [None])
+def get_query_timestamps(
+    query_arg,
+    start_key: str = 'start_timestamp',
+    end_key: str = 'end_timestamp',
+) -> Tuple[datetime, datetime]:
+    start_timestamp = query_arg.get(start_key, [None])
     if start_timestamp:
         start_timestamp = start_timestamp[0]
-    end_timestamp = query_arg.get('end_timestamp', [None])
+    end_timestamp = query_arg.get(end_key, [None])
     if end_timestamp:
         end_timestamp = end_timestamp[0]
 
+    # TODO: Consider gracefully handling invalid timestamps (e.g. skip filtering)
+    # instead of raising an error. Keeping existing behavior unchanged for now.
     error = ApiError.RESOURCE_INVALID.copy()
     if start_timestamp:
         try:
             start_timestamp = datetime.fromtimestamp(int(start_timestamp))
         except (ValueError, OverflowError):
-            error.update(message='Value is invalid for start_timestamp.')
+            error.update(message=f'Value {start_timestamp} is invalid for {start_key}.')
             raise ApiError(error)
     if end_timestamp:
         try:
             end_timestamp = datetime.fromtimestamp(int(end_timestamp))
         except (ValueError, OverflowError):
-            error.update(message='Value is invalid for end_timestamp.')
+            error.update(message=f'Value {end_timestamp} is invalid for {end_key}.')
             raise ApiError(error)
 
     return start_timestamp, end_timestamp
