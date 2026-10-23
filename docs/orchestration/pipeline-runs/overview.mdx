@@ -5,6 +5,8 @@ description: "Learn how to monitor, manage, and troubleshoot pipeline runs in Ma
 keywords: ["pipeline runs", "pipeline execution", "monitoring", "troubleshooting", "block runs", "pipeline status", "execution history"]
 ---
 
+import { ProOnly } from '/snippets/pro/only.mdx';
+
 ## Overview
 
 Pipeline runs represent **individual executions of your data pipelines** in Mage. Each time a pipeline is triggered (manually or automatically), a pipeline run record is created that tracks the entire execution process, including all block runs, status updates, timing information, and any errors that occur.
@@ -106,6 +108,8 @@ all applied filters while preserving unrelated list state such as search, date r
 </Info>
 
 #### Project-Wide Batch Operations
+
+<ProOnly source="project-wide-pipeline-run-actions" />
 
 The project-wide **Pipeline runs** page supports Mage Pro-only batch actions
 across all pipelines. Selected-run actions operate on the selected runs, while
