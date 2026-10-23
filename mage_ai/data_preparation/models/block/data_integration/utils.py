@@ -29,6 +29,7 @@ from mage_ai.data_preparation.models.block.data_integration.constants import (
     KEY_SCHEMA,
     KEY_STREAM,
     KEY_TABLE,
+    KEY_TRUNCATE_BEFORE_REPLICATION,
     KEY_TYPE,
     KEY_UNIQUE_CONFLICT_METHOD,
     KEY_UNIQUE_CONSTRAINTS,
@@ -562,7 +563,7 @@ def execute_data_integration(
         filename = output_filename(index) if index is not None else None
         with variable.open_to_write(filename) as f:
             for line in proc.stdout:
-                f.write(line.decode()),
+                f.write(line.decode())
                 print_log_from_line(
                     line,
                     config=config,
@@ -966,6 +967,7 @@ def __execute_destination(
             KEY_KEY_PROPERTIES,
             KEY_PARTITION_KEYS,
             KEY_REPLICATION_METHOD,
+            KEY_TRUNCATE_BEFORE_REPLICATION,
             KEY_UNIQUE_CONFLICT_METHOD,
             KEY_UNIQUE_CONSTRAINTS,
             KEY_STREAM,
