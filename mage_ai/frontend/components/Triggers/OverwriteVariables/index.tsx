@@ -20,11 +20,49 @@ type OverwriteVariablesProps = {
   borderless?: boolean;
   compact?: boolean;
   enableVariablesOverwrite: boolean;
-  originalVariables?: { [keyof: string]: string };
-  runtimeVariables: { [keyof: string]: string };
-  setEnableVariablesOverwrite: (enableVariablesOverwrite: boolean) => void;
+  originalVariables?: { [keyof: string]: any };
+  runtimeVariables: { [keyof: string]: any };
+  setEnableVariablesOverwrite?: (enableVariablesOverwrite: boolean) => void;
   setRuntimeVariables: (runtimeVariables: any) => void;
 };
+
+function formatRuntimeVariableValue(value: any): string {
+  if (typeof value === 'undefined') {
+    return '';
+  } else if (typeof value === 'string') {
+    if (shouldUseTextAreaForValue(value)) {
+      return JSON.stringify(JSON.parse(value), null, 2);
+    }
+
+    return value;
+  } else if (typeof value === 'object') {
+    try {
+      return JSON.stringify(value, null, 2);
+    } catch {
+      return String(value);
+    }
+  }
+
+  return String(value);
+}
+
+function shouldUseTextAreaForValue(value: any): boolean {
+  if (value !== null && typeof value === 'object') {
+    return true;
+  }
+
+  if (typeof value !== 'string' || !isJsonString(value)) {
+    return false;
+  }
+
+  const parsedValue = JSON.parse(value);
+
+  return (
+    typeof parsedValue === 'object'
+    && !Array.isArray(parsedValue)
+    && parsedValue !== null
+  );
+}
 
 function OverwriteVariables({
   borderless,
@@ -40,31 +78,34 @@ function OverwriteVariables({
   const [newVariableValue, setNewVariableValue] = useState(null);
 
   useEffect(() => {
-    const textAreaElementMappingInit = Object.entries(runtimeVariables || {})
-      .reduce((acc, keyValPair) => {
-        const [uuid, val] = keyValPair;
-        const isUsingTextAreaEl = isJsonString(val)
-          && typeof JSON.parse(val) === 'object'
-          && !Array.isArray(JSON.parse(val))
-          && JSON.parse(val) !== null;
+    setTextAreaElementMapping(prev => {
+      let mappingChanged = false;
+      const runtimeVariableMapping = Object.entries(runtimeVariables || {})
+        .reduce((acc, [uuid, val]) => {
+          if (typeof prev?.[uuid] !== 'undefined') {
+            return {
+              ...acc,
+              [uuid]: prev[uuid],
+            };
+          }
 
-        return {
-          ...acc,
-          [uuid]: isUsingTextAreaEl,
-        };
-      }, {});
+          mappingChanged = true;
 
-    setTextAreaElementMapping(textAreaElementMappingInit);
+          return {
+            ...acc,
+            [uuid]: shouldUseTextAreaForValue(val),
+          };
+        }, {});
 
-  /*
-   * The runtimeVariables prop is intentionally excluded from the dependency array
-   * because adding it would convert the input element back to a normal TextInput
-   * component once the user edits the variable value.
-   */
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+      return mappingChanged
+        || Object.keys(prev || {}).length !== Object.keys(runtimeVariableMapping || {}).length
+        ? runtimeVariableMapping
+        : prev;
+    });
+  }, [runtimeVariables]);
 
-  const buildValueRowEl = (uuid: string, value: string) => {
+  const buildValueRowEl = (uuid: string, value: any) => {
+    const formattedValue = formatRuntimeVariableValue(value);
     const sharedValueElProps = {
       borderless: true,
       key: `variable_uuid_input_${uuid}`,
@@ -78,15 +119,15 @@ function OverwriteVariables({
       },
       paddingHorizontal: 0,
       placeholder: 'Variable value',
-      value,
+      value: formattedValue,
     };
 
     if (textAreaElementMapping[uuid]) {
       return (
         <TextArea
           {...sharedValueElProps}
-          rows={1}
-          value={value}
+          rows={Math.min(formattedValue.split('\n').length, 6)}
+          value={formattedValue}
         />
       );
     }
@@ -130,7 +171,7 @@ function OverwriteVariables({
             },
             {
               label: () => '',
-              uuid: 'Action'
+              uuid: 'Action',
             },
           ]}
           rows={Object.entries(runtimeVariables).map(([uuid, value]) => [
@@ -146,7 +187,7 @@ function OverwriteVariables({
               <Button
                 iconOnly
                 onClick={() => {
-                  setRuntimeVariables(prev => ignoreKeys(prev, [uuid]))
+                  setRuntimeVariables(prev => ignoreKeys(prev, [uuid]));
                 }}
               >
                 <Trash default />
