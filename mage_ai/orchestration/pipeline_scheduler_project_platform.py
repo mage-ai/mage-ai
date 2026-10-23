@@ -843,8 +843,23 @@ class PipelineScheduler:
         crashed_runs = []
         for br in running_or_queued_block_runs:
             if not job_manager.has_block_run_job(br.id):
-                br.update(status=BlockRun.BlockRunStatus.INITIAL)
-                crashed_runs.append(br)
+                # Check retry configuration before resetting to INITIAL
+                # Priority: block retry_config > repo retry_config (open source only)
+                block = self.pipeline.get_block(br.block_uuid)
+                retry_config = None
+
+                if block and block.retry_config:
+                    retry_config = block.retry_config
+                else:
+                    retry_config = self.pipeline.repo_config.retry_config or {}
+
+                # Only reset to INITIAL if retries > 0, otherwise mark as permanently failed
+                if retry_config and retry_config.get('retries', 0) > 0:
+                    br.update(status=BlockRun.BlockRunStatus.INITIAL)
+                    crashed_runs.append(br)
+                else:
+                    # Mark as permanently failed - no retry
+                    br.update(status=BlockRun.BlockRunStatus.FAILED)
 
         return crashed_runs
 
