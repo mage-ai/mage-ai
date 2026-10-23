@@ -881,6 +881,8 @@
                 "pages": [
                   "integrations/databases/Algolia",
                   "integrations/databases/Athena",
+                  "integrations/databases/AzureBlobStorage",
+                  "integrations/databases/AzureDataLakeStorage",
                   "integrations/databases/BackblazeB2",
                   "integrations/databases/BigQuery",
                   "integrations/databases/Chroma",
@@ -888,27 +890,25 @@
                   "integrations/databases/Databricks",
                   "integrations/databases/Druid",
                   "integrations/databases/DuckDB",
+                  "integrations/databases/GoogleCloudStorage",
                   "integrations/databases/GoogleSheets",
                   "integrations/databases/MicrosoftFabricWarehouse",
                   "integrations/databases/MicrosoftSQLServer",
                   "integrations/databases/MongoDB",
                   "integrations/databases/MotherDuck",
                   "integrations/databases/MySQL",
+                  "integrations/databases/OracleDB",
                   "integrations/databases/Pinot",
+                  "integrations/databases/PowerBI",
                   "integrations/databases/PostgreSQL",
                   "integrations/databases/Qdrant",
                   "integrations/databases/Redshift",
                   "integrations/databases/S3",
                   "integrations/databases/Snowflake",
+                  "integrations/databases/Spark",
                   "integrations/databases/SQLite",
                   "integrations/databases/trino",
-                  "integrations/databases/Weaviate",
-                  "integrations/databases/AzureBlobStorage",
-                  "integrations/databases/AzureDataLakeStorage",
-                  "integrations/databases/GoogleCloudStorage",
-                  "integrations/databases/OracleDB",
-                  "integrations/databases/PowerBI",
-                  "integrations/databases/Spark"
+                  "integrations/databases/Weaviate"
                 ]
               }
             ]
