@@ -5,6 +5,9 @@ from mage_ai.shared.enum import StrEnum
 class DataType(StrEnum):
     DATA_FRAME = 'data_frame'
     IMAGE_PNG = 'image/png'
+    IMAGE_JPEG = 'image/jpeg'
+    IMAGE_GIF = 'image/gif'
+    IMAGE_WEBP = 'image/webp'
     PROGRESS = 'progress'  # Deprecated; can come from Great Expectations
     PROGRESS_STATUS = 'progress_status'  # Comes from execute_custom_code.py
     GROUP = 'group'
