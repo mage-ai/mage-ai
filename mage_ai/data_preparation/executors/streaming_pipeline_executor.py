@@ -2,6 +2,7 @@ import asyncio
 import copy
 import logging
 import os
+import threading
 import traceback
 from contextlib import redirect_stderr, redirect_stdout
 from datetime import datetime
@@ -23,6 +24,8 @@ from mage_ai.orchestration.db.models.schedules import PipelineRun
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.retry import retry
 from mage_ai.usage_statistics.logger import UsageStatisticLogger
+
+LOG_UPLOAD_INTERVAL = 30  # seconds
 
 
 class StreamingPipelineExecutor(PipelineExecutor):
@@ -93,6 +96,11 @@ class StreamingPipelineExecutor(PipelineExecutor):
         else:
             self.logger = DictLogger(self.logger_manager.logger, logging_tags=tags)
             stdout = StreamToLogger(self.logger, logging_tags=tags)
+
+        # Set up a separate thread to upload logs periodically
+        self.timer = threading.Timer(LOG_UPLOAD_INTERVAL, self.__upload_logs)
+        self.timer.start()
+
         try:
             if retry_config is None:
                 retry_config = self.pipeline.retry_config or dict()
@@ -302,6 +310,9 @@ class StreamingPipelineExecutor(PipelineExecutor):
                 error=error_msg,
                 stacktrace=stacktrace,
             )
+
+    def __upload_logs(self):
+        self.logger_manager.output_logs_to_destination()
 
     def __execute_in_flink(self):
         """
