@@ -9,14 +9,24 @@ import { ProOnly } from '/snippets/pro/only.mdx';
 
 ## Requirements
 
-- Python **3.10** or newer
 - A Mage Pro cluster (URL + account credentials)
+- Your chosen AI client
+- Python **3.10** or newer for PyPI or source installation; bundled installers
+  and the Claude Desktop extension include the Mage Agent executable
 
 ## Download from Mage Pro
 
-In Mage Pro, open **Settings** > **Platform** > **Mage Agent** to download the latest Mage Agent installer for Claude Code or OpenAI Codex CLI.
+In Mage Pro, open **Settings** > **Plugins** > **Mage Agent** to download the latest Mage Agent installer for Claude Code or OpenAI Codex CLI.
 
 The page lists the latest GitHub release assets for macOS and Windows, including file sizes and checksums. Download links use GitHub's stable latest-release asset URLs, so Mage Pro does not need source changes when release tags or asset URLs change. Use the download that matches your operating system and AI coding client, then follow the prompts from the installer.
+
+## Claude Desktop extension
+
+Claude Desktop uses a separate `.mcpb` extension for macOS or Windows. It
+includes the standalone Mage Agent executable and does not require Python or
+Claude Code. See the [plugin installation guide](/agent/mage-agent-plugin#claude-desktop)
+for package selection and setup. The Claude Code `.pkg` and `.zip` installers
+are for Claude Code.
 
 ## Install from PyPI
 

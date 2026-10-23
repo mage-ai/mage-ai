@@ -5,7 +5,6 @@ icon: "code-compare"
 description: "Local file edit tracking and version history for restoring changes made in the past."
 ---
 
-import { ProButton } from '/snippets/pro/button.mdx';
 import { ProOnly } from '/snippets/pro/only.mdx';
 
 <ProOnly source="file-versioning" />
@@ -30,18 +29,23 @@ Every update to a file's contents automatically creates a new version that can b
     </p>
 </Frame>
 
-3. **Select a version** – Choose the version you want to restore from the available options
-4. **Restore** – Click the "Restore this version" button to apply the changes
+3. **Compare versions** – Version history selects the most recent saved version by default. Choose another version from the newest-first list when needed. Use **Split** to show the current saved file in the **Current** pane on the left and the selected historical version in the **Version** pane on the right, or use **Inline** to review the changes in one editor. On narrow screens, the comparison automatically uses the inline layout.
+4. **Restore** – Review the highlighted changes, then click the **Restore version** button to apply the selected version
 
-<Frame>
-    <p align="center">
-        <img
-            alt="Change version history"
-            src="https://raw.githubusercontent.com/mage-ai/assets/main/pro/features/change-version-history.png"
-        />
-    </p>
-</Frame>
+To leave version history without restoring a version, click **Back to current file**.
 
 Once restored, the selected version becomes the current active version of your file.
+
+### Opening Version History from Activity
+
+When an Activity audit event targets a file, Mage records the file path in the event details and shows readable file actions such as **Created file** and **Updated file**. URL-derived file paths are decoded for display, while literal percent sequences provided in request payload paths are preserved. You can search Activity with the full path or a filename segment to find the event, then click **Open versions** in the detail panel to open that file in Coder with version history visible.
+
+You can also link directly to the same Coder view by adding both `paths[]` and `file_versions_path` to the URL:
+
+```text
+/apps/coder?paths[]=/home/src/demo/pipelines/example.py&file_versions_path=/home/src/demo/pipelines/example.py
+```
+
+When Coder opens or reloads with `file_versions_path`, it loads the file, opens version history, and selects the most recent saved version automatically. The history panel preserves the normal newest-first version list; select another saved version to compare it with the current saved file or restore it.
 
 Version history gives you the confidence to experiment and iterate freely without fear of losing work. If you make a mistake or need to reference previous logic, you can always roll back to any saved version.

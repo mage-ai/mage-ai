@@ -5,6 +5,10 @@ icon: "gavel"
 description: "Install dependencies using requirements.txt with automatic environment management"
 ---
 
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="dependency-installation" />
+
 Mage Pro includes an advanced dependency management system that automatically creates and manages isolated virtual environments for your projects. Adding new packages is simple and doesn't require cluster restarts - you can immediately run your code after installation.
 
 ## Quick Start: Installing Dependencies via UI
@@ -23,7 +27,7 @@ Installing dependencies in Mage Pro can be done through the requirements.txt fil
 
 ### Steps:
 
-1. **Navigate to the Terminal page** in your Mage workspace
+1. Open **Tools** in the left navigation, then select **Editor**
 
 2. **Open `requirements.txt`**: Browse to `/home/src/[project_path]/requirements.txt` and click to open it in the editor
 
@@ -90,7 +94,7 @@ Follow these steps to add and install requirements:
 
 1. Click the requirements.text file to open the file in your editor
 2. Add your packages to the file and save it
-3. Navigate to the terminal page
+3. Open **Tools** in the left navigation, then select **Terminal**
 4. Run `pip install -r requirements.txt`
 
 <img
@@ -98,4 +102,4 @@ Follow these steps to add and install requirements:
     src="https://raw.githubusercontent.com/mage-ai/assets/main/pro/cloud/pip-install-r.png"
 />
 
-Following this steps will install your requirements and you will not need to restart the cluster after installation. You can run your code as written 
+Following this steps will install your requirements and you will not need to restart the cluster after installation. You can run your code as written

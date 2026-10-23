@@ -4,6 +4,8 @@ sidebarTitle: "Overview"
 description: "Learn how to configure and manage pipeline triggers in Mage"
 ---
 
+import { ProOnly } from '/snippets/pro/only.mdx';
+
 ## Overview
 
 Pipeline triggers are automated scheduling mechanisms that determine **when and how data pipelines should run** in Mage. A single pipeline can have multiple triggers, each with different configurations for various use cases like production runs, testing, or data backfills.
@@ -169,6 +171,13 @@ To view all triggers for a specific pipeline:
    - Direct URL: `/pipelines/[pipeline_uuid]/triggers`
 3. You'll see a comprehensive table listing all configured triggers with the following information:
 
+Frequency, status, tag, and type filters are preserved when you navigate away and return to this
+pipeline's Triggers page during the same browser session. Saved filters are scoped to the pipeline.
+They are removed when you select **Clear** and are not restored in a new browser session unless they
+are part of the URL you open.
+Applied filters appear in a band below the toolbar. Select an individual chip to remove one value,
+or select **Clear** to remove all applied filters while preserving unrelated list state.
+
 #### Project-Wide Trigger Dashboard
 
 To view all triggers across your entire project:
@@ -177,6 +186,14 @@ To view all triggers across your entire project:
 2. Click **Triggers** in the left navigation menu
    - Direct URL: `/triggers`
 3. You'll see all triggers from all pipelines in your project
+
+UUID, type, and status filters are preserved when you navigate away and return during the same
+browser session. Selecting **Clear** removes the saved filters. Free-text search is cleared when you
+leave the page. Saved filters and search text are not restored in a new browser session unless they
+are part of the URL you open.
+On the List view, applied filters appear in a band below the toolbar. Select an individual chip to
+remove one value, or select **Clear** to remove all applied filters while preserving unrelated list
+state.
 
 **Trigger list columns:**
 - **Active** - Toggle switch showing if the trigger is enabled/disabled
@@ -191,6 +208,77 @@ To view all triggers across your entire project:
 - **Created** - Timestamp when the trigger was created (with info icon for details)
 
 You can click on the logs icon to view detailed execution history and logs for each trigger.
+
+#### Day calendar
+
+<ProOnly source="trigger-calendar" />
+
+Open **Triggers → Calendar** to review a day's planned starts and inspect their execution
+status. Calendar is the default tab; **List** and **Load** open the existing trigger and load
+views.
+
+##### Pick a day and filter starts
+
+1. Select a date, type `YYYY-MM-DD`, or choose **Today**.
+2. Search by pipeline or trigger name. Use **All statuses** to filter by execution status,
+   or select the succeeded or failed summary count.
+3. Open **Calendar options** (the three-dot menu) to search for a display timezone or filter
+   by an existing trigger tag. Choose **All trigger tags** to remove the tag filter.
+4. Select **Refresh calendar** to update the selected day. Today's view also refreshes
+   periodically.
+
+Rows represent hours and horizontal positions represent minutes. Hover over the grid for
+an exact time. Entries mark scheduled starts; their width does not show run duration.
+Overlapping entries form groups: **+N** counts additional starts. Tag colors identify
+categories, while separate status badges keep failures visible inside groups. A branch
+icon and count indicate verified downstream runs when available.
+
+Changing the display timezone changes the displayed day and times, not the trigger's UTC
+schedule. The default follows your local-time display preference; an explicit calendar
+selection takes precedence. Daylight-saving transitions can add or remove hour rows.
+
+##### Inspect a scheduled start
+
+Select an entry to open its details. For a group, choose an occurrence from the list;
+**Back** returns to that group. Different triggers remain separate occurrences even when
+they belong to the same pipeline.
+
+Open **Timing details** to see the interval or cron, UTC schedule timezone, display timezone,
+trigger ID, and available execution start and end times. Select the pipeline name, trigger
+name, or **run** button to open its page in a new tab. The panel toggle beside **Refresh
+calendar** hides or reopens details while retaining your selection.
+
+**Unconfirmed** means a start is due but no execution is confidently matched; it does not
+mean failure. **Unknown** means execution data cannot be verified. **All statuses** also
+includes waiting, unconfirmed, and unknown states that have no individual filter option.
+A downstream failure does not change the selected execution's own status.
+
+##### Trace connected runs
+
+For a matched execution, review the downstream summary, then select **lineage ↗** to open
+its graph. Select a failed or blocked count to focus an affected execution directly.
+
+Pan, zoom, or fit the graph; search for a pipeline and choose a matching run, or select a
+node to inspect it. **View run** opens the execution in a new tab. Close the modal to return
+to the same calendar selection. The modal keeps its opening snapshot; close and reopen it
+to see refreshed relationships.
+
+Lineage shows recorded execution links, including serial and parallel branches, with each
+run counted once. It does not predict the next pipeline after success or dependencies for
+unstarted schedules. Downstream runs are not added as calendar starts unless independently
+scheduled. Results are bounded and permission-filtered: **Some connections unavailable**
+means verified counts are partial. **Execution lineage unavailable** offers a retry action;
+neither state establishes that no dependencies exist.
+
+<Info>
+  The calendar plots enabled, recurring time triggers using current settings. Past dates do
+  not preserve historical schedule configurations. Disabled, run-once, always-on, landing-time,
+  and streaming schedules are omitted. Known manual, API, backfill, and dependency-triggered
+  runs are excluded from scheduled-run matching; older runs may lack origin information.
+  Unsupported schedules, missing metadata, unavailable data, or result limits can make the
+  calendar incomplete. An alert appears even when some starts remain visible; an incomplete
+  empty day is identified separately. Summary counts describe the records shown.
+</Info>
 
 **Enabling/Disabling triggers:**
 - **From trigger list**: Use the toggle switch in the "Active" column to enable or disable a trigger

@@ -28,10 +28,53 @@ api: "GET /api/pipelines/:pipeline_uuid/logs"
   Example: `1677648116`
 </ParamField>
 
+<ParamField query="end_timestamp" type="integer">
+  Read logs on or before a specified timestamp.
+
+  Example: `1678252916`
+</ParamField>
+
+<ParamField query="level[]" type="array of strings">
+  Read logs matching one or more log levels.
+
+  Example: `INFO`
+</ParamField>
+
+<ParamField query="source_category[]" type="array of strings">
+  Read Mage Pro OpenSearch-backed logs from one or more source categories.
+  Accepted values are `user_code`, `mage_scheduler`, `executor`,
+  `connector_library`, `kubernetes`, `system`, and `unknown`.
+
+  Example: `user_code`
+</ParamField>
+
+<ParamField query="exclude_source_category[]" type="array of strings">
+  Exclude Mage Pro OpenSearch-backed logs from one or more source categories.
+  To hide infrastructure logs, pass `mage_scheduler`, `executor`, `kubernetes`,
+  and `system`.
+
+  Example: `kubernetes`
+</ParamField>
+
+Source category filters require Mage Pro OpenSearch-backed log search. When the
+API falls back to disk logs, responses with active source filters include
+`fallback_from_disk: true`, `source_filters_applied: false`, and
+`source_filter_fallback_reason: "opensearch_unavailable"`. Legacy OpenSearch
+documents are classified from conservative structured fields when possible;
+unclassified entries remain `unknown` and are included in unfiltered results.
+Unsupported source category values return no OpenSearch-backed rows for that
+request instead of being ignored.
+
+<ParamField query="hide_health_check" type="integer">
+  Pass `1` to hide scheduler health-check log entries.
+
+  Example: `1`
+</ParamField>
+
 <RequestExample>
 ```curl cURL
 curl --request GET \
-  --url 'http://localhost:6789/api/pipelines/example_pipeline/logs?_limit=20&_offset=0&start_timestamp=1677648116&api_key=zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2' \
+  --url 'http://localhost:6789/api/pipelines/example_pipeline/logs?_limit=20&_offset=0&start_timestamp=1677648116&exclude_source_category[]=kubernetes&api_key=zkWlN0PkIKSN0C11CfUHUj84OT5XOJ6tDZ6bDRO2' \
   --header 'OAUTH-TOKEN=some_really_long_string' \
 ```
 </RequestExample>
@@ -63,6 +106,9 @@ curl --request GET \
           "path": "very_long_content"
         }
       ],
+      "fallback_from_disk": true,
+      "source_filter_fallback_reason": "opensearch_unavailable",
+      "source_filters_applied": false,
       "total_block_run_log_count": 2,
       "total_pipeline_run_log_count": 2
     }

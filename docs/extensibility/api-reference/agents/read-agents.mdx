@@ -1,0 +1,39 @@
+---
+title: 'Read agents'
+sidebarTitle: 'Read agents'
+description: 'List and fetch YAML-backed agents.'
+---
+
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="agents-api" />
+
+## List Agents
+
+```http
+GET /api/agents
+```
+
+Optional query parameters:
+
+- `_limit`: Maximum number of agents to return.
+- `_offset`: Number of agents to skip.
+
+```json
+{
+  "agents": [],
+  "metadata": {
+    "count": 0,
+    "results": 0,
+    "has_more": false
+  }
+}
+```
+
+## Get Agent
+
+```http
+GET /api/agents/{agent_uuid}
+```
+
+Returns one `agent` object.

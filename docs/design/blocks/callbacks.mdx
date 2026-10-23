@@ -102,12 +102,93 @@ def only_run_this_function_on_cancelled(parent_block_data, **kwargs):
     pass
 ```
 
-### Advanced parameters
-
-import { ProButton } from '/snippets/pro/button.mdx';
 import { ProOnly } from '/snippets/pro/only.mdx';
 
-<ProOnly source="callback" />
+<ProOnly source="pipeline-callbacks" />
+
+## Mage Pro callback features
+
+### Pipeline-level callbacks
+
+In **Mage Pro**, callback blocks can be attached to the pipeline itself instead of only to
+individual parent blocks. Pipeline-level callbacks run once after a pipeline run reaches one of
+these terminal statuses:
+
+- `completed`
+- `failed`
+- `cancelled`
+
+Block-level callbacks continue to run from their parent block status. Pipeline-level callbacks are
+separate and wait for the full pipeline run outcome.
+
+To configure pipeline-level callbacks in the editor:
+
+1. Open the pipeline editor.
+1. Create at least one callback block from the <b>Add-ons</b> panel.
+1. In the callback block footer selector, choose the current pipeline UUID under <b>Pipeline</b>.
+
+The selector groups targets under <b>Pipeline</b> and <b>Blocks</b>. The <b>Pipeline</b> group
+contains only the current pipeline UUID.
+If a callback block still uses block-level-only function signatures with required positional block
+input, such as `def success_callback(parent_block_data, **kwargs)`, the editor still shows the
+current pipeline target. Saving that pipeline target shows a compatibility error because pipeline
+callbacks do not pass `parent_block_data` or other block inputs. To use the callback at the pipeline
+level, make block input arguments optional, for example
+`def success_callback(parent_block_data=None, **kwargs)`, use documented pipeline context keyword
+arguments, or use a kwargs-only signature such as `def success_callback(**kwargs)`. The original
+required-argument signature remains valid for block-level callbacks.
+
+You can also configure the same behavior in the pipeline `metadata.yaml` file or through the
+pipeline create and update API:
+
+```yaml
+callbacks:
+- name: notify stakeholders
+  type: callback
+  uuid: notify_stakeholders
+
+pipeline_callbacks:
+- callback_block_uuid: notify_stakeholders
+  enabled: true
+```
+
+The association controls whether the callback block runs once for the pipeline. The callback block
+code controls terminal-status-specific behavior by defining matching callback functions:
+
+```python
+@callback('success')
+def notify_pipeline_completed(**kwargs):
+    pipeline_run_id = kwargs.get('pipeline_run_id')
+    terminal_status = kwargs.get('terminal_status')
+    print(f'Pipeline run {pipeline_run_id} finished with {terminal_status}.')
+
+
+@callback('failure')
+def notify_pipeline_failed(**kwargs):
+    error_context = kwargs.get('terminal_status')
+
+
+@callback('cancelled')
+def notify_pipeline_cancelled(**kwargs):
+    pipeline_run_id = kwargs.get('pipeline_run_id')
+```
+
+Pipeline-level callbacks receive a safe pipeline-run context instead of upstream block output.
+Available keyword arguments are intentionally minimal:
+
+| Name | Description |
+| --- | --- |
+| `pipeline_run_id` | ID of the pipeline run that triggered the callback. |
+| `terminal_status` | Terminal pipeline run status: `completed`, `failed`, or `cancelled`. |
+
+Use `pipeline_run_id` with existing authorized APIs or models if callback code needs additional
+pipeline-run details.
+
+Run details show each dispatched pipeline callback as a block run with its status and any
+user-code error captured by the normal block-run execution path. Callback statuses can be
+`initial`, `queued`, `running`, `completed`, or `failed`.
+
+### Advanced parameters
 
 In **Mage Pro**, you can pass additional parameters to the `@callback` decorator.
 

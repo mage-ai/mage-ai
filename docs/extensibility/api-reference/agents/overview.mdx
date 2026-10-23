@@ -1,0 +1,35 @@
+---
+title: 'Agents API'
+sidebarTitle: 'Overview'
+description: 'Manage YAML-backed Mage Pro agents.'
+---
+
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="agents-api" />
+
+The Agents API manages AI agent YAML files stored under the project `agents/` folder. Each API-created agent has one backing pipeline and one `type: agent` YAML block file.
+
+Agents use `instructions` for saved default instructions. Runtime calls use `message`.
+
+## Resource Shape
+
+```json
+{
+  "uuid": "customer_support_agent_a1b2",
+  "name": "Customer support agent",
+  "description": "Routes support questions.",
+  "instructions": "Classify the request.",
+  "pipeline_uuid": "customer_support_agent",
+  "actions": [
+    {
+      "pipeline_uuid": "support_workflows",
+      "block_uuid": "triage_ticket"
+    }
+  ],
+  "status": "draft",
+  "endpoint": {}
+}
+```
+
+List responses include only valid agent YAML files with `pipeline_uuid`.

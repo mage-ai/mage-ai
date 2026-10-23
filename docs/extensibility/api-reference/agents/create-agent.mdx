@@ -1,0 +1,26 @@
+---
+title: 'Create agent'
+sidebarTitle: 'Create agent'
+description: 'Create an agent YAML file and backing pipeline.'
+---
+
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="agents-api" />
+
+```http
+POST /api/agents
+```
+
+```json
+{
+  "agent": {
+    "name": "Customer support agent",
+    "description": "Routes support questions.",
+    "instructions": "Classify the request.",
+    "actions": []
+  }
+}
+```
+
+Creating an agent creates one backing pipeline named after the agent and one YAML block file under `agents/`. If `uuid` is omitted, Mage derives it from the cleaned agent name. If that UUID already exists, the request is rejected.

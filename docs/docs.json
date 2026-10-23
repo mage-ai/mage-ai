@@ -42,18 +42,9 @@
             ]
           },
           {
-            "group": "Mage Agent",
+            "group": "Operations",
             "pages": [
-              "agent/introduction",
-              "agent/quickstart",
-              "agent/installation",
-              "agent/mage-agent-plugin",
-              "agent/authentication",
-              "agent/ide-integration",
-              "agent/sync",
-              "agent/mcp-tools",
-              "agent/cli-reference",
-              "agent/troubleshooting"
+              "guides/operations/activity"
             ]
           },
           {
@@ -75,6 +66,7 @@
                 "icon": "microchip-ai",
                 "pages": [
                   "ai/blocks",
+                  "ai/agents",
                   "ai/rag-pipeline",
                   "ai/custom-resources"
                 ]
@@ -190,6 +182,21 @@
               "extensibility/pro-api-reference/deployments/overview",
               "extensibility/pro-api-reference/workspaces/update-workspace"
             ]
+          },
+          {
+            "group": "Mage Agent",
+            "pages": [
+              "agent/introduction",
+              "agent/quickstart",
+              "agent/installation",
+              "agent/mage-agent-plugin",
+              "agent/authentication",
+              "agent/ide-integration",
+              "agent/sync",
+              "agent/mcp-tools",
+              "agent/cli-reference",
+              "agent/troubleshooting"
+            ]
           }
         ]
       },
@@ -234,6 +241,7 @@
                     ]
                   },
                   "design/blocks/dynamic-blocks",
+                  "design/blocks/remote-blocks",
                   {
                     "group": "Resources",
                     "pages": [
@@ -681,7 +689,8 @@
               "production/ci-cd/local-cloud/gitlab-ci-cd",
               "production/ci-cd/local-cloud/buildkite",
               "production/ci-cd/mage/pro",
-              "production/configuring-production-settings/overview"
+              "production/configuring-production-settings/overview",
+              "production/configuring-production-settings/trusted-ca-certificates"
             ]
           },
           {
@@ -755,6 +764,7 @@
               "production/deploying-to-cloud/secrets/mage",
               "production/deploying-to-cloud/secrets/AWS",
               "production/deploying-to-cloud/secrets/Azure",
+              "production/deploying-to-cloud/secrets/Doppler",
               "production/deploying-to-cloud/secrets/GCP",
               "production/deploying-to-cloud/secrets/Vault"
             ]
@@ -763,6 +773,7 @@
             "group": "Authentication",
             "pages": [
               "production/authentication/overview",
+              "production/authentication/password-reset",
               "production/authentication/mfa",
               "production/authentication/okta",
               "production/authentication/microsoft",
@@ -963,6 +974,19 @@
                   "extensibility/api-reference/resources",
                   "extensibility/api-reference/policies",
                   "extensibility/api-reference/presenters"
+                ]
+              },
+              {
+                "group": "Agents",
+                "icon": "user-robot",
+                "pages": [
+                  "extensibility/api-reference/agents/overview",
+                  "extensibility/api-reference/agents/read-agents",
+                  "extensibility/api-reference/agents/create-agent",
+                  "extensibility/api-reference/agents/update-agent",
+                  "extensibility/api-reference/agents/delete-agent",
+                  "extensibility/api-reference/agents/publish-agent",
+                  "extensibility/api-reference/agents/run-agent"
                 ]
               },
               {

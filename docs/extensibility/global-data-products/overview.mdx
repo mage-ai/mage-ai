@@ -6,6 +6,10 @@ icon: "globe"
 "og:image": "https://j.gifs.com/0grLrN.gif"
 ---
 
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="global-data-products" />
+
 <Frame>
     <img
         alt="Global data products"
@@ -63,6 +67,10 @@ blocks depend on it.
 
 A global data product can be added as a block in any pipeline.
 Once added, any other blocks in that pipeline can depend on it or it can depend on other blocks.
+
+When a downstream block depends on a global data product block, Mage passes the selected source
+block outputs through [remote blocks](/design/blocks/remote-blocks). Those
+outputs are available in the downstream block as `kwargs['remote_blocks']`.
 
 ---
 
@@ -128,8 +136,18 @@ If you set the partitions value to 0, then all the partitions will be returned.
 ## Add to a pipeline
 
 In a pipeline, you can add a block and choose `Global data product`.
-After selecting an existing global data product, it’ll be added to the current pipeline as
-a block.
+The data product browser lets you search by name, UUID, description, pipeline, type, source, or
+provider. Group the available data products by type or by pipeline, then select one to
+preview its metadata and the blocks or upstream data products it is derived from. Pipeline-backed
+data products also show the configured output blocks and partition counts when that information is
+available.
+
+Click the **+** button to open the global data products page in a new tab when you need to create or
+manage a data product without leaving the pipeline editor.
+
+Click **Add to workflow** to add a selected pipeline data product to the current pipeline as a
+block. If its pipeline details can’t be loaded, you can still review the available registry metadata
+and add it.
 
 ### Override global settings
 

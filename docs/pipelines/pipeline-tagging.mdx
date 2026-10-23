@@ -12,8 +12,17 @@ In the Mage GUI, pipelines can be filtered and grouped to make it easier to find
 
 ![Filtering pipelines](https://user-images.githubusercontent.com/1066980/255380712-3d86d4ac-255b-4894-8a5f-45c10b7c68c8.gif)
 
-To apply a tag, first right click the desired pipeline and select "Add/Remove tags," then, type or select the desired tags, separated by enter. Tag names are trimmed, must be non-empty, and can contain up to 70 characters.
+In Mage Pro, you can apply or remove tags from the pipeline list by right clicking the desired pipeline and selecting "Update tags." In the modal, type a tag name and press Enter, select an existing matching tag suggestion, or leave a valid typed tag in the field and click "Save." You can add multiple tags this way and remove selected tags as needed.
+
+In Mage Pro, you can also manage tags from a pipeline's settings page. In the **Tags** field, type a tag name and press Enter. You can add multiple tags this way or select existing matching tag suggestions, then click **Save pipeline settings**. Tag names are trimmed, must be non-empty, and can contain up to 70 characters.
 
 Mage will populate a list of existing tags for consistency. Once tags have been applied, you can group/filter your pipelines by tag on the "Pipeline" page.
 
-Filters are sticky, so grouping/filtering and navigating away will preserve your filter settings.
+Status, tag, and type filters appear in a band below the toolbar on the Pipelines page. Select an
+individual chip to remove one value, or select **Clear** to remove all applied filters while
+preserving unrelated list state such as search, grouping, sorting, and page size.
+
+Status, tag, and type filters are preserved when you navigate away and return during the same browser
+session. Free-text search is cleared when you leave the Pipelines page. Saved filters and search text
+are not restored in a new browser session unless they are part of the URL you open. Selecting
+**Clear** also removes the saved filters for the current session.

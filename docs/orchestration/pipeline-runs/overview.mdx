@@ -5,6 +5,8 @@ description: "Learn how to monitor, manage, and troubleshoot pipeline runs in Ma
 keywords: ["pipeline runs", "pipeline execution", "monitoring", "troubleshooting", "block runs", "pipeline status", "execution history"]
 ---
 
+import { ProOnly } from '/snippets/pro/only.mdx';
+
 ## Overview
 
 Pipeline runs represent **individual executions of your data pipelines** in Mage. Each time a pipeline is triggered (manually or automatically), a pipeline run record is created that tracks the entire execution process, including all block runs, status updates, timing information, and any errors that occur.
@@ -52,7 +54,7 @@ Within each pipeline run, individual blocks have their own statuses:
 
 View all pipeline runs across your entire project:
 
-1. **Navigate to the homepage** and click **"Pipeline runs"** in the left navigation
+1. **Navigate to the homepage** and select **Pipeline runs** in Mage OSS or **Runs** in Mage Pro
 2. **Or go directly to** `/pipeline-runs` URL
 3. **Filter** by pipeline, status, or date range, and **search** by pipeline or trigger
 4. **Monitor key metrics** like success rate, average duration, and recent activity
@@ -77,12 +79,25 @@ The pipeline run list page provides comprehensive filtering options:
 - **Pipeline UUID** - Filter by specific pipeline identifiers
 - **Status** - Filter by run status (Cancelled, Done, Failed, Last run failed, Ready, Running)
 - **Pipeline Tag** - Filter by pipeline tags
-- **Date range** - Filter current and past runs by bounded UTC preset ranges (Last hour, Last day, Last week, Last 30 days, Last year), all time, or a custom UTC start and end date
+- **Date range** - Filter current and past runs by bounded UTC preset ranges (Last hour, Last day, Last week, Last 30 days, Last year), all time, or a custom UTC start and end date and time
 - **Search** - Text search by pipeline or trigger (Mage Pro only)
 
 **Filter Actions:**
 - **Apply filters** - Apply selected filter criteria
 - **Reset filters** - Clear all filters and return to defaults
+
+In Mage Pro, select **Custom UTC range** to enter exact start and end values
+directly in the `YYYY-MM-DD HH:mm` inputs, or choose them with the calendar and
+time picker. The inputs keep separators and placeholders in place while you edit,
+and **Apply** remains disabled until both values form a complete valid range.
+
+Pipeline UUID, status, and pipeline tag filters are preserved when you navigate away and return
+during the same browser session. Selecting **Clear** removes the saved filters. Free-text search is
+cleared when you leave the page. Saved filters and search text are not restored in a new browser
+session unless they are part of the URL you open.
+Applied Pipeline UUID, status, and pipeline tag filters also appear in a band below the toolbar for
+current and past runs. Select an individual chip to remove one value, or select **Clear** to remove
+all applied filters while preserving unrelated list state such as search, date range, and page size.
 
 <Info>
   **Mage OSS vs Pro**: 
@@ -91,6 +106,29 @@ The pipeline run list page provides comprehensive filtering options:
   
   The project-wide dashboard shows runs from all pipelines, making it easy to monitor your entire data infrastructure at a glance.
 </Info>
+
+#### Project-Wide Batch Operations
+
+<ProOnly source="project-wide-pipeline-run-actions" />
+
+The project-wide **Pipeline runs** page supports Mage Pro-only batch actions
+across all pipelines. Selected-run actions operate on the selected runs, while
+retry-all and cancel-all actions operate on the current filtered set.
+
+**Project-wide actions:**
+- **Retry selected** - Retry specific selected pipeline runs
+- **Retry all failed** - Retry all failed pipeline runs in the current filtered set
+- **Cancel selected running** - Cancel specific selected Ready or Running pipeline runs (Mage Pro only)
+- **Cancel all running** - Cancel all currently running pipeline runs
+
+**How to use project-wide batch operations:**
+1. **Select pipeline runs** by checking the boxes next to the runs you want to manage
+2. **Click the "Actions" dropdown** to access batch operation options
+3. **Choose your desired action** from the dropdown menu
+4. **Confirm the operation** when prompted
+
+**Cancel selected running** can include runs from different pipelines. It does
+not cancel other active runs in the project.
 
 ### Pipeline-Specific Run History
 
@@ -108,18 +146,23 @@ pipeline's **Runs** page to open the run actions menu. From this menu, you can o
 edit its pipeline, view its logs, select **Copy URL** to copy its direct URL, select **Retry
 pipeline run** to restart the entire run, or select **Retry incomplete blocks** on a failed run
 to resume from its incomplete blocks.
+You can also select a failed run's status chip and choose **Retry incomplete blocks** from
+the status menu; the option remains visible but disabled for runs that cannot be retried.
 **Cancel** is enabled only for running runs, and **Fix with AI** is enabled only for failed
 runs when AI Sidekick is enabled; unavailable actions remain visible but disabled.
 
-#### Batch Operations
+#### Pipeline-Specific Batch Operations
 
-The pipeline-specific run page supports batch operations for managing multiple runs:
+The pipeline-specific **Runs** page supports batch operations for the current
+pipeline.
 
-**Available Batch Actions:**
+**Pipeline-specific actions:**
 - **Retry selected** - Retry specific selected pipeline runs
-- **Retry all incomplete block runs** - Retry all incomplete block runs across the pipeline
-- **Cancel selected running** - Cancel specific selected running pipeline runs
+- **Retry incomplete block runs of selected** - Retry incomplete block runs for selected pipeline runs
+- **Retry all incomplete block runs** - Retry all incomplete block runs across that pipeline
+- **Cancel selected running** - Cancel specific selected Ready or Running pipeline runs
 - **Cancel all running** - Cancel all currently running pipeline runs
+- **Delete selected** - Permanently delete selected pipeline runs after confirmation
 
 **How to Use Batch Operations:**
 1. **Select pipeline runs** by checking the boxes next to the runs you want to manage

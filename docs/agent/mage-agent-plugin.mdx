@@ -3,7 +3,6 @@ title: "Mage Agent Plugin"
 description: "Install the Mage Agent Plugin and connect it to a Mage cluster."
 ---
 
-import { ProButton } from '/snippets/pro/button.mdx';
 import { ProOnly } from '/snippets/pro/only.mdx';
 
 # Mage Agent Plugin Installation Guide
@@ -35,7 +34,8 @@ mage-pro/plugins/mage-agent-plugin
 
 ## Choose The Correct Installer
 
-Use the package that matches your agent client and operating system.
+Use the package that matches your agent client and operating system. Claude
+Code and Claude Desktop use different packages.
 
 macOS:
 
@@ -52,7 +52,49 @@ Mage-Agent-Windows-Claude.zip
 ```
 
 Use the Codex package if you are installing the plugin for Codex. Use the
-Claude package if you are installing it for Claude Code.
+Claude package if you are installing it for Claude Code. For Claude Desktop,
+use the separate `.mcpb` extension described below.
+
+### Claude Desktop
+
+The Claude Desktop extension bundles the standalone Mage Agent executable;
+it does not require Python or the Claude Code CLI. Choose the file for your
+computer:
+
+| Computer | Extension file |
+| --- | --- |
+| macOS with Apple silicon | `Mage-Agent-Claude-Desktop-darwin-arm64.mcpb` |
+| macOS with an Intel processor | `Mage-Agent-Claude-Desktop-darwin-x64.mcpb` |
+| Windows x64 | `Mage-Agent-Claude-Desktop-windows-x64.mcpb` |
+
+It exposes the same shared API-backed tools and bundled skill guidance through
+MCP. Claude Desktop decides how to display and load that guidance.
+
+Use a Desktop extension supplied with the release or test build you are
+installing. The `.pkg` and `.zip` files named for Claude Code install into
+Claude Code and do not register a Claude Desktop extension.
+
+1. In Claude Desktop, open **Settings** > **Extensions** > **Advanced
+   settings** > **Install Extension**, select the `.mcpb` file, and follow the
+   installation prompts.
+2. Enable the Mage extension, then start a conversation.
+3. Ask: "Connect Mage to my cluster" and provide the cluster name or URL.
+4. Complete the Mage sign-in in your browser when prompted, then return to
+   Claude Desktop.
+5. Ask: "What Mage tools are available?" or "List my Mage pipelines."
+
+The extension starts the bundled executable directly. You do not need to
+enter a token into extension settings. The first tool that needs
+authentication can also start browser sign-in automatically.
+If Mage Cloud tools are missing after your first sign-in, restart the
+extension to refresh its tool list.
+
+Claude Desktop reuses the Mage connection stored in
+`~/.mage/agent/config.json`. The selected cluster is shared with other Mage
+Agent clients on the same computer. To change it, ask "Connect Mage to
+`https://your-mage-cluster-url`"; this updates the shared connection. If a
+tool fails, check the active cluster, your access, and the server's feature
+configuration before retrying.
 
 ## Prerequisites
 
@@ -60,7 +102,8 @@ Before installing, make sure you have:
 
 - Access to the Mage cluster you want the agent to use.
 - The cluster name or cluster URL.
-- The correct agent client installed, such as Codex or Claude Code.
+- The correct agent client installed, such as Codex, Claude Code, or Claude
+  Desktop with desktop extension support.
 - For Claude Code, the Claude Code CLI must be installed and support plugins.
 
 For Claude Code, verify:
@@ -212,8 +255,8 @@ After installation and sign-in:
 ## Quick Checklist
 
 - Download installer from `https://github.com/mage-ai/agent-plugin/releases`.
-- Pick Codex or Claude package.
-- Pick macOS `.pkg` or Windows `.zip`.
+- Pick Codex, Claude Code, or Claude Desktop.
+- Pick the matching macOS `.pkg`, Windows `.zip`, or Desktop `.mcpb` file.
 - Install the package.
 - Sign in to Mage.
 - Provide or select the Mage cluster name or URL.

@@ -95,6 +95,14 @@ Then you can run command `mage clean-old-logs [project_path]` to clean up old lo
 A logger is available in the block's context. You can use it to log messages to the block's log file. The logger is passed into
 each block as a keyword argument. You can retrieve the logger by calling `kwargs.get('logger')` within the block.
 
+In Mage Pro, Python and dbt block exceptions are grouped into one structured log
+entry per exception. dbt exception entries preserve the multiline traceback,
+exception type and message, run and block identity, dbt command and model or
+node context when available, redaction status, and truncation metadata when a
+trace is too large to store in full. Secrets in exception text are redacted
+before the log entry is written, so the grouped entry is safe to view, search,
+and download from the Logs page.
+
 Example:
 ```python
 @data_loader

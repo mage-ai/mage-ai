@@ -1,0 +1,30 @@
+---
+title: 'Publish agent'
+sidebarTitle: 'Publish agent'
+description: 'Mark an agent live by upserting an API trigger.'
+---
+
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="agents-api" />
+
+```http
+POST /api/agents/{agent_uuid}/publish
+```
+
+Publishing upserts an API trigger for the backing pipeline, sets `status` to `published`, and writes endpoint metadata to the agent YAML file.
+
+```json
+{
+  "agent_publish": {
+    "uuid": "customer_support_agent_a1b2",
+    "status": "published",
+    "endpoint": {
+      "enabled": true,
+      "pipeline_schedule_id": 42,
+      "streaming_run_path": "/api/agents/customer_support_agent_a1b2/runs",
+      "token_present": true
+    }
+  }
+}
+```

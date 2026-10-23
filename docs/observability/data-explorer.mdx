@@ -38,10 +38,10 @@ discovery to implementation with confidence.
   />
 </Frame>
 
-## Explore data with AI
+## Explain Data
 
-If AI Sidekick is enabled, Data Explorer shows **Explore data with AI** above the
-explorer. Clicking it starts a new Sidekick thread from the Data Explorer page.
+If AI Sidekick is enabled, Data Explorer shows **Explain Data** in the page toolbar.
+Clicking it starts a new Sidekick thread from the Data Explorer page.
 
 Use this when you want Sidekick to help with questions such as:
 
@@ -59,7 +59,7 @@ debugging, validation, or implementation plan.
 
 In Mage Pro, open Data Explorer from either location:
 
-1. Select **Data Explorer** from the sidebar.
+1. Open **Library** in the left navigation, then select **Data**.
 1. Open **Apps**, then select **Data Explorer**.
 
 The page is available at:
@@ -80,7 +80,8 @@ AI-assisted investigation in one page.
 | --- | --- |
 | Connection inventory | See supported IO profiles, saved integration sources, saved integration destinations, and compatible pipeline execution outputs in one searchable list. |
 | Connection filters | Switch between **All**, **IO configs**, **Sources**, and **Destinations** to focus on the kind of system you are investigating. |
-| Schema browser | Browse catalogs or databases, schemas, tables, and columns for supported IO config SQL providers. |
+| Connection management | Select **Add / Manage** in the page toolbar to open the workspace settings page in a new tab, where you can create or update IO config profiles. |
+| Schema browser | Browse catalogs or databases, schemas, tables, and columns for supported IO config SQL providers. For supported saved destinations, browse tables directly within the configured catalog and schema. |
 | Table, stream, and output preview | Load a bounded preview from a table, stream, destination table, pipeline block output, or compatible output from a pipeline run or block run. |
 | Guarded SQL | Run one read-oriented `SELECT` or `WITH` query against supported SQL connections. |
 | Result table | Sort and filter the returned preview window without changing the source system. |
@@ -125,7 +126,9 @@ Supported `io_config.yaml` SQL providers include:
 - Microsoft SQL Server
 - Trino
 
-SQLite and DuckDB configs are preview-only in Data Explorer V1. Other supported
+SQLite `io_config.yaml` profiles are preview-only in Data Explorer V1. Local
+DuckDB profiles can preview or run guarded read-only SQL when their database
+file exists. MotherDuck `md:` profiles remain preview-only. Other supported
 SQL-capable IO config profiles can preview or query data when their connection
 settings are complete.
 
@@ -133,6 +136,19 @@ Saved source and destination configs are discovered from data integration
 pipelines. When a source or destination has stream or table options in its
 catalog, Data Explorer shows those options in a **Table or stream** selector and
 uses the selected value to prepare preview and starter SQL state.
+
+For saved BigQuery, MySQL, PostgreSQL, Redshift, Snowflake, and Microsoft SQL
+Server destinations with a complete provider-specific scope, Data Explorer uses
+that scope automatically. It loads the tables within the configured scope, so
+you select a table instead of browsing or re-entering it. For BigQuery, the
+configured project and dataset define the scope. For MySQL, the configured
+database defines it.
+
+Saved DuckDB destinations support table previews and read-only SQL exploration
+when the destination config points to an existing local DuckDB database file.
+Queries must pass Data Explorer's single `SELECT` or `WITH` statement validation.
+Configs that point to a missing local file or a MotherDuck `md:` database remain
+unavailable in Data Explorer.
 
 For Delta Lake destinations on Amazon S3, Data Explorer can preview a bounded
 window from the saved `delta_lake_s3` config when the config points to a readable
@@ -144,6 +160,11 @@ run outputs. Data Explorer uses Mage's preview system to load a bounded output
 window so you can inspect intermediate results from a pipeline run or block run
 without adding temporary print statements, export blocks, or one-off validation
 code.
+
+For pipeline and block outputs, Data Explorer reads the real saved output for
+the selected run. JSON-backed outputs use the saved `data.json` output. Data
+Explorer does not use `sample_data`, `sample=True` output reads, or
+`sample_data.json` as backing data for pipeline output previews.
 
 ## Permissions
 
@@ -184,6 +205,13 @@ connection so you can reload metadata after upstream tables or schemas change.
 During dependent metadata loads, Data Explorer keeps stable panels visible where
 possible so the page does not blank out while the next level loads.
 
+For a supported saved data integration destination, its provider-specific scope
+replaces the catalog and schema selection levels. Data Explorer opens a
+**Tables** browser scoped to that destination, selects the first available table
+by default, fills the preview target, and updates the starter SQL. Search and
+refresh operate only on tables in that configured scope. Selecting a table also
+loads its columns and types.
+
 Schema browsing is currently supported for these IO config providers:
 
 - DuckDB
@@ -206,8 +234,10 @@ manually.
 1. For `io_config.yaml` connections with metadata support, use the schema
    browser to confirm or change the selected catalog or database, schema, and
    table.
-1. For saved source or destination configs, choose a table or stream when options
-   are available.
+1. For supported saved SQL destinations with a complete provider-specific scope,
+   choose a table from the destination-scoped **Tables** browser. For other saved
+   source or destination configs, choose a table or stream when options are
+   available.
 1. For compatible pipeline or block run outputs, choose the output you want to
    inspect.
 1. If the connection does not provide table options, or the schema browser does
@@ -361,6 +391,9 @@ important context.
 1. Preview rows or run a narrow SQL query that checks the records affected by
    the latest sync.
 
+For a saved DuckDB destination, use **Preview table** or run a read-only SQL query.
+The destination config must point to an existing local DuckDB database file.
+
 ### Inspect a pipeline run or block run output
 
 1. Open Data Explorer.
@@ -413,8 +446,8 @@ pipelines, pipeline runs, or block runs the user can view.
 Open the connection and read the unavailable reason. Common causes include
 placeholder values, incomplete `io_config.yaml` provider settings, missing
 credentials, a saved source or destination provider that cannot be mapped to a
-SQL-capable IO provider, a pipeline run whose output is no longer available, or
-a block type whose output cannot be previewed.
+SQL-capable IO provider, a pipeline run whose real output is no longer
+available, or a block type whose output cannot be previewed.
 
 ### Preview or query buttons are disabled
 

@@ -5,6 +5,10 @@ icon: "laptop"
 description: "Fully managed Mage Pro"
 ---
 
+import { ProOnly } from '/snippets/pro/only.mdx';
+
+<ProOnly source="managed-cloud" />
+
 Mage Pro SaaS is fully managed and deployed in the Mage cloud infrastructure. In this configuration, both the control and data planes are hosted and managed within Mage's cloud infrastructure:
 
 <img
@@ -16,17 +20,23 @@ Mage Pro SaaS is fully managed and deployed in the Mage cloud infrastructure. In
 
 - **Deployment Method**: Zero touch deployment with automatic provisioning
 - **Infrastructure**: Containerized environment with auto scaling in Kubernetes
-- **Networking**: Secure TLS connections to data sources with IP Whitelisting
+- **Networking**: Secure TLS connections to data sources with IP allowlisting
 - **Authentication**: SAML/OAuth2 support for SSO integration
 - **Updates**: Automated version management with zero-downtime updates
 - **Scalability**: Dynamic resource allocation based on workload patterns
 - **Monitoring**: Internal monitoring tools, capable of integrating with external monitoring tools
 
-### IP Whitelisting
+For Google Identity Platform, Microsoft Active Directory, and [Okta](/production/authentication/okta) setup guidance, open **Settings > Access & security > Authentication**. To compare the setup guides for Mage's built-in and external secret managers, open **Settings > Access & security > Secrets management**. To create and manage built-in project secrets, open **Library** in the left navigation, select **Secrets**, and see the [Secrets guide](/development/variables/secrets).
+
+### Allowlist IP addresses
 Enhance your network security by configuring firewall rules or security groups to allow traffic only from Mage Pro's static IP addresses. 
 This prevents unauthorized access by restricting connections to trusted sources only.
 
-**Mage Pro IP ranges:**
+In Mage, open **Settings > Access & security > Network access** to view and copy individual addresses or the complete regional list. The former `/onboarding/security` and `/settings/workspace/security` URLs redirect to this settings page.
+
+Allowlist every address below when your Mage Pro workspace region is listed. Contact Mage before configuring your firewall if your region is not listed.
+
+**United States**
 
 ```
 100.21.110.88
@@ -41,6 +51,26 @@ This prevents unauthorized access by restricting connections to trusted sources 
 54.185.105.221
 54.190.141.196
 ```
+
+**Europe**
+
+```
+13.43.35.64
+3.11.158.8
+3.8.69.248
+51.24.28.212
+```
+
+**Australia**
+
+```
+13.236.104.140
+3.26.253.87
+54.153.177.143
+54.66.123.121
+```
+
+If your region is not listed above or your firewall policy requires a single static IP address, contact Mage to discuss the available network configuration for your workspace.
 
 ### Integration Requirements
 

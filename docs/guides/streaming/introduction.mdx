@@ -2,6 +2,8 @@
 title: "Overview"
 ---
 
+import { ProOnly } from '/snippets/pro/only.mdx';
+
 Streaming pipelines in Mage are designed to process data in real-time as it arrives, rather than in batches at scheduled intervals. This feature is particularly beneficial for use cases where immediate data processing is crucial, such as real-time analytics, monitoring, and decision-making systems.
 
 One of the key benefits of streaming pipelines in Mage is the reduction in latency from data ingestion to actionable insights. For example, a technology solutions company was able to reduce the latency of transforming stream data and writing to MongoDB from 1.5 seconds to 200ms, even for larger size messages, by replacing Spark Structured Streaming with Mage's streaming pipelines. This represents a significant improvement in performance, enabling faster response times and more timely data-driven actions.
@@ -84,6 +86,33 @@ After finishing configuring the streaming pipeline, you can click the button `Ex
 
 ## Run pipeline in production
 Create the trigger in [triggers page](/design/data-pipeline-management#create-trigger) to run streaming pipelines in production.
+
+## Monitor streaming health
+
+<ProOnly source="streaming-health" />
+
+After a streaming trigger starts creating pipeline runs in Mage Pro, open the
+pipeline monitoring page to view **Streaming health** for the selected pipeline
+and trigger.
+
+Streaming health helps answer whether the stream is healthy now:
+
+- **Rows consumed** counts rows or messages accepted from the streaming source.
+- **Destination writes** counts rows or messages accepted by Mage's sink write
+  path for each destination.
+- **Failed writes** counts destination write attempts that raised errors.
+- **Average latency** shows streaming record processing latency when samples are
+  available.
+
+Destination writes are not always the same as destination-warehouse commits. A
+connector may provide stronger destination-confirmed counts, but the default
+Streaming health count means Mage accepted the rows in the sink write path.
+
+The monitoring page can group runs by trigger. This matters for streaming
+pipelines because a trigger can automatically create a new pipeline run after an
+exception so streaming can continue. Use trigger-level health to review the
+overall stream across those restart runs and compare destination-level metric
+breakdowns.
 
 ### Executor count
 If you want to run multiple executors at the same time to scale the streaming pipeline execution, you can set the `executor_count` variable
