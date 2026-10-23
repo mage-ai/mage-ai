@@ -20,7 +20,12 @@ import {
   LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HIDDEN,
   set,
 } from '@storage/localStorage';
-import { OutputContainerStyle, OutputHeaderStyle } from './index.style';
+import {
+  DragHandleStyle,
+  OutputContainerStyle,
+  OutputHeaderStyle,
+  PipelineExecutionWrapperStyle,
+} from './index.style';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { removeKeyboardFocus } from '@context/shared/utils';
 import { SampleDataType } from '@interfaces/BlockType';
@@ -31,6 +36,9 @@ export type PipelineExecutionProps = {
   checkIfPipelineRunning: () => void;
   executePipeline: () => void;
   isPipelineExecuting: boolean;
+  isDragging?: boolean;
+  onDragStart?: (e: React.MouseEvent) => void;
+  panelHeight?: number;
   pipelineExecutionHidden: boolean;
   pipelineMessages: KernelOutputType[];
   setPipelineExecutionHidden: (pipelineExecutionHidden: boolean) => void;
@@ -41,6 +49,9 @@ function PipelineExecution({
   checkIfPipelineRunning,
   executePipeline,
   isPipelineExecuting,
+  isDragging,
+  onDragStart,
+  panelHeight,
   pipelineExecutionHidden,
   pipelineMessages,
   setPipelineExecutionHidden,
@@ -70,8 +81,17 @@ function PipelineExecution({
     setPipelineExecutionHidden,
   ]);
 
-  return (
+  const content = (
     <>
+      <DragHandleStyle
+        role="separator"
+        aria-valuenow={panelHeight}
+        aria-label="Resize execution logs"
+        data-testid="execution-drag-handle"
+        isDragging={isDragging}
+        isHidden={pipelineExecutionHidden}
+        onMouseDown={onDragStart}
+      />
       <OutputHeaderStyle>
         <FlexContainer alignItems="center" justifyContent="space-between">
           <Flex>
@@ -131,6 +151,7 @@ function PipelineExecution({
             </Text>
             <Spacing mr={1} />
             <ToggleSwitch
+              data-testid="hide-logs-toggle"
               checked={pipelineExecutionHidden}
               onCheck={togglePipelineExecution}
             />
@@ -205,6 +226,20 @@ function PipelineExecution({
       }
     </>
   );
+
+  if (panelHeight !== undefined) {
+    return (
+      <PipelineExecutionWrapperStyle
+        aria-expanded={!pipelineExecutionHidden}
+        data-testid="pipeline-execution-panel"
+        panelHeight={panelHeight}
+      >
+        {content}
+      </PipelineExecutionWrapperStyle>
+    );
+  }
+
+  return content;
 }
 
 export default PipelineExecution;
