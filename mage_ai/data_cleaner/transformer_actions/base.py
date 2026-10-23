@@ -43,6 +43,7 @@ FUNCTION_MAPPING = {
         ActionType.MAX: column.max,
         ActionType.MEDIAN: column.median,
         ActionType.MIN: column.min,
+        ActionType.ONE_HOT_ENCODE: column.one_hot_encode,
         ActionType.REFORMAT: column.reformat,
         ActionType.REMOVE: column.remove_column,
         ActionType.REMOVE_OUTLIERS: column.remove_outliers,
