@@ -13,6 +13,7 @@ export const SECTION_UUID_WORKSPACE = 'Workspace';
 export enum WorkspacesPageNameEnum {
   OVERVIEW = 'overview',
   PIPELINE_RUNS = 'pipeline_runs',
+  BLOCK_RUNS = 'block_runs',
   WORKSPACES = 'workspaces',
   USERS = 'users',
   SETTINGS = 'settings',
@@ -50,6 +51,15 @@ export function buildNavigationItems(
       label: () => 'Pipeline runs',
       linkProps: {
         href: '/manage/pipeline-runs',
+      },
+    },
+    {
+      Icon: Schedule,
+      id: WorkspacesPageNameEnum.BLOCK_RUNS,
+      isSelected: () => WorkspacesPageNameEnum.BLOCK_RUNS === pageName,
+      label: () => 'Block runs',
+      linkProps: {
+        href: '/manage/block-runs',
       },
     },
   ];
