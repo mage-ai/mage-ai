@@ -7,7 +7,8 @@ import simplejson
 from jinja2 import Template
 
 from mage_ai.data_preparation.models.block.dbt import DBTBlock
-from mage_ai.data_preparation.models.block.dbt.dbt_cli import DBTCli
+from mage_ai.data_preparation.models.block.dbt.dbt_cli import DBTCli, extract_failed_dbt_nodes
+from mage_ai.data_preparation.models.block.dbt.exceptions import DbtBlockRunError
 from mage_ai.data_preparation.models.block.dbt.profiles import Profiles
 from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.data_preparation.templates.utils import get_variable_for_template
@@ -192,4 +193,9 @@ class DBTBlockYAML(DBTBlock):
 
             res = cli.invoke([task] + args)
             if not res.success:
-                raise Exception(str(res.exception))
+                failed_models, failed_tests = extract_failed_dbt_nodes(res)
+                raise DbtBlockRunError(
+                    str(res.exception or 'dbt command failed'),
+                    failed_models=failed_models,
+                    failed_tests=failed_tests,
+                )
