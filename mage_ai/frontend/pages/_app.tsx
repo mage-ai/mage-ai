@@ -10,6 +10,7 @@ import { createRoot } from 'react-dom/client';
 
 import 'react-toastify/dist/ReactToastify.min.css';
 import '@styles/globals.css';
+import '@xterm/xterm/css/xterm.css';
 import '@styles/scss/main.scss';
 import '@styles/scss/themes/dark.scss';
 import '@styles/scss/themes/light.scss';
