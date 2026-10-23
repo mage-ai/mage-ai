@@ -118,8 +118,19 @@ class ApiResourceDownloadHandler(BaseHandler):
     # file pointer points to either a singular file or a temporary zip
     def get_file_pointer(self, file_list, relative_file_list):
         if len(file_list) == 1:
-            if file_list[0].endswith('.xlsx'):  # Check if it's an XLSX file
-                return open(file_list[0], 'rb')  # Open in binary mode for XLSX
+            binary_extensions = (
+                '.xlsx', '.xls',
+                '.zip', '.tar', '.gz', '.tgz', '.tar.gz',
+                '.png', '.jpg', '.jpeg', '.gif', '.bmp', '.ico', '.svg',
+                '.pdf', '.doc', '.docx',
+                '.db', '.sqlite', '.sqlite3',
+                '.parquet', '.delta', '.avro',
+                '.exe', '.dll', '.so', '.dylib',
+                '.pkl', '.pickle', '.joblib',
+                '.whl',
+            )
+            if file_list[0].endswith(binary_extensions):
+                return open(file_list[0], 'rb')
             else:
                 return open(file_list[0])
         return self.zip_files(file_list, relative_file_list)
