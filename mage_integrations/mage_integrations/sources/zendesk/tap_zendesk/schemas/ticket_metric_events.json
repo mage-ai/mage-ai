@@ -1,0 +1,117 @@
+{
+  "type": [
+    "null",
+    "object"
+  ],
+  "properties": {
+    "id": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "ticket_id": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "metric": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "instance_id": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "type": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "time": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "sla": {
+      "type": [
+        "null",
+        "object"
+      ],
+      "properties": {
+        "target": {
+          "type": [
+            "null",
+            "integer"
+          ]
+        },
+        "business_hours": {
+          "type": [
+            "null",
+            "boolean"
+          ]
+        },
+        "policy": {
+          "type": [
+            "null",
+            "object"
+          ],
+          "properties": {
+            "id": {
+              "type": [
+                "null",
+                "integer"
+              ]
+            },
+            "title": {
+              "type": [
+                "null",
+                "string"
+              ]
+            },
+            "description": {
+              "type": [
+                "null",
+                "string"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "status": {
+      "type": [
+        "null",
+        "object"
+      ],
+      "properties": {
+        "calendar": {
+          "type": [
+            "null",
+            "integer"
+          ]
+        },
+        "business": {
+          "type": [
+            "null",
+            "integer"
+          ]
+        }
+      }
+    },
+    "deleted": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    }
+  }
+}

@@ -1,0 +1,240 @@
+{
+  "type": [
+            "null",
+              "object"
+            ],
+  "properties": {
+    "metric_set": {
+      "type": [
+            "null",
+              "object"
+            ],
+      "properties": {
+        "url": {
+          "type": [
+            "null",
+              "string"
+            ]
+        },
+        "id": {
+          "type": [
+            "null",
+              "integer"
+            ]
+        },
+        "ticket_id": {
+          "type": [
+            "null",
+              "integer"
+            ]
+        },
+        "created_at": {
+          "type": [
+            "null",
+              "string"
+            ]
+        },
+        "updated_at": {
+          "type": [
+            "null",
+              "string"
+            ]
+        },
+        "group_stations": {
+          "type": [
+            "null",
+              "integer"
+            ]
+        },
+        "assignee_stations": {
+          "type": [
+            "null",
+              "integer"
+            ]
+        },
+        "reopens": {
+          "type": [
+            "null",
+              "integer"
+            ]
+        },
+        "replies": {
+          "type": [
+            "null",
+              "integer"
+            ]
+        },
+        "assignee_updated_at": {
+          "type": [
+            "null",
+              "string"
+            ]
+        },
+        "requester_updated_at": {
+          "type": [
+            "null",
+              "string"
+            ]
+        },
+        "status_updated_at": {
+          "type": [
+            "null",
+              "string"
+            ]
+        },
+        "initially_assigned_at": {
+         "type": [
+            "null",
+              "string"
+            ]
+        },
+        "assigned_at": {
+          "type": [
+            "null",
+              "string"
+            ]
+        },
+        "solved_at": {
+          "type": [
+            "null",
+              "string"
+            ]
+        },
+        "latest_comment_added_at": {
+          "type": [
+            "null",
+              "string"
+            ]
+        },
+        "reply_time_in_minutes": {
+          "type": [
+            "null",
+              "object"
+            ],
+          "properties": {
+            "calendar": {
+              "type": [
+            "null",
+              "string"
+            ]
+            },
+            "business": {
+              "type": [
+            "null",
+              "string"
+            ]
+            }
+          },
+          "additionalProperties": true
+        },
+        "first_resolution_time_in_minutes": {
+          "type": [
+            "null",
+              "object"
+            ],
+          "properties": {
+            "calendar": {
+              "type": [
+            "null",
+              "string"
+            ]
+            },
+            "business": {
+              "type": [
+            "null",
+              "string"
+            ]
+            }
+          },
+          "additionalProperties": true
+        },
+        "full_resolution_time_in_minutes": {
+          "type": [
+            "null",
+              "object"
+            ],
+          "properties": {
+            "calendar": {
+              "type": [
+            "null",
+              "string"
+            ]
+            },
+            "business": {
+             "type": [
+            "null",
+              "string"
+            ]
+            }
+          },
+          "additionalProperties": true
+        },
+        "agent_wait_time_in_minutes": {
+          "type": [
+            "null",
+              "object"
+            ],
+          "properties": {
+            "calendar": {
+             "type": [
+            "null",
+              "string"
+            ]
+            },
+            "business": {
+              "type": [
+            "null",
+              "string"
+            ]
+            }
+          },
+          "additionalProperties": true
+        },
+        "requester_wait_time_in_minutes": {
+          "type": [
+            "null",
+              "object"
+            ],
+          "properties": {
+            "calendar": {
+             "type": [
+            "null",
+              "string"
+            ]
+            },
+            "business": {
+              "type": [
+            "null",
+              "string"
+            ]
+            }
+          },
+          "additionalProperties": true
+        },
+        "on_hold_time_in_minutes": {
+          "type": [
+            "null",
+              "object"
+            ],
+          "properties": {
+            "calendar": {
+              "type": [
+            "null",
+              "integer"
+            ]
+            },
+            "business": {
+              "type": [
+            "null",
+              "integer"
+            ]
+            }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}
