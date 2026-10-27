@@ -1,189 +1,160 @@
----
-title: "Install Python packages using `requirements.txt`"
-sidebarTitle: "Python packages"
-description: "Mage allows you to easily integrate third-party Python packages into your project and pipelines.
-This guide will walk you through the process of adding and managing external dependencies."
----
+-- FARDO CONSULTING — сохтори пойгоҳи маълумот (SQLite)
+--
+-- МУҲИМ (талаботи бехатарӣ): дар ин пойгоҳ ҲЕҶ ГОҲ сутуне барои
+-- логин/пароли андоз, омор ё ФСЗН илова накунед. Боти мо танҳо
+-- маълумоти хидматрасонии муҳосибиро нигоҳ медорад, на рамзҳои
+-- воридшавӣ ба системаҳои давлатӣ.
 
-import { ProButton } from '/snippets/pro/button.mdx';
+PRAGMA foreign_keys = ON;
 
-<p align='center'>
-<img
-  alt="Python mecha"
-  src="https://mage-ai.github.io/assets/development/python-package.png"
-  width="250"
-></img>
-</p>
+-- ---------------------------------------------------------------------
+-- Корхонаҳо
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS companies (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    inn         TEXT NOT NULL UNIQUE,      -- РМА, ҳамчун матн (то 0-ҳои пешин гум нашаванд)
+    name        TEXT NOT NULL,
+    director    TEXT,
+    accountant  TEXT,
+    tax_office  TEXT,
+    reg_date    TEXT,                      -- санаи бақайдгирӣ (матн, формати DD.MM.YYYY)
+    created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
 
-<Note>
-**Mage Pro: Advanced Dependency Management**
+-- Феҳристи телефонҳои иҷозатдодашуда барои ҳар корхона (як-ба-бисёр).
+-- Санҷиш аз рӯи 9 рақами охирин сурат мегирад (phone_last9).
+CREATE TABLE IF NOT EXISTS company_phones (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    company_id  INTEGER NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+    phone_last9 TEXT NOT NULL,             -- 9 рақами охирин, бе +992/фосила
+    label       TEXT,                      -- ихтиёрӣ: "Офис", "Зулфиқор" ва ғ.
+    created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_company_phones_phone ON company_phones(phone_last9);
+CREATE INDEX IF NOT EXISTS idx_company_phones_company ON company_phones(company_id);
 
-Mage Pro includes an advanced dependency management system with isolated virtual environments, automatic caching, and intelligent package resolution. Features include:
+-- ---------------------------------------------------------------------
+-- Корбарон (миҷозони воридшуда ба бот)
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS users (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    tg_user_id      INTEGER NOT NULL UNIQUE,
+    company_id      INTEGER NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+    verified_phone  TEXT,                  -- 9 рақами тасдиқшуда
+    created_at      TEXT NOT NULL DEFAULT (datetime('now'))
+);
 
-- **Isolated environments** for each unique combination of dependencies
-- **Automatic caching** with fingerprint-based environment reuse
-- **Fast installation** using `uv` with `pip` fallback
-- **Smart compatibility checking** to reuse global packages
-- **No cluster restarts required** for dependency updates
-- **Easy UI-based installation** via Terminal page
+-- Назорати кӯшишҳои нодурусти РМА — 5 нодуруст → қуфли 15 дақиқа.
+CREATE TABLE IF NOT EXISTS login_lockouts (
+    tg_user_id      INTEGER PRIMARY KEY,
+    failed_count    INTEGER NOT NULL DEFAULT 0,
+    locked_until    TEXT,                  -- NULL = қуфл нест
+    last_attempt_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
 
-See the [Advanced Dependency Management](/development/dependencies/dependency-management) guide for complete documentation, or the [Quick Start guide](/getting-started/install-dependencies) for UI-based installation.
+-- Дархостҳои вуруд, вақте ки телефон дар феҳрист нест → ба админ меравад.
+CREATE TABLE IF NOT EXISTS access_requests (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    tg_user_id      INTEGER NOT NULL,
+    company_id      INTEGER NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+    phone_submitted TEXT NOT NULL,
+    status          TEXT NOT NULL DEFAULT 'pending'
+                        CHECK (status IN ('pending', 'approved', 'denied')),
+    requested_at    TEXT NOT NULL DEFAULT (datetime('now')),
+    decided_at      TEXT,
+    decided_by_tg   INTEGER                -- ID-и админи қарордиҳанда
+);
+CREATE INDEX IF NOT EXISTS idx_access_requests_status ON access_requests(status);
 
-<ProButton />
-</Note>
+-- ---------------------------------------------------------------------
+-- 📑 Ҳисоботҳо
+-- ---------------------------------------------------------------------
+-- Мақом:
+--   'submitted'  — админ дар Экзел ҳамчун супоридашуда қайд кардааст
+--   'in_review'  — админ дар Экзел ҳамчун дар тафтиш қайд кардааст
+--   NULL         — ҳоло муайян карда нашудааст: бот худаш аз рӯи
+--                  due_date ҳисоб мекунад (⚠️ ≤7 рӯз, ❌ гузашта,
+--                  вагарна 🕓 дар интизор)
+CREATE TABLE IF NOT EXISTS reports (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    company_id  INTEGER NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+    report_type TEXT NOT NULL,             -- масалан: "Фоида", "ПНВ/НДС", "Омор", "ФСЗН"
+    due_date    TEXT NOT NULL,             -- формати YYYY-MM-DD, барои муқоисаи сана
+    status      TEXT CHECK (status IN ('submitted', 'in_review') OR status IS NULL),
+    updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_reports_company ON reports(company_id);
+CREATE INDEX IF NOT EXISTS idx_reports_due_date ON reports(due_date);
 
-## Add Python packages to `requirements.txt`
+-- ---------------------------------------------------------------------
+-- 💰 Қарздорӣ (як сабт барои ҳар корхона, воридкунӣ = upsert)
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS debts (
+    company_id  INTEGER PRIMARY KEY REFERENCES companies(id) ON DELETE CASCADE,
+    amount      NUMERIC NOT NULL DEFAULT 0,
+    updated_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
 
-### Location
+-- ---------------------------------------------------------------------
+-- 🏦 Ҳисобҳои бонкӣ
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS bank_accounts (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    company_id      INTEGER NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+    bank_name       TEXT NOT NULL,
+    location        TEXT,
+    account_number  TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_bank_accounts_company ON bank_accounts(company_id);
 
-At the root of your Mage project directory, you'll find a file named `requirements.txt`.
-This file is used to specify all the Python packages that your project depends on.
+-- ---------------------------------------------------------------------
+-- 📝 Шартнома ва пардохт
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS contracts (
+    company_id  INTEGER PRIMARY KEY REFERENCES companies(id) ON DELETE CASCADE,
+    start_date  TEXT,                      -- YYYY-MM-DD
+    end_date    TEXT,                      -- YYYY-MM-DD; огоҳӣ агар ≤30 рӯз монда бошад
+    monthly_fee NUMERIC NOT NULL DEFAULT 0
+);
 
-### Path
+CREATE TABLE IF NOT EXISTS payments (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    company_id      INTEGER NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+    payment_date    TEXT NOT NULL,         -- YYYY-MM-DD
+    amount          NUMERIC NOT NULL,
+    note            TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_payments_company_date ON payments(company_id, payment_date);
 
-At the root of your project directory, there is a file named `requirements.txt`. Open this file
-and add the Python package you want installed and available throughout your entire project.
+-- ---------------------------------------------------------------------
+-- ❓ Саволҳо
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS questions (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    tg_user_id      INTEGER NOT NULL,
+    company_id      INTEGER NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+    question_text   TEXT NOT NULL,
+    asked_at        TEXT NOT NULL DEFAULT (datetime('now')),
+    answer_text     TEXT,
+    answered_at     TEXT,
+    answered_by_tg  INTEGER
+);
+CREATE INDEX IF NOT EXISTS idx_questions_company ON questions(company_id);
+CREATE INDEX IF NOT EXISTS idx_questions_user ON questions(tg_user_id);
 
-For example, if your project is named `demo_project` then the file will be located at
-`demo_project/requirements.txt`.
-
-### Adding packages
-
-To add a package, simply open the `requirements.txt` file and list each package on a new line. You can also specify version requirements if needed.
-
-### Example `requirements.txt`:
-
-```
-matplotlib==3.5.2
-tqdm
-```
-In this example the `requirements.txt` file will install:
-
-- matplotlib version 3.5.2
-- tqdm
-
-## Automatic installation
-
-When installing Mage using Docker, Mage provides two main methods for automatically installing third-party packages at runtime.
-These methods utilize the `USER_CODE_PATH` environment variable, which defines your project path (e.g. `/home/src/project_name`),
-to locate your `requirements.txt` file and install the packages listed there.
-
-<Accordion title="Using Command Line Flags">
-
-## Using command line flags
-
-If you installed Mage using Docker, the `USER_CODE_PATH` can be set using command line flags. You will need to add these command line flags at every run when running a new Docker container or installing a new version of Mage.
-
-### Setting `USER_CODE_PATH` in Docker
-
-The `USER_CODE_PATH` environment variable tells Mage where your project code is located within the Docker container. This is essential for features like automatic package installation from `requirements.txt`.
-
-#### Docker run command
-
-To set the `USER_CODE_PATH` when running a Mage Docker container, use the following command structure:
-
-```Shell
-docker run -it -p 6789:6789 -v $(pwd):/home/src \
-  -e USER_CODE_PATH=/home/src/project_name \
-  mageai/mageai /app/run_app.sh mage start [project_name]
-```
-Let's break down this command:
-
-- `it`: Runs the container interactively with a pseudo-TTY.
-- `p 6789:6789`: Maps port 6789 from the container to your host machine.
-- `v $(pwd):/home/src`: Mounts your current directory to `/home/src` in the container.
-- `e USER_CODE_PATH=/home/src/project_name`: Sets the `USER_CODE_PATH` environment variable.
-- `mageai/mageai`: Specifies the Mage Docker image to use.
-- `/app/run_app.sh mage start [project_name]`: The command to run inside the container.
-
-### Important Notes
-
-1. **Persistence**: The `USER_CODE_PATH` setting is not persistent across container restarts or when installing new versions of Mage. You must include these flags each time you run a new Docker container.
-2. **Project Name**: Replace `[project_name]` with your actual Mage project name in both the `USER_CODE_PATH` and the start command.
-3. **Path Consistency**: Ensure that the path in `USER_CODE_PATH` matches the mount point specified in the `v` flag. In this example, we mount to `/home/src`, so the `USER_CODE_PATH` starts with `/home/src`.
-4. **Working Directory**: The `$(pwd)` in the `v` flag assumes you're running the Docker command from your project's parent directory. Adjust this path if you're running from a different location.
-
-For more detailed information on environment variables and their impact on Mage's functionality, please refer to our comprehensive environment variable [documentation](https://docs.mage.ai/development/variables/environment-variables).
-</Accordion>
-
-<Accordion title="Using Dockerfile">
-
-## Using Dockerfiles
-
-One important aspect of configuring Mage is setting the `USER_CODE_PATH`, which tells Mage where your project code is located.
-While this can be done using command-line flags when running Docker containers, it's also possible to set the `USER_CODE_PATH`
-directly in your Dockerfile. This approach can be more convenient for consistent deployments and when building custom images.
-
-```Bash
-FROM mageai/mageai:latest
-
-### Set up project-specific arguments
-ARG PROJECT_NAME=[project_name]
-ARG MAGE_CODE_PATH=/home/mage_code
-ARG USER_CODE_PATH=${MAGE_CODE_PATH}/${PROJECT_NAME}
-
-### Set working directory
-WORKDIR ${MAGE_CODE_PATH}
-
-### Copy project files
-COPY ${PROJECT_NAME} ${PROJECT_NAME}
-
-### Set the command to run on container startup
-CMD ["/bin/sh", "-c", "/app/run_app.sh"]
-```
-
-Breakdown of the Dockerfile:
-
-1. `FROM mageai/mageai:latest`
-    - Specifies the base image as the latest version of the official Mage AI image.
-2. Project-specific arguments:
-
-```Bash
-ARG PROJECT_NAME=[project_name]
-ARG MAGE_CODE_PATH=/home/mage_code
-ARG USER_CODE_PATH=${MAGE_CODE_PATH}/${PROJECT_NAME}
-```
-- `PROJECT_NAME`: Should be replaced with your actual project name.
-- `MAGE_CODE_PATH`: Sets the base path for Mage code.
-- `USER_CODE_PATH`: Constructs the full path to your project, effectively setting the `USER_CODE_PATH` for Mage.
-3. `WORKDIR ${MAGE_CODE_PATH}`
-    - Sets the working directory inside the container to the path specified by `MAGE_CODE_PATH`.
-4. `COPY ${PROJECT_NAME} ${PROJECT_NAME}`
-    - Copies your project files from the host machine into the container.
-5. `CMD ["/bin/sh", "-c", "/app/run_app.sh"]`
-    - Specifies the command to run when the container starts, which launches the Mage application.
-
-To use this Dockerfile:
-
-1. Replace `[project_name]` with your actual project name.
-2. Ensure your project files are in a directory named after your project.
-3. Build the Docker image using this Dockerfile.
-4. Run the container to start your Mage environment.
-
-This Dockerfile demonstrates how to set the `USER_CODE_PATH` using build arguments. By defining it this way, you ensure that Mage will
-consistently know where to find your project code within the container, without needing to specify it each time you run the container.
-
-Follow the [Repository setup](https://docs.mage.ai/production/ci-cd/local-cloud/repository-setup) documentation to deploy this
-Dockerfile to fully automate the installation of third-party Python packages.
-
-</Accordion>
-If you’re running Mage using pip or conda, your local machine’s environment variables are accessible within the running Mage app.
-
-### Prerequisites
-
-1. Ensure that the environment variable `USER_CODE_PATH` is set to your project path, using
-the command line flags or the Dockerfile methods.
-
-      Example: `/home/src/project_name`
-
-2. Mage uses a script named `run_app.sh` to manage the application startup process.
-
-### Installation process
-
-When you start your Mage server:
-
-1. The `run_app.sh` script checks the `USER_CODE_PATH` environment variable.
-2. It locates the `requirements.txt` file within the specified project directory.
-3. All packages listed in `requirements.txt` are automatically installed before the server starts.
-
-This ensures that all required packages are available for your project and pipelines.
+-- ---------------------------------------------------------------------
+-- 📄 Маълумотномаҳо
+-- ---------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS certificates (
+    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+    tg_user_id          INTEGER NOT NULL,
+    company_id          INTEGER NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+    cert_type           TEXT NOT NULL CHECK (cert_type IN ('no_tax_debt', 'accounting', 'other')),
+    status              TEXT NOT NULL DEFAULT 'in_progress'
+                            CHECK (status IN ('in_progress', 'ready')),
+    requested_at        TEXT NOT NULL DEFAULT (datetime('now')),
+    file_telegram_id    TEXT,               -- file_id-и Телеграм, пас аз тайёр шудан
+    delivered_at        TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_certificates_company ON certificates(company_id);
