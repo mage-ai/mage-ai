@@ -1,0 +1,49 @@
+{
+  "properties": {
+    "url": {
+      "type": ["null", "string"]
+    },
+    "final_url": {
+      "type": ["null", "string"]
+    },
+    "status": {
+      "type": ["null", "string"]
+    },
+    "status_code": {
+      "type": ["null", "integer"]
+    },
+    "error": {
+      "type": ["null", "string"]
+    },
+    "markdown": {
+      "type": ["null", "string"]
+    },
+    "html": {
+      "type": ["null", "string"]
+    },
+    "cleaned_html": {
+      "type": ["null", "string"]
+    },
+    "generated_json": {
+      "type": ["null", "object"],
+      "additionalProperties": true
+    },
+    "country": {
+      "type": ["null", "string"]
+    },
+    "cached": {
+      "type": ["null", "boolean"]
+    },
+    "duration_ms": {
+      "type": ["null", "integer"]
+    },
+    "job_id": {
+      "type": ["null", "string"]
+    },
+    "completed_at": {
+      "type": ["null", "string"],
+      "format": "date-time"
+    }
+  },
+  "type": ["null", "object"]
+}

@@ -299,6 +299,7 @@
                       "data-integrations/sources/airtable",
                       "data-integrations/sources/amazon_s3",
                       "data-integrations/sources/amplitude",
+                      "data-integrations/sources/anakin",
                       "data-integrations/sources/api",
                       "data-integrations/sources/azure_blob_storage",
                       "data-integrations/sources/bigquery",
