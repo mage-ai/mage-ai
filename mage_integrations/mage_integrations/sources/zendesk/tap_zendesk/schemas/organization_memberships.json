@@ -1,0 +1,64 @@
+{
+  "properties": {
+    "created_at": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "default": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "id": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "organization_id": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "organization_name": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "updated_at": {
+      "type": [
+        "null",
+        "string"
+      ],
+      "format": "date-time"
+    },
+    "url": {
+      "type": [
+        "null",
+        "string"
+      ]
+    },
+    "user_id": {
+      "type": [
+        "null",
+        "integer"
+      ]
+    },
+    "view_tickets": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    }
+  },
+  "type": [
+    "null",
+    "object"
+  ]
+}
