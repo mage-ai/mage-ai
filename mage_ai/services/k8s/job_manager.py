@@ -10,9 +10,11 @@ from mage_ai.services.k8s.api_client import KubernetesApiClient
 from mage_ai.services.k8s.config import K8sExecutorConfig
 from mage_ai.services.k8s.constants import (
     DEFAULT_NAMESPACE,
+    K8S_BLOCK_FAILED_EXIT_CODE,
     KUBE_CONTAINER_NAME,
     KUBE_POD_NAME_ENV_VAR,
     KUBE_POD_NAMESPACE_ENV_VAR,
+    MAGE_K8S_JOB_NAME_ENV_VAR,
 )
 from mage_ai.shared.hash import merge_dict
 
@@ -80,18 +82,16 @@ class JobManager():
 
             self.create_job(job)
 
-        api_response = None
-        job_completed = False
-        while not job_completed:
+        # Wait for Kubernetes to finish the Job rather than deciding from the pod counts:
+        # it only marks the Job Failed once every backoffLimit retry is used up.
+        while True:
             api_response = self.batch_api_client.read_namespaced_job(
                 name=self.job_name,
                 namespace=self.namespace
             )
-            if api_response.status.succeeded is not None or \
-                    api_response.status.failed is not None:
-                job_completed = True
+            if self.__is_job_finished(api_response.status):
+                break
             time.sleep(5)
-            # self._print(f'Job {self.job_name} status={api_response.status}')
 
         self.delete_job()
         self._print(f'Job {self.job_name} status={api_response.status}')
@@ -142,6 +142,17 @@ class JobManager():
             template=template,
             active_deadline_seconds=k8s_config.job_config.active_deadline_seconds,
             backoff_limit=k8s_config.job_config.backoff_limit,
+            # A failed block is final (retry_config already ran in the pod): only pod
+            # failures such as OOM or eviction spend backoffLimit retries.
+            pod_failure_policy=client.V1PodFailurePolicy(rules=[
+                client.V1PodFailurePolicyRule(
+                    action='FailJob',
+                    on_exit_codes=client.V1PodFailurePolicyOnExitCodesRequirement(
+                        operator='In',
+                        values=[K8S_BLOCK_FAILED_EXIT_CODE],
+                    ),
+                ),
+            ]),
             ttl_seconds_after_finished=k8s_config.job_config.ttl_seconds_after_finished)
 
         # Instantiate the job object
@@ -193,6 +204,12 @@ class JobManager():
         mage_server_container_spec = self.get_mage_server_container()
         container_spec.env = container_spec.env + \
             [item for item in mage_server_container_spec.env if item not in container_spec.env]
+        # Tell the block executor it runs inside a block pod, so a failed block exits
+        # with K8S_BLOCK_FAILED_EXIT_CODE.
+        container_spec.env = [
+            item for item in container_spec.env
+            if getattr(item, 'name', None) != MAGE_K8S_JOB_NAME_ENV_VAR
+        ] + [client.V1EnvVar(name=MAGE_K8S_JOB_NAME_ENV_VAR, value=self.job_name)]
         container_spec.env_from = (container_spec.env_from or []) + \
             [item for item in (mage_server_container_spec.env_from or [])
              if item not in (container_spec.env_from or [])]
@@ -240,6 +257,12 @@ class JobManager():
             self._print("Job deleted. status='%s'" % str(api_response.status))
         except Exception as e:
             self._print(f'Failed to delete job {self.job_name} with error {e}')
+
+    def __is_job_finished(self, job_status) -> bool:
+        for condition in job_status.conditions or []:
+            if condition.type in ('Complete', 'Failed') and condition.status == 'True':
+                return True
+        return False
 
     def job_exists(self):
         try:

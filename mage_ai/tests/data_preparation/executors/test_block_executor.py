@@ -13,6 +13,10 @@ from mage_ai.data_preparation.models.block.hook.block import HookBlock
 from mage_ai.data_preparation.models.constants import BlockType
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
+from mage_ai.services.k8s.constants import (
+    K8S_BLOCK_FAILED_EXIT_CODE,
+    MAGE_K8S_JOB_NAME_ENV_VAR,
+)
 from mage_ai.shared.hash import merge_dict
 from mage_ai.tests.api.operations.test_base import BaseApiTestCase
 from mage_ai.tests.factory import create_pipeline_with_blocks
@@ -498,3 +502,32 @@ class BlockExecutorTest(BaseApiTestCase):
         with patch.object(executor.block, 'execute_sync') as mock_execute_sync:
             executor.execute(block_run_id=block_run.id, pipeline_run_id=pipeline_run.id)
             mock_execute_sync.assert_called_once()
+
+
+class BlockExecutorK8sExitCodeTest(BlockExecutorTest):
+    """
+    In a k8s block pod, a failed block exits with K8S_BLOCK_FAILED_EXIT_CODE so the Job's
+    podFailurePolicy fails the Job instead of retrying it.
+    """
+
+    def __execute_failing_block(self):
+        self.block_executor._execute_conditional = MagicMock(return_value=True)
+        self.block_executor._execute = MagicMock(side_effect=ValueError('boom'))
+        self.block_executor.execute_callback = MagicMock()
+        self.block_executor.execute(
+            on_failure=MagicMock(),
+            retry_config={'retries': 0},
+        )
+
+    def test_exits_with_dedicated_code_in_a_k8s_block_pod(self):
+        with patch.dict(os.environ, {MAGE_K8S_JOB_NAME_ENV_VAR: 'mage-data-prep-block-1'}):
+            with self.assertRaises(SystemExit) as ctx:
+                self.__execute_failing_block()
+        self.assertEqual(ctx.exception.code, K8S_BLOCK_FAILED_EXIT_CODE)
+        self.assertIsInstance(ctx.exception.__cause__, ValueError)
+
+    def test_reraises_outside_a_k8s_block_pod(self):
+        # The scheduler runs local blocks in-process: it must never exit.
+        with patch.dict(os.environ, {}, clear=True):
+            with self.assertRaises(ValueError):
+                self.__execute_failing_block()

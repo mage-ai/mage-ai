@@ -1,5 +1,6 @@
 import asyncio
 import json
+import os
 import traceback
 from datetime import datetime, timedelta
 from typing import Callable, Dict, List, Optional, Union
@@ -42,6 +43,10 @@ from mage_ai.data_preparation.models.project.constants import FeatureUUID
 from mage_ai.data_preparation.models.triggers import ScheduleInterval, ScheduleType
 from mage_ai.data_preparation.shared.retry import RetryConfig
 from mage_ai.orchestration.db.models.schedules import BlockRun, PipelineRun
+from mage_ai.services.k8s.constants import (
+    K8S_BLOCK_FAILED_EXIT_CODE,
+    MAGE_K8S_JOB_NAME_ENV_VAR,
+)
 from mage_ai.shared.hash import merge_dict
 from mage_ai.shared.utils import clean_name
 from mage_ai.usage_statistics.constants import EventNameType, EventObjectType
@@ -703,6 +708,11 @@ class BlockExecutor:
                         logging_tags=tags,
                         pipeline_run=pipeline_run,
                     )
+                    # In a k8s block pod, exit with a code the Job's podFailurePolicy
+                    # turns into FailJob: the block failed for real and its retry_config
+                    # already ran, so Kubernetes must not run it again.
+                    if os.getenv(MAGE_K8S_JOB_NAME_ENV_VAR):
+                        raise SystemExit(K8S_BLOCK_FAILED_EXIT_CODE) from error
                     raise error
 
             if not should_finish:
