@@ -28,6 +28,7 @@ from mage_ai.shared.enum import StrEnum
 from mage_ai.shared.logger import set_logging_format
 
 LIVENESS_TIMEOUT_SECONDS = 300
+SENTRY_FLUSH_TIMEOUT_SECONDS = 5
 
 
 class JobStatus(StrEnum):
@@ -291,7 +292,7 @@ class Worker(mp.Process):
                 server_name=SENTRY_SERVER_NAME,
             )
             import atexit
-            atexit.register(lambda: sentry_sdk.flush(timeout=5))
+            atexit.register(lambda: sentry_sdk.flush(timeout=SENTRY_FLUSH_TIMEOUT_SECONDS))
         initialize_new_relic()
 
         set_logging_format(
@@ -320,6 +321,7 @@ class Worker(mp.Process):
             except Exception as e:
                 if self.dsn:
                     capture_exception(e)
+                    sentry_sdk.flush(timeout=SENTRY_FLUSH_TIMEOUT_SECONDS)
                 raise
             finally:
                 self.job_dict[job_id] = JobStatus.COMPLETED
