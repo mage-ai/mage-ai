@@ -354,7 +354,16 @@ function Edit({
     () => {
       if (overwriteVariables) {
         setRuntimeVariables(formattedVariables?.reduce(
-          (vars, { uuid, value }) => ({ ...vars, [uuid]: scheduleVariables[uuid] || value }),
+          (vars, { uuid, value }) => {
+            const runtimeVariableValue = Object.prototype.hasOwnProperty.call(scheduleVariables, uuid)
+              ? scheduleVariables[uuid]
+              : value;
+
+            return {
+              ...vars,
+              [uuid]: runtimeVariableValue,
+            };
+          },
           {},
         ));
       } else {
