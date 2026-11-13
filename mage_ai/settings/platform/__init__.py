@@ -371,7 +371,6 @@ def project_platform_settings(
     repo_path: str = None,
     context_data: Dict = None,
     mage_projects_only: bool = False,
-    user=None,
 ) -> Dict:
     if context_data is None:
         context_data = dict()

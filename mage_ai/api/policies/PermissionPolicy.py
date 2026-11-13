@@ -28,6 +28,7 @@ PermissionPolicy.allow_actions([
 PermissionPolicy.allow_read(PermissionPresenter.default_attributes + [
     'conditions',
     'entity_names',
+    'entity_scopes',
     'entity_types',
     'query_attributes',
     'read_attributes',
@@ -66,6 +67,8 @@ PermissionPolicy.allow_write([
     'entity_id',
     'entity_name',
     'entity_type',
+    'entity_scope',
+    'entity_scope_id',
     'query_attributes',
     'read_attributes',
     'role_id',

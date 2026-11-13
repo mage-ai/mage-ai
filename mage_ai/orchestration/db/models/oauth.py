@@ -595,10 +595,6 @@ class Permission(BaseModel):
 
     entity_id = Column(String(255))
     entity = Column(Enum(Entity), default=Entity.GLOBAL)
-    # 1 = owner
-    # 2 = admin
-    # 4 = edit
-    # 8 = view
     access = Column(Integer, default=None)
     role_id = Column(Integer, ForeignKey('role.id'))
     user_id = Column(Integer, ForeignKey('user.id'), default=None)
@@ -662,6 +658,14 @@ class Permission(BaseModel):
             )
 
         return value
+
+    @property
+    def entity_scope(self) -> str:
+        return self.__get_access_attributes('entity_scope')
+
+    @property
+    def entity_scope_id(self) -> str:
+        return self.__get_access_attributes('entity_scope_id')
 
     @classmethod
     @safe_db_query
@@ -804,6 +808,25 @@ class Permission(BaseModel):
             arr.append(user)
 
         return arr
+
+    def verify_scope(
+        self,
+        entity_scope: str = None,
+        entity_scope_id: str = None,
+    ) -> bool:
+        """
+        Used in conjunction with PermissionsMixin to define API level permissions within
+        the context of a Mage entity (project). This method will verify that the passed in
+        entity scope and entity scope id match the permission's. If the permission does not
+        have an entity scope, it will return True.
+        """
+        if not self.entity_scope:
+            return True
+        else:
+            return (
+                entity_scope == self.entity_scope
+                and entity_scope_id == self.entity_scope_id
+            )
 
     def __get_access_attributes(self, access_name: str) -> List[str]:
         return (self.options or {}).get(access_name)
