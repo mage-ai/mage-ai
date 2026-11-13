@@ -6,7 +6,11 @@ from scipy.sparse import csr_matrix
 from sklearn.linear_model import LinearRegression
 
 from mage_ai.data_preparation.models.project.constants import FeatureUUID
-from mage_ai.data_preparation.models.utils import infer_variable_type
+from mage_ai.data_preparation.models.utils import (
+    deserialize_complex,
+    infer_variable_type,
+    serialize_complex,
+)
 from mage_ai.data_preparation.models.variables.constants import VariableType
 from mage_ai.tests.base_test import TestCase
 
@@ -78,3 +82,69 @@ class TestModelUtils(TestCase):
         data = [1, 2, 3]
         variable_type_use, basic_iterable = infer_variable_type(data)
         self.assertEqual(variable_type_use, VariableType.ITERABLE)
+
+    def test_serialize_deserialize_none_values(self):
+        """Test that None values in nested structures can be serialized and deserialized."""
+        # Test case from the issue
+        test_data = [
+            {
+                'icao24': '018097',
+                'firstSeen': 1763414571,
+                'estDepartureAirport': None,
+                'lastSeen': 1763418065,
+                'estArrivalAirport': None,
+                'callsign': '5ALEX   ',
+                'estDepartureAirportHorizDistance': 0,
+                'estDepartureAirportVertDistance': 0,
+                'estArrivalAirportHorizDistance': 0,
+                'estArrivalAirportVertDistance': 0,
+                'departureAirportCandidatesCount': 0,
+                'arrivalAirportCandidatesCount': 0,
+                'aircraft': None,
+                'departure_airport_info': {
+                    'status': '404',
+                    'error': 'Airport not found.',
+                },
+                'arrival_airport_info': {
+                    'status': '404',
+                    'error': 'Airport not found.',
+                },
+            }
+        ]
+
+        # Serialize the data
+        serialized_data, column_types = serialize_complex(test_data)
+
+        # Deserialize the data
+        deserialized_data = deserialize_complex(serialized_data, column_types)
+
+        # Verify the deserialized data matches the original
+        self.assertEqual(len(deserialized_data), 1)
+        self.assertEqual(deserialized_data[0]['icao24'], '018097')
+        self.assertEqual(deserialized_data[0]['firstSeen'], 1763414571)
+        self.assertIsNone(deserialized_data[0]['estDepartureAirport'])
+        self.assertIsNone(deserialized_data[0]['estArrivalAirport'])
+        self.assertIsNone(deserialized_data[0]['aircraft'])
+        self.assertEqual(deserialized_data[0]['departure_airport_info']['status'], '404')
+
+    def test_serialize_deserialize_mixed_none_values(self):
+        """Test various scenarios with None values."""
+        test_cases = [
+            # None in a list
+            [1, 2, None, 3, None],
+            # None in a dict
+            {'a': 1, 'b': None, 'c': 'test'},
+            # Nested structures with None
+            {'data': [None, {'nested': None, 'value': 42}]},
+            # Just None
+            None,
+        ]
+
+        for test_data in test_cases:
+            serialized_data, column_types = serialize_complex(test_data)
+            deserialized_data = deserialize_complex(serialized_data, column_types)
+            # Handle the case where test_data is None
+            if test_data is None:
+                self.assertIsNone(deserialized_data)
+            else:
+                self.assertEqual(deserialized_data, test_data)
