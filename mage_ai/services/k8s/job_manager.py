@@ -259,6 +259,20 @@ class JobManager():
             self.logger.info(message, **merge_dict(self.logging_tags, kwargs))
 
 
+def delete_job(name: str, namespace: str = DEFAULT_NAMESPACE) -> None:
+    """Delete a Job and its pods, e.g. when its block run is cancelled."""
+    JobManager.load_config()
+    try:
+        client.BatchV1Api(KubernetesApiClient()).delete_namespaced_job(
+            name=name,
+            namespace=namespace,
+            body=client.V1DeleteOptions(propagation_policy='Background'),
+        )
+    except ApiException as err:
+        if err.status != 404:
+            raise
+
+
 def filter_used_volumes(pod_spec: V1PodSpec):
     # Extract names of all volumes used in volume mounts
     used_volume_names = {vm.name for vm in pod_spec.containers[0].volume_mounts}

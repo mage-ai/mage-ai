@@ -2,6 +2,7 @@ import os
 from unittest.mock import MagicMock, patch
 
 from kubernetes import client
+from kubernetes.client.rest import ApiException
 from kubernetes.client import (
     V1Affinity,
     V1Container,
@@ -21,6 +22,7 @@ from kubernetes.client import (
 from mage_ai.services.k8s.config import K8sExecutorConfig
 from mage_ai.services.k8s.job_manager import (
     JobManager,
+    delete_job,
     filter_used_volumes,
     merge_containers,
 )
@@ -112,6 +114,28 @@ class TestK8sUtilities(TestCase):
 
 
 @patch.dict(os.environ, {'HOSTNAME': 'mage-server'})
+class DeleteJobTests(TestCase):
+    @patch('mage_ai.services.k8s.job_manager.JobManager.load_config')
+    @patch('mage_ai.services.k8s.job_manager.client.BatchV1Api')
+    def test_deletes_job_and_its_pods(self, mock_batch_api, mock_load_config):
+        delete_job('mage-data-prep-block-1', namespace='bi')
+
+        kwargs = mock_batch_api.return_value.delete_namespaced_job.call_args.kwargs
+        self.assertEqual(kwargs['name'], 'mage-data-prep-block-1')
+        self.assertEqual(kwargs['namespace'], 'bi')
+        self.assertEqual(kwargs['body'].propagation_policy, 'Background')
+
+    @patch('mage_ai.services.k8s.job_manager.JobManager.load_config')
+    @patch('mage_ai.services.k8s.job_manager.client.BatchV1Api')
+    def test_ignores_a_job_already_gone(self, mock_batch_api, mock_load_config):
+        mock_batch_api.return_value.delete_namespaced_job.side_effect = ApiException(status=404)
+        delete_job('mage-data-prep-block-1')
+
+        mock_batch_api.return_value.delete_namespaced_job.side_effect = ApiException(status=403)
+        with self.assertRaises(ApiException):
+            delete_job('mage-data-prep-block-1')
+
+
 class JobManagerTests(TestCase):
     @patch('mage_ai.services.k8s.job_manager.config')
     def test_load_config(self, mock_config):

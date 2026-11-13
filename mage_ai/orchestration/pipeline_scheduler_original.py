@@ -45,6 +45,7 @@ from mage_ai.orchestration.metrics.pipeline_run import (
 from mage_ai.orchestration.notification.config import NotificationConfig
 from mage_ai.orchestration.notification.sender import NotificationSender
 from mage_ai.orchestration.utils.distributed_lock import DistributedLock
+from mage_ai.services.k8s.constants import K8S_JOB_METRIC_KEY
 from mage_ai.orchestration.utils.git import log_git_sync, run_git_sync
 from mage_ai.orchestration.utils.resources import get_compute, get_memory
 from mage_ai.server.logger import Logger
@@ -1457,6 +1458,20 @@ def stop_pipeline_run(
     cancel_block_runs_and_jobs(pipeline_run, pipeline)
 
 
+def _delete_k8s_job(block_run: BlockRun) -> None:
+    # Killing the block run's worker leaves its k8s Job running: the pod would carry on
+    # and backoffLimit retries would follow, alongside the next run of the pipeline.
+    job = (block_run.metrics or {}).get(K8S_JOB_METRIC_KEY)
+    if not job:
+        return
+    try:
+        from mage_ai.services.k8s.job_manager import delete_job
+
+        delete_job(job['name'], namespace=job['namespace'])
+    except Exception:
+        logger.exception(f'Failed to delete k8s job {job["name"]} of block run {block_run.id}')
+
+
 def cancel_block_runs_and_jobs(
     pipeline_run: PipelineRun,
     pipeline: Pipeline = None,
@@ -1515,6 +1530,7 @@ def cancel_block_runs_and_jobs(
     else:
         for b in running_blocks:
             job_manager.kill_block_run_job(b.id)
+            _delete_k8s_job(b)
 
     GenericJob.enqueue_cancel_pipeline_run(pipeline_run.id, cancelled_block_run_ids)
 

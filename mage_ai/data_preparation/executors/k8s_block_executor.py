@@ -7,7 +7,7 @@ from mage_ai.data_preparation.shared.utils import get_template_vars
 from mage_ai.orchestration.db import safe_db_query
 from mage_ai.orchestration.db.models.schedules import BlockRun
 from mage_ai.services.k8s.config import K8sExecutorConfig
-from mage_ai.services.k8s.constants import DEFAULT_NAMESPACE
+from mage_ai.services.k8s.constants import DEFAULT_NAMESPACE, K8S_JOB_METRIC_KEY
 from mage_ai.services.k8s.job_manager import JobManager as K8sJobManager
 from mage_ai.settings.server import MAGE_CLUSTER_UUID
 from mage_ai.shared.hash import merge_dict
@@ -49,6 +49,8 @@ class K8sBlockExecutor(BlockExecutor):
             logging_tags=kwargs.get('tags', dict()),
             namespace=namespace,
         )
+        if block_run_id:
+            self._record_job(block_run_id, job_manager.job_name, namespace)
         cmd = self._run_commands(
             block_run_id=block_run_id,
             global_vars=global_vars,
@@ -58,6 +60,16 @@ class K8sBlockExecutor(BlockExecutor):
             cmd,
             k8s_config=self.executor_config,
         )
+
+    @safe_db_query
+    def _record_job(self, block_run_id: int, job_name: str, namespace: str) -> None:
+        # Lets cancel_block_runs_and_jobs delete the Job: killing this process alone
+        # would leave the pod running and Kubernetes retrying it.
+        block_run = BlockRun.query.get(block_run_id)
+        block_run.update(metrics=merge_dict(
+            block_run.metrics or {},
+            {K8S_JOB_METRIC_KEY: dict(name=job_name, namespace=namespace)},
+        ))
 
     @safe_db_query
     def _get_job_name_prefix(

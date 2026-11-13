@@ -27,6 +27,7 @@ from mage_ai.orchestration.pipeline_scheduler import (
     check_sla,
     schedule_all,
 )
+from mage_ai.services.k8s.constants import K8S_JOB_METRIC_KEY
 from mage_ai.shared.array import find
 from mage_ai.shared.hash import ignore_keys, merge_dict
 from mage_ai.tests.base_test import DBTestCase
@@ -430,6 +431,52 @@ class PipelineSchedulerTests(DBTestCase):
                 pipeline_run=pipeline_run,
                 stacktrace=None,
             )
+
+    @patch('mage_ai.services.k8s.job_manager.delete_job')
+    @patch('mage_ai.orchestration.pipeline_scheduler_original.get_job_manager')
+    def test_stop_deletes_the_k8s_job_of_running_blocks(
+        self, mock_get_job_manager, mock_delete_job,
+    ):
+        """
+        Cancelling a run must delete the k8s Job of a running block: killing the worker
+        alone leaves the pod running and Kubernetes retrying it, next to the next run.
+        """
+        pipeline_run = create_pipeline_run_with_schedule(
+            pipeline_uuid='test_pipeline',
+        )
+        pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+        block_runs = pipeline_run.block_runs
+        block_runs[0].update(
+            status=BlockRun.BlockRunStatus.RUNNING,
+            metrics={K8S_JOB_METRIC_KEY: dict(name='mage-data-prep-block-1', namespace='bi')},
+        )
+        # Not run by K8sBlockExecutor: no Job recorded, nothing to delete.
+        block_runs[1].update(status=BlockRun.BlockRunStatus.RUNNING)
+
+        PipelineScheduler(pipeline_run=pipeline_run).stop()
+
+        self.assertEqual(pipeline_run.status, PipelineRun.PipelineRunStatus.CANCELLED)
+        mock_delete_job.assert_called_once_with('mage-data-prep-block-1', namespace='bi')
+        self.assertEqual(mock_get_job_manager().kill_block_run_job.call_count, 2)
+
+    @patch('mage_ai.services.k8s.job_manager.delete_job', side_effect=Exception('forbidden'))
+    @patch('mage_ai.orchestration.pipeline_scheduler_original.get_job_manager')
+    def test_stop_still_cancels_when_the_k8s_job_cannot_be_deleted(
+        self, mock_get_job_manager, mock_delete_job,
+    ):
+        pipeline_run = create_pipeline_run_with_schedule(
+            pipeline_uuid='test_pipeline',
+        )
+        pipeline_run.update(status=PipelineRun.PipelineRunStatus.RUNNING)
+        pipeline_run.block_runs[0].update(
+            status=BlockRun.BlockRunStatus.RUNNING,
+            metrics={K8S_JOB_METRIC_KEY: dict(name='mage-data-prep-block-1', namespace='bi')},
+        )
+
+        PipelineScheduler(pipeline_run=pipeline_run).stop()
+
+        self.assertEqual(pipeline_run.status, PipelineRun.PipelineRunStatus.CANCELLED)
+        mock_delete_job.assert_called_once()
 
     @patch('mage_ai.orchestration.pipeline_scheduler_original.run_pipeline')
     @patch('mage_ai.orchestration.pipeline_scheduler_original.get_job_manager')
