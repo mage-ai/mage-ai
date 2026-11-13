@@ -469,6 +469,65 @@ class BlockExecutorTest(BaseApiTestCase):
                 verify_output=True,
             )
 
+    def test_dynamic_child_controller_skips_empty_dynamic_parent_output(self):
+        pipeline, blocks = create_pipeline_with_blocks(
+            'dynamic_child_empty_output',
+            self.repo_path,
+            return_blocks=True,
+        )
+
+        block1 = blocks[0]
+        block1.configuration = dict(dynamic=True)
+        block1.update_content(block1.get_typed_content("""
+def load_data(*args, **kwargs):
+    return [
+        [],
+        [],
+    ]
+""".strip()))
+
+        block2 = blocks[1]
+
+        pipeline_run = PipelineRun.create(
+            execution_date=datetime.utcnow(),
+            pipeline_schedule_id=0,
+            pipeline_uuid=pipeline.uuid,
+        )
+        BlockRun.create(
+            block_uuid=block1.uuid,
+            pipeline_run_id=pipeline_run.id,
+            status=BlockRun.BlockRunStatus.COMPLETED,
+        )
+        block_run = BlockRun.create(
+            block_uuid=block2.uuid,
+            pipeline_run_id=pipeline_run.id,
+        )
+
+        block1.execute_sync(execution_partition=pipeline_run.execution_partition)
+
+        executor = BlockExecutor(
+            pipeline,
+            block_run.block_uuid,
+            block_run_id=block_run.id,
+            execution_partition=pipeline_run.execution_partition,
+        )
+
+        self.assertEqual(executor.block.__class__, DynamicChildController)
+        self.assertEqual(
+            [],
+            executor.block.execute_sync(execution_partition=pipeline_run.execution_partition),
+        )
+        self.assertEqual(
+            [],
+            [
+                block_run.block_uuid
+                for block_run in BlockRun.query.filter(
+                    BlockRun.pipeline_run_id == pipeline_run.id,
+                ).all()
+                if block_run.block_uuid.startswith(f'{block2.uuid}:')
+            ],
+        )
+
     def test_block_run_for_dynamic_child_block_reduce_output(self):
         block1 = self.blocks[0]
         block2 = self.blocks[1]

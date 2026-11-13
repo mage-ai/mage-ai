@@ -28,6 +28,13 @@ def load_data2(*args, **kwargs):
     ]
 
 
+def load_empty_data(*args, **kwargs):
+    return [
+        [],
+        [],
+    ]
+
+
 def transform_multiple(data1, data2, *args, **kwargs):
     return [data1, dict(upstream_data=data2)]
 
@@ -286,6 +293,21 @@ class DynamicBlockCombinationTest(BaseApiTestCase):
                     sum([len(arr) for arr in dynamic_spawn_2x_outputs]),
                 )
                 self.assertEqual(len(replica_outputs), 12)
+
+    def test_empty_dynamic_parent_output_has_no_combinations(self):
+        dynamic = self.create_block(
+            name='dynamic_empty',
+            func=load_empty_data,
+            configuration=dict(dynamic=True),
+        )
+        self.pipeline.add_block(dynamic)
+
+        child = self.create_block(name='child_empty', func=transform)
+        self.pipeline.add_block(child, upstream_block_uuids=[dynamic.uuid])
+
+        dynamic.execute_sync()
+
+        self.assertEqual([], build_combinations_for_dynamic_child(child))
 
     #             # Skip this one
     #             child_1x_childspawn_1x_reduce_outputs = []
