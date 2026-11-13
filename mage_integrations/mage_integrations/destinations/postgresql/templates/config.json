@@ -5,5 +5,6 @@
   "port": 5432,
   "schema": "",
   "table": "",
+  "truncate_full_table": false,
   "username": ""
 }
