@@ -180,6 +180,7 @@ class MySQL(BaseSQL):
             PandasTypes.MIXED,
             PandasTypes.UNKNOWN_ARRAY,
             PandasTypes.COMPLEX,
+            PandasTypes.OBJECT,
         ):
             return 'TEXT'
         elif dtype in (PandasTypes.DATETIME, PandasTypes.DATETIME64):
@@ -219,11 +220,11 @@ class MySQL(BaseSQL):
         elif dtype in (PandasTypes.TIMEDELTA, PandasTypes.TIMEDELTA64, PandasTypes.PERIOD):
             return 'BIGINT'
         elif dtype == PandasTypes.EMPTY:
-            return 'CHAR(255)'
+            return 'TEXT'
         else:
             print(f'Invalid datatype provided: {dtype}')
 
-        return 'CHAR(255)'
+        return 'TEXT'
 
     def _enforce_limit(self, query: str, limit: int = QUERY_ROW_LIMIT) -> str:
         query = query.strip(';')
