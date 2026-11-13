@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import NextHead from 'next/head';
 import { CanvasRef } from 'reaflow';
 
 import ApiReloader from '@components/ApiReloader';
@@ -17,6 +18,7 @@ import DataTable from '@components/DataTable';
 import DependencyGraph from '@components/DependencyGraph';
 import ErrorsType from '@interfaces/ErrorsType';
 import EmptyCharts from '@oracle/icons/custom/EmptyCharts';
+import Mage8Bit from '@oracle/icons/custom/Mage8Bit';
 import Extensions, { ExtensionsProps } from '@components/PipelineDetail/Extensions';
 import FileType from '@interfaces/FileType';
 import FileVersions from '@components/FileVersions';
@@ -45,6 +47,8 @@ import {
   Charts as ChartsIcon,
   Close,
   SettingsWithKnobs,
+  Tree,
+  VisibleEye,
 } from '@oracle/icons';
 import {
   MESSAGE_VIEWS,
@@ -52,14 +56,23 @@ import {
   ViewKeyEnum,
 } from './constants';
 import { VERTICAL_NAVIGATION_WIDTH } from '@components/Dashboard/index.style';
-import { LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HIDDEN, get } from '@storage/localStorage';
+import {
+  LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HIDDEN,
+  LOCAL_STORAGE_KEY_PIPELINE_TREE_HIDDEN,
+  get,
+  set,
+} from '@storage/localStorage';
 import { OpenDataIntegrationModalType } from '@components/DataIntegrationModal/constants';
 import { OUTPUT_HEIGHT } from '@components/PipelineDetail/PipelineExecution/index.style';
 import { PADDING_UNITS, UNIT } from '@oracle/styles/units/spacing';
 import {
+  DRAG_HANDLE_HEIGHT,
+  DragHandleStyle,
+  OUTPUT_HEADER_HEIGHT,
   SidekickContainerStyle,
   TABLE_COLUMN_HEADER_HEIGHT,
-} from './index.style';
+} from '@components/Sidekick/index.style';
+import useDragResize from '@components/Sidekick/useDragResize';
 import { SCROLLBAR_WIDTH } from '@oracle/styles/scrollbars';
 import { buildRenderColumnHeader } from '@components/datasets/overview/utils';
 import { indexBy } from '@utils/array';
@@ -247,6 +260,12 @@ function Sidekick({
   const [errorMessages, setErrorMessages] = useState<string[]>([]);
   const [pipelineExecutionHidden, setPipelineExecutionHidden] =
     useState(!!get(LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HIDDEN));
+  const [treeHidden, setTreeHidden] = useState<boolean>(
+    () => !!get(LOCAL_STORAGE_KEY_PIPELINE_TREE_HIDDEN),
+  );
+  const [hasEverShownTree, setHasEverShownTree] = useState<boolean>(
+    () => !get(LOCAL_STORAGE_KEY_PIPELINE_TREE_HIDDEN),
+  );
 
   const afterWidth = useMemo(() => afterWidthProp - (VERTICAL_NAVIGATION_WIDTH + 1), [
     afterWidthProp,
@@ -275,9 +294,45 @@ function Sidekick({
 
   const hasData = !!sampleData;
   const isIntegration = useMemo(() => PipelineTypeEnum.INTEGRATION === pipeline?.type, [pipeline]);
-  const finalOutputHeight = !(PipelineTypeEnum.STREAMING === pipeline?.type)
+
+  const graphContainerRef = useRef<HTMLDivElement>(null);
+  const outputScrollRef = useRef<HTMLDivElement>(null);
+
+  const availablePanelHeight = heightWindow - (heightOffset - SCROLLBAR_WIDTH);
+  const dragHandleDisabled = treeHidden || pipelineExecutionHidden;
+
+  const { dragDelta, handleDragHandleMouseDown, isDragging, outputHeight } = useDragResize({
+    disabled: dragHandleDisabled,
+    graphContainerRef,
+    initialHeight: OUTPUT_HEIGHT,
+    outputScrollRef,
+  });
+
+  const isStreamingPipeline = PipelineTypeEnum.STREAMING === pipeline?.type;
+
+  const finalOutputHeight = !isStreamingPipeline
     ? -70   // Hide entire output area
-    : (pipelineExecutionHidden ? -16 : OUTPUT_HEIGHT);
+    : pipelineExecutionHidden
+      ? DRAG_HANDLE_HEIGHT + OUTPUT_HEADER_HEIGHT + UNIT
+      : outputHeight + DRAG_HANDLE_HEIGHT + OUTPUT_HEADER_HEIGHT + UNIT;
+
+  const graphHeight = Math.max(0, availablePanelHeight - finalOutputHeight);
+
+  const effectiveOutputHeight = treeHidden
+    ? availablePanelHeight - DRAG_HANDLE_HEIGHT - OUTPUT_HEADER_HEIGHT - UNIT
+    : outputHeight;
+
+  /**
+   * @dev Visual heights for containers only — change every frame during drag.  
+   * `graphHeight` and `effectiveOutputHeight` stay stable (`DependencyGraph` never re-layouts during drag).
+   */
+  const visualGraphHeight = isDragging
+    ? Math.max(0, graphHeight - dragDelta)
+    : graphHeight;
+
+  const visualOutputHeight = isDragging
+    ? Math.max(0, effectiveOutputHeight + dragDelta)
+    : effectiveOutputHeight;
 
   const renderColumnHeader = useCallback(buildRenderColumnHeader({
     columnTypes,
@@ -293,6 +348,24 @@ function Sidekick({
     insightsOverview,
     statistics,
   ]);
+
+  const handleSetTreeHidden = useCallback((hidden: boolean) => {
+    setTreeHidden(hidden);
+    set(LOCAL_STORAGE_KEY_PIPELINE_TREE_HIDDEN, hidden);
+  }, []);
+
+  useEffect(() => {
+    if (!treeHidden && !hasEverShownTree) {
+      setHasEverShownTree(true);
+    }
+  }, [hasEverShownTree, treeHidden]);
+
+  useEffect(() => {
+    if (pipeline?.type && !isStreamingPipeline) {
+      if (treeHidden) setTreeHidden(false);
+      if (!hasEverShownTree) setHasEverShownTree(true);
+    }
+  }, [hasEverShownTree, isStreamingPipeline, pipeline?.type, treeHidden]);
 
   const globalVariablesMemo = useMemo(() => (
     <GlobalVariables
@@ -599,61 +672,150 @@ function Sidekick({
         {activeView === ViewKeyEnum.TREE &&
           <ApiReloader uuid={`PipelineDetail/${pipeline?.uuid}`}>
             <>
-              <DependencyGraph
-                addNewBlockAtIndex={addNewBlockAtIndex}
-                blockRefs={blockRefs}
-                blocks={blocks}
-                contentByBlockUUID={contentByBlockUUID}
-                contextMenuEnabled
-                deleteBlock={deleteBlock}
-                dragEnabled
-                editingBlock={editingBlock}
-                enablePorts={!isIntegration}
-                fetchPipeline={fetchPipeline}
-                height={heightWindow - (heightOffset - SCROLLBAR_WIDTH) - finalOutputHeight}
-                messages={messages}
-                // @ts-ignore
-                onClickNode={({ block: { uuid } }) => setHiddenBlocks((prev) => {
-                  const hidden = !!prev?.[uuid];
+              {!blockEditing && PipelineTypeEnum.STREAMING === pipeline?.type
+                && treeHidden && pipelineExecutionHidden && (
+                  <FlexContainer
+                    alignItems="center"
+                    flexDirection="column"
+                    justifyContent="center"
+                    verticalHeight={VH_PERCENTAGE}
+                    verticalHeightOffset={heightOffset}
+                  >
+                    <Spacing mb={PADDING_UNITS}>
+                      <Mage8Bit size={UNIT * 20} />
+                    </Spacing>
+                    <Spacing mb={1}>
+                      <Text bold center large>
+                        Everything is hidden!
+                      </Text>
+                    </Spacing>
+                    <Spacing mb={PADDING_UNITS}>
+                      <Text center muted>
+                        Use the buttons below to bring something back.
+                      </Text>
+                    </Spacing>
+                    <FlexContainer>
+                      <Button
+                        beforeIcon={<Tree muted size={UNIT * 2} />}
+                        compact
+                        onClick={() => handleSetTreeHidden(false)}
+                        secondary
+                      >
+                        <Text bold noWrapping>
+                          Show tree
+                        </Text>
+                      </Button>
+                      <Spacing ml={1} />
+                      <Button
+                        beforeIcon={<VisibleEye muted size={UNIT * 2} />}
+                        compact
+                        onClick={() => {
+                          setPipelineExecutionHidden(false);
+                          set(LOCAL_STORAGE_KEY_PIPELINE_EXECUTION_HIDDEN, false);
+                        }}
+                        secondary
+                      >
+                        <Text bold noWrapping>
+                          Show output
+                        </Text>
+                      </Button>
+                    </FlexContainer>
+                  </FlexContainer>
+              )}
+              {hasEverShownTree && (
+                <div
+                  aria-hidden={treeHidden}
+                  data-testid="dependency-graph-container"
+                  ref={graphContainerRef}
+                  style={{
+                    display: treeHidden ? 'none' : undefined,
+                    height: visualGraphHeight,
+                    overflow: 'hidden',
+                  }}
+                >
+                  <DependencyGraph
+                    addNewBlockAtIndex={addNewBlockAtIndex}
+                    blockRefs={blockRefs}
+                    blocks={blocks}
+                    contentByBlockUUID={contentByBlockUUID}
+                    contextMenuEnabled
+                    deleteBlock={deleteBlock}
+                    dragEnabled
+                    editingBlock={editingBlock}
+                    enablePorts={!isIntegration}
+                    fetchPipeline={fetchPipeline}
+                    height={visualGraphHeight}
+                    heightOffset={0}
+                    messages={messages}
+                    // @ts-ignore
+                    onClickNode={({ block: { uuid } }) => setHiddenBlocks((prev) => {
+                      const hidden = !!prev?.[uuid];
 
-                  if (!hidden) {
-                    return prev;
-                  }
+                      if (!hidden) {
+                        return prev;
+                      }
 
-                  return {
-                    ...prev,
-                    [uuid]: !hidden,
-                  };
-                })}
-                pipeline={pipeline}
-                runBlock={runBlock}
-                runningBlocks={runningBlocks}
-                selectedBlock={selectedBlock}
-                setActiveSidekickView={setActiveSidekickView}
-                setEditingBlock={setEditingBlock}
-                setErrors={setErrors}
-                setSelectedBlock={(block) => {
-                  setSelectedBlock(block);
+                      return {
+                        ...prev,
+                        [uuid]: !hidden,
+                      };
+                    })}
+                    pipeline={pipeline}
+                    runBlock={runBlock}
+                    runningBlocks={runningBlocks}
+                    selectedBlock={selectedBlock}
+                    setActiveSidekickView={setActiveSidekickView}
+                    setEditingBlock={setEditingBlock}
+                    setErrors={setErrors}
+                    setSelectedBlock={(block) => {
+                      setSelectedBlock(block);
 
-                  if (sideBySideEnabled) {
-                    scrollToBlock(block);
-                  }
-                }}
-                showUpdateBlockModal={showUpdateBlockModal}
-                treeRef={treeRef}
-              />
-              {!blockEditing && PipelineTypeEnum.STREAMING === pipeline?.type && (
-                <Spacing p={1}>
-                  <PipelineExecution
-                    cancelPipeline={cancelPipeline}
-                    checkIfPipelineRunning={checkIfPipelineRunning}
-                    executePipeline={executePipeline}
-                    isPipelineExecuting={isPipelineExecuting}
-                    pipelineExecutionHidden={pipelineExecutionHidden}
-                    pipelineMessages={pipelineMessages}
-                    setPipelineExecutionHidden={setPipelineExecutionHidden}
+                      if (sideBySideEnabled) {
+                        scrollToBlock(block);
+                      }
+                    }}
+                    showUpdateBlockModal={showUpdateBlockModal}
+                    treeRef={treeRef}
                   />
-                </Spacing>
+                </div>
+              )}
+              {!blockEditing && PipelineTypeEnum.STREAMING === pipeline?.type
+                && !(treeHidden && pipelineExecutionHidden) && (
+                  <>
+                    {isDragging && (
+                      <NextHead>
+                        <style
+                          dangerouslySetInnerHTML={{
+                            __html: `
+                              body {
+                                cursor: row-resize;
+                              }
+                            `,
+                          }}
+                        />
+                      </NextHead>
+                    )}
+                    <DragHandleStyle
+                      data-testid="drag-handle"
+                      disabled={dragHandleDisabled}
+                      onMouseDown={handleDragHandleMouseDown}
+                    />
+                    <Spacing p={1}>
+                      <PipelineExecution
+                        cancelPipeline={cancelPipeline}
+                        checkIfPipelineRunning={checkIfPipelineRunning}
+                        executePipeline={executePipeline}
+                        isPipelineExecuting={isPipelineExecuting}
+                        onToggleTreeHidden={() => handleSetTreeHidden(!treeHidden)}
+                        outputHeight={visualOutputHeight}
+                        outputScrollRef={outputScrollRef}
+                        pipelineExecutionHidden={pipelineExecutionHidden}
+                        pipelineMessages={pipelineMessages}
+                        setPipelineExecutionHidden={setPipelineExecutionHidden}
+                        treeHidden={treeHidden}
+                      />
+                    </Spacing>
+                  </>
               )}
             </>
           </ApiReloader>
