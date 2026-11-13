@@ -29,6 +29,8 @@ function RunListPage() {
   const q = queryFromUrl();
   const page = q?.page ? q.page : 0;
   const query = useMemo(() => filterQuery(q, [
+    PipelineRunFilterQueryEnum.EXECUTION_DATE_END,
+    PipelineRunFilterQueryEnum.EXECUTION_DATE_START,
     PipelineRunFilterQueryEnum.PIPELINE_UUID,
     PipelineRunFilterQueryEnum.STATUS,
     PipelineRunFilterQueryEnum.TAG,
@@ -78,6 +80,11 @@ function RunListPage() {
         pipeline_tag: tags.map(({ uuid }) => uuid),
         pipeline_uuid: pipelineUUIDs,
         status: PIPELINE_RUN_STATUSES_NO_LAST_RUN_FAILED,
+        execution_date: {
+          type: 'date_range',
+          startKey: PipelineRunFilterQueryEnum.EXECUTION_DATE_START,
+          endKey: PipelineRunFilterQueryEnum.EXECUTION_DATE_END,
+        },
       }}
       filterValueLabelMapping={{
         pipeline_tag: tags.reduce((acc, { uuid }) => ({

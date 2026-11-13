@@ -42,6 +42,12 @@ class PipelineRunResource(DatabaseResource):
             pipeline_schedule_id = parent_model.id
 
         start_timestamp, end_timestamp = get_query_timestamps(query_arg)
+        execution_date_start, execution_date_end = get_query_timestamps(
+            query_arg,
+            start_key='execution_date_start',
+            end_key='execution_date_end',
+        )
+
         backfill_id = query_arg.get('backfill_id', [None])
         if backfill_id:
             backfill_id = backfill_id[0]
@@ -171,6 +177,10 @@ class PipelineRunResource(DatabaseResource):
             results = results.filter(PipelineRun.created_at >= start_timestamp)
         if end_timestamp is not None:
             results = results.filter(PipelineRun.created_at <= end_timestamp)
+        if execution_date_start is not None:
+            results = results.filter(PipelineRun.execution_date >= execution_date_start)
+        if execution_date_end is not None:
+            results = results.filter(PipelineRun.execution_date <= execution_date_end)
 
         limit = int((meta or {}).get(META_KEY_LIMIT, self.DEFAULT_LIMIT))
 
