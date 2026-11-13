@@ -898,8 +898,11 @@ class PipelineScheduler:
                 logger=self.logger,
                 logging_tags=self.build_tags(block_run=br),
             ):
-                br.update(status=BlockRun.BlockRunStatus.INITIAL)
-                crashed_runs.append(br)
+                # The job may have finished, and written the final status of the block run,
+                # after the statuses were refreshed above. Only reset it if it is still in
+                # progress.
+                if BlockRun.reset_if_in_progress(br.id):
+                    crashed_runs.append(br)
 
         return crashed_runs
 
