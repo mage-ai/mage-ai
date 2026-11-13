@@ -75,3 +75,52 @@ class SessionWithCaching(Session):
     def stop_cache(self) -> None:
         self._cache = None
         self._cache_initialized = False
+
+    def execute_with_cache(
+        self,
+        statement,
+        cache: bool = False,
+        result_type: str = 'scalars',
+        **kwargs,
+    ):
+        from mage_ai.shared.parsers import encode_complex
+
+        cache_key = None
+        debug = is_debug()
+
+        if cache:
+            compiler = statement.compile(self.get_bind())
+            cache_key_1 = compiler.string
+            cache_key_2 = simplejson.dumps(
+                compiler.params or {},
+                default=encode_complex,
+                ignore_nan=True,
+            )
+            cache_key = str(hash(f'{cache_key_1}:{cache_key_2}'))
+
+            if debug and not os.getenv('DISABLE_DATABASE_TERMINAL_OUTPUT'):
+                keys_count = len((self.cache() or {}).keys())
+                print(f'[INFO] Number of keys in session cache: {keys_count}')
+
+            cached_result = self.get_results_from_cache(cache_key)
+            if cached_result is not None:
+                if debug and not os.getenv('DISABLE_DATABASE_TERMINAL_OUTPUT'):
+                    print(f'[INFO] Cache HIT for cache key: {cache_key}')
+                return cached_result
+
+        result = super().execute(statement, **kwargs)
+        if result_type == 'scalars':
+            data = result.scalars().all()
+        elif result_type == 'all':
+            data = result.all()
+        elif result_type == 'fetchall':
+            data = result.fetchall()
+        else:
+            raise ValueError(f'Unsupported result type: {result_type}')
+
+        if cache and cache_key:
+            if debug and not os.getenv('DISABLE_DATABASE_TERMINAL_OUTPUT'):
+                print(f'[INFO] Cache MISS for cache key: {cache_key}')
+            self.cache_results(cache_key, data)
+
+        return data
