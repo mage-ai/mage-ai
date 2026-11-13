@@ -1,0 +1,47 @@
+---
+title: "Anakin"
+description: "Load web pages and web search results into a pipeline with the Anakin API."
+---
+
+[Anakin](https://anakin.io) is a web data API. Use this source to load scraped pages and web search
+results into your data warehouse, for example to track product pages over time.
+
+<br />
+
+## Configuration
+
+| Key | Description | Sample value | Required |
+| --- | --- | --- | --- |
+| `api_key` | Anakin API key. Create one in the [Anakin dashboard](https://anakin.io/dashboard). | `ask_abc123...` | ✅ |
+| `urls` | URLs to scrape, as a list or a comma-separated string. Required for `scraped_pages`. | `["https://example.com"]` | |
+| `country` | Country code to scrape from. Defaults to `us`. | `de` | |
+| `use_browser` | Render pages in a browser before extracting them. Defaults to `false`. | `true` | |
+| `force_fresh` | Skip Anakin's cache and scrape the page again. Use it when you track changes over time. Defaults to `false`. | `true` | |
+| `generate_json` | Extract structured data from each page into `generated_json`. Defaults to `false`. | `true` | |
+| `poll_timeout_seconds` | How long to wait for each group of 10 scrape jobs. Defaults to `300`. | `600` | |
+| `search_prompt` | Search query to run on every sync. Required for `search_results`. | `open source data pipeline tools` | |
+| `search_limit` | Maximum number of search results. Defaults to `5`. | `10` | |
+
+Anakin usage is billed in credits, and the free Starter plan includes 300 credits. See
+[pricing](https://anakin.io/pricing).
+
+<br />
+
+## Streams
+
+Both streams use `FULL_TABLE` replication with `url` as the key property.
+
+| Stream | One row per | Columns |
+| --- | --- | --- |
+| `scraped_pages` | URL in `urls` | `url`, `final_url`, `status`, `status_code`, `error`, `markdown`, `html`, `cleaned_html`, `generated_json`, `country`, `cached`, `duration_ms`, `job_id`, `completed_at` |
+| `search_results` | Search result | `url`, `title`, `snippet`, `date`, `last_updated`, `prompt`, `search_id` |
+
+<br />
+
+## Failure handling
+
+- A URL that can't be scraped becomes a row with `status` and `error` set, and the sync continues.
+  Filter on `status = 'completed'` downstream if you only want successful pages.
+- The sync fails if every URL fails, if the API key is invalid, or if the account is out of credits.
+
+<br />

@@ -1,0 +1,11 @@
+{
+  "api_key": "",
+  "urls": [],
+  "country": "us",
+  "use_browser": false,
+  "force_fresh": false,
+  "generate_json": false,
+  "poll_timeout_seconds": 300,
+  "search_prompt": "",
+  "search_limit": 5
+}

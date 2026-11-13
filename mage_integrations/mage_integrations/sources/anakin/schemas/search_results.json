@@ -1,0 +1,26 @@
+{
+  "properties": {
+    "url": {
+      "type": ["null", "string"]
+    },
+    "title": {
+      "type": ["null", "string"]
+    },
+    "snippet": {
+      "type": ["null", "string"]
+    },
+    "date": {
+      "type": ["null", "string"]
+    },
+    "last_updated": {
+      "type": ["null", "string"]
+    },
+    "prompt": {
+      "type": ["null", "string"]
+    },
+    "search_id": {
+      "type": ["null", "string"]
+    }
+  },
+  "type": ["null", "object"]
+}

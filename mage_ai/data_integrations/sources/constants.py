@@ -21,6 +21,7 @@ SOURCES = sorted([
     dict(name='Airtable'),
     dict(name='Amazon S3'),
     dict(name='Amplitude'),
+    dict(name='Anakin'),
     dict(name='Api'),
     dict(name='Azure Blob Storage'),
     dict(name='Chargebee'),
