@@ -100,14 +100,55 @@ class DBConnection:
         self.session = None
 
     def start_cache(self):
-        if hasattr(self.session.registry.registry, 'value'):
-            if hasattr(self.session.registry.registry.value, 'start_cache'):
-                self.session.registry.registry.value.start_cache()
+        if self.session is None:
+            return
+
+        session = self.session() if isinstance(self.session, scoped_session) else self.session
+        if hasattr(session, 'start_cache'):
+            session.start_cache()
 
     def stop_cache(self):
-        if hasattr(self.session.registry.registry, 'value'):
-            if hasattr(self.session.registry.registry.value, 'stop_cache'):
-                self.session.registry.registry.value.stop_cache()
+        if self.session is None:
+            return
+
+        if isinstance(self.session, scoped_session):
+            if not self.session.registry.has():
+                return
+            session = self.session()
+        else:
+            session = self.session
+
+        if hasattr(session, 'stop_cache'):
+            session.stop_cache()
+
+    def execute_with_cache(
+        self,
+        statement,
+        cache: bool = False,
+        result_type: str = 'scalars',
+        **kwargs,
+    ):
+        if self.session is None:
+            raise RuntimeError('Database session has not been started.')
+
+        session = self.session() if isinstance(self.session, scoped_session) else self.session
+        if hasattr(session, 'execute_with_cache'):
+            return session.execute_with_cache(
+                statement,
+                cache=cache,
+                result_type=result_type,
+                **kwargs,
+            )
+
+        result = session.execute(statement, **kwargs)
+        if result_type == 'scalars':
+            return result.scalars().all()
+        elif result_type == 'all':
+            return result.all()
+        elif result_type == 'fetchall':
+            return result.fetchall()
+
+        raise ValueError(f'Unsupported result type: {result_type}')
 
 
 def get_postgresql_schema(url):

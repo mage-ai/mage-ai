@@ -47,8 +47,6 @@ class RoleTests(DBTestCase):
         self.assertEqual(owner.get_access(entity=Entity.PROJECT, entity_id=test_entity_id), 1)
         self.assertEqual(owner.get_access(entity=Entity.PROJECT, entity_id=test_entity_id2), 1)
 
-
-class UserPermissionTests(DBTestCase):
     def test_fetch_permissions_deduplicates_permissions_from_multiple_roles(self):
         user = User.create(email='user-permissions@test.com')
         roles = [Role.create(name=f'permission-role-{index}') for index in range(2)]

@@ -261,7 +261,7 @@ class User(BaseModel):
 
         subquery = query.add_column(row_number_column).subquery()
         query = select(subquery).filter(subquery.c.row_number == 1)
-        rows = db_connection.session.execute(query).all()
+        rows = db_connection.execute_with_cache(query, cache=True, result_type='all')
 
         arr = []
 
@@ -786,7 +786,7 @@ class Permission(BaseModel):
 
         subquery = query.add_column(row_number_column).subquery()
         query = select(subquery).filter(subquery.c.row_number == 1)
-        rows = db_connection.session.execute(query).all()
+        rows = db_connection.execute_with_cache(query, result_type='all')
 
         arr = []
 
