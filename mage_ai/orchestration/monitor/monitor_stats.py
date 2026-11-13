@@ -117,6 +117,8 @@ class MonitorStats:
             ).
             join(PipelineSchedule, PipelineRun.pipeline_schedule_id == PipelineSchedule.id)
         )
+        repo_pipeline_schedule_ids = PipelineSchedule.repo_query.with_entities(PipelineSchedule.id)
+        query = query.filter(PipelineRun.pipeline_schedule_id.in_(repo_pipeline_schedule_ids))
 
         query = self.__filter(
             query,
