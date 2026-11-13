@@ -28,6 +28,7 @@ from mage_ai.shared.enum import StrEnum
 from mage_ai.shared.logger import set_logging_format
 
 LIVENESS_TIMEOUT_SECONDS = 300
+JOB_KEY_TIMEOUT_SECONDS = 86400  # 24 hours
 
 
 class JobStatus(StrEnum):
@@ -113,7 +114,7 @@ class ProcessQueue(Queue):
             return
         self._print(f'Enqueue job {job_id}')
         if self.redis_client:
-            self.redis_client.set(job_id, self.client_id)
+            self.redis_client.set(job_id, self.client_id, ex=JOB_KEY_TIMEOUT_SECONDS)
         if self.redis_client:
             self.redis_client.set(self.client_id, '1', ex=LIVENESS_TIMEOUT_SECONDS)
         self.queue.put([job_id, target, args, kwargs])
