@@ -11,7 +11,8 @@ from jinja2 import Template
 from mage_ai.data_preparation.models.block import Block
 from mage_ai.data_preparation.models.block.dbt import DBTBlock
 from mage_ai.data_preparation.models.block.dbt.constants import LogLevel
-from mage_ai.data_preparation.models.block.dbt.dbt_cli import DBTCli
+from mage_ai.data_preparation.models.block.dbt.dbt_cli import DBTCli, extract_failed_dbt_nodes
+from mage_ai.data_preparation.models.block.dbt.exceptions import DbtBlockRunError
 from mage_ai.data_preparation.models.block.dbt.profiles import Profiles
 from mage_ai.data_preparation.models.block.dbt.project import Project
 from mage_ai.data_preparation.models.block.dbt.utils import (
@@ -415,7 +416,12 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
                 res = cli.invoke([task] + args)
                 success = res.success
                 if not success:
-                    raise Exception(str(res.exception))
+                    failed_models, failed_tests = extract_failed_dbt_nodes(res)
+                    raise DbtBlockRunError(
+                        str(res.exception or 'dbt command failed'),
+                        failed_models=failed_models,
+                        failed_tests=failed_tests,
+                    )
             # run show task, to get data for preview or downstream usage
             # test task does not have any data
             #
@@ -427,7 +433,12 @@ class DBTBlockSQL(DBTBlock, ProjectPlatformAccessible):
                 if res.success:
                     df = cli.to_pandas(res)
                 else:
-                    raise Exception(str(res.exception))
+                    failed_models, failed_tests = extract_failed_dbt_nodes(res)
+                    raise DbtBlockRunError(
+                        str(res.exception or 'dbt show failed'),
+                        failed_models=failed_models,
+                        failed_tests=failed_tests,
+                    )
 
         # provide df for downstream usage or data preview
         self.store_variables(
