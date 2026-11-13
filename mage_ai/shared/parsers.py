@@ -38,8 +38,29 @@ MAX_ITEMS_IN_SAMPLE_OUTPUT = 20
 def has_to_dict(obj) -> bool:
     return hasattr(obj, 'to_dict')
 
+def is_custom_object_with_dict(obj):
+    """
+    Returns True if obj has a __dict__ attribute and is not a class, function, method, or module.
 
-def encode_complex(obj):
+    Note: hasattr(obj, '__dict__') may raise for some dynamic objects (properties
+    that raise). Catching exceptions ensures encode_complex() can safely handle
+    all objects without breaking.
+    """
+    try:
+        return (
+            hasattr(obj, '__dict__')
+            and not inspect.isclass(obj)
+            and not inspect.isfunction(obj)
+            and not inspect.ismethod(obj)
+            and not inspect.ismodule(obj)
+        )
+    except Exception:
+        return False
+
+def encode_complex(obj, visited=None):
+    if obj is None:
+        return None
+
     from mage_ai.shared.models import BaseDataClass
 
     if isinstance(obj, set):
@@ -78,7 +99,8 @@ def encode_complex(obj):
         return obj.to_list()
     elif isinstance(obj, scipy.sparse.csr_matrix):
         return serialize_matrix(obj)
-    elif is_model_sklearn(obj) or is_model_xgboost(obj) or inspect.isclass(obj):
+    # Add a check to ensure we aren't passing a string into sklearn helpers
+    elif not isinstance(obj, str) and is_model_sklearn(obj) or is_model_xgboost(obj) or inspect.isclass(obj):
         return object_to_uuid(obj)
     elif has_to_dict(obj):
         return obj.to_dict()
@@ -91,9 +113,34 @@ def encode_complex(obj):
             'message': str(obj),
             'traceback': traceback.format_tb(obj.__traceback__),
         }
+    elif is_custom_object_with_dict(obj):
+        """
+        Recursively serialize complex Python objects into JSON-safe structures.
 
+        Notes:
+        - Circular references are detected and serialized as strings to prevent
+        infinite recursion.
+        - Shared non-cyclic references (diamond patterns) are not preserved.
+        If the same object appears in multiple branches, it may be serialized
+        inconsistently (first as a dict, subsequent occurrences as a string).
+        """
+        if visited is None:
+            visited = set()
+        obj_id = id(obj)
+        if obj_id in visited:
+            return str(obj)
+
+        visited.add(obj_id)
+        # Shallow dict of attributes, convert recursively
+        try:
+            return {
+                name: encode_complex(value, visited)
+                for name, value in obj.__dict__.items()
+            }
+
+        except Exception:
+            return str(obj)
     return obj
-
 
 def extract_json_objects(text, decoder=None):
     """Find JSON objects in text, and yield the decoded JSON data
