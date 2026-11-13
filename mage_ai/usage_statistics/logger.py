@@ -487,7 +487,7 @@ class UsageStatisticLogger():
             data_to_send['project_uuid'] = project_uuid
 
         try:
-            async with aiohttp.ClientSession() as session:
+            async with aiohttp.ClientSession(trust_env=True) as session:
                 async with session.post(
                     API_ENDPOINT,
                     json=dict(
