@@ -81,22 +81,29 @@ class JobManager():
             self.create_job(job)
 
         api_response = None
-        job_completed = False
-        while not job_completed:
+        while True:
             api_response = self.batch_api_client.read_namespaced_job(
                 name=self.job_name,
                 namespace=self.namespace
             )
-            if api_response.status.succeeded is not None or \
-                    api_response.status.failed is not None:
-                job_completed = True
+            if self.__job_condition_is_true(api_response, 'Complete') or \
+                    self.__job_condition_is_true(api_response, 'Failed'):
+                break
             time.sleep(5)
             # self._print(f'Job {self.job_name} status={api_response.status}')
 
         self.delete_job()
         self._print(f'Job {self.job_name} status={api_response.status}')
-        if api_response.status.succeeded is None:
+        if not self.__job_condition_is_true(api_response, 'Complete'):
             raise Exception(f'Failed to execute k8s job {self.job_name}')
+
+    @staticmethod
+    def __job_condition_is_true(job, condition_type: str) -> bool:
+        conditions = job.status.conditions or []
+        return any(
+            condition.type == condition_type and str(condition.status).lower() == 'true'
+            for condition in conditions
+        )
 
     def create_job_object(
         self,

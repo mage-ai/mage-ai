@@ -113,6 +113,63 @@ class TestK8sUtilities(TestCase):
 
 @patch.dict(os.environ, {'HOSTNAME': 'mage-server'})
 class JobManagerTests(TestCase):
+    def build_job_manager_for_run_job(self, statuses):
+        job_manager = JobManager.__new__(JobManager)
+        job_manager.job_name = 'test_job_name'
+        job_manager.namespace = 'test_namespace'
+        job_manager.batch_api_client = MagicMock()
+        job_manager.batch_api_client.read_namespaced_job.side_effect = [
+            MagicMock(status=status) for status in statuses
+        ]
+        job_manager.job_exists = MagicMock(return_value=True)
+        job_manager.delete_job = MagicMock()
+        job_manager._print = MagicMock()
+        return job_manager
+
+    @patch('mage_ai.services.k8s.job_manager.time.sleep')
+    def test_run_job_waits_for_retry_then_succeeds(self, mock_sleep):
+        failed_attempt = MagicMock(succeeded=0, failed=1, active=0, conditions=None)
+        retry_active = MagicMock(succeeded=None, failed=1, active=1, conditions=None)
+        completed = MagicMock(
+            succeeded=1,
+            failed=1,
+            active=0,
+            conditions=[MagicMock(type='Complete', status='True')],
+        )
+        job_manager = self.build_job_manager_for_run_job([
+            failed_attempt,
+            retry_active,
+            completed,
+        ])
+
+        job_manager.run_job('test command')
+
+        self.assertEqual(
+            job_manager.batch_api_client.read_namespaced_job.call_count,
+            3,
+        )
+        self.assertEqual(mock_sleep.call_count, 2)
+        job_manager.delete_job.assert_called_once()
+
+    @patch('mage_ai.services.k8s.job_manager.time.sleep')
+    def test_run_job_raises_for_terminal_failure(self, mock_sleep):
+        failed = MagicMock(
+            succeeded=0,
+            failed=3,
+            active=0,
+            conditions=[MagicMock(type='Failed', status=True)],
+        )
+        job_manager = self.build_job_manager_for_run_job([failed])
+
+        with self.assertRaisesRegex(
+            Exception,
+            'Failed to execute k8s job test_job_name',
+        ):
+            job_manager.run_job('test command')
+
+        mock_sleep.assert_not_called()
+        job_manager.delete_job.assert_called_once()
+
     @patch('mage_ai.services.k8s.job_manager.config')
     def test_load_config(self, mock_config):
         with patch.object(mock_config, 'load_incluster_config') as mock_load_incluster_config:
