@@ -1,0 +1,30 @@
+---
+title: "Adanos"
+---
+
+Load market sentiment snapshots with the existing Adanos Singer tap in a separate
+virtual environment. This source supports stocks from Reddit, X, financial news,
+and Polymarket, plus Reddit crypto.
+
+## Setup
+
+Install `tap-adanos` in a separate virtual environment on every Mage worker, not
+in Mage's Python environment. Select **Adanos** in a data integration pipeline,
+set `tap_path` to that environment's executable, and configure `tap_config` with
+your own API key (stored as a Mage secret), symbols, source, and inclusive UTC
+start/end dates.
+
+See the [source README](https://github.com/mage-ai/mage-ai/blob/master/mage_integrations/mage_integrations/sources/adanos/README.md)
+for the pinned installation command, configuration, quota use, and failure handling.
+
+## Streams
+
+`asset_sentiment`, `trending_assets`, `asset_comparison`, and `market_sentiment`
+are full-refresh snapshots, not incremental history. There is no `observed_at`,
+raw-mention stream, or point-in-time guarantee. API source access, lookback, and
+quota restrictions depend on the customer's plan.
+
+Discovery is offline. Connection testing uses one API request; sampling extracts
+the entire selected stream. Each invocation has a five-minute timeout and buffers
+output on temporary disk before emitting records. Failures stop the run without
+forwarding potentially sensitive tap diagnostics.
