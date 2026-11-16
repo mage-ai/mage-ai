@@ -1,0 +1,12 @@
+{
+  "api_key": "",
+  "urls": [],
+  "extract_format": "markdown",
+  "search_query": "",
+  "search_limit": 10,
+  "search_speed": "fast",
+  "search_language": "",
+  "search_country": "",
+  "include_passages": false,
+  "max_pages": 1
+}

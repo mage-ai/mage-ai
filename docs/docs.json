@@ -338,6 +338,7 @@
                       "data-integrations/sources/salesforce",
                       "data-integrations/sources/sftp",
                       "data-integrations/sources/snowflake",
+                      "data-integrations/sources/specstream",
                       "data-integrations/sources/stripe",
                       "data-integrations/sources/tableau",
                       "data-integrations/sources/teradata",

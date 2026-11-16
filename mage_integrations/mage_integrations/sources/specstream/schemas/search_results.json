@@ -1,0 +1,41 @@
+{
+  "properties": {
+    "url": {
+      "type": ["null", "string"]
+    },
+    "title": {
+      "type": ["null", "string"]
+    },
+    "site": {
+      "type": ["null", "string"]
+    },
+    "snippet": {
+      "type": ["null", "string"]
+    },
+    "excerpt": {
+      "type": ["null", "string"]
+    },
+    "published": {
+      "type": ["null", "string"]
+    },
+    "modified": {
+      "type": ["null", "string"]
+    },
+    "cited": {
+      "type": ["null", "boolean"]
+    },
+    "file_type": {
+      "type": ["null", "string"]
+    },
+    "query": {
+      "type": ["null", "string"]
+    },
+    "page": {
+      "type": ["null", "integer"]
+    },
+    "request_id": {
+      "type": ["null", "string"]
+    }
+  },
+  "type": ["null", "object"]
+}

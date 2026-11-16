@@ -53,6 +53,7 @@ SOURCES = sorted([
     dict(name='PowerBI'),
     dict(name='Salesforce'),
     dict(name='Sftp'),
+    dict(name='SpecStream'),
     dict(name='Stripe'),
     dict(name='Tableau'),
     dict(name='Teradata'),
