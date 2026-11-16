@@ -22,8 +22,12 @@ on:
 
 jobs:
   push_to_registry:
-    name: Push Docker image to Docker Hub
+    name: Push Docker image to Docker Hub (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
     steps:
       - name: Check out the repo
         uses: actions/checkout@v5
@@ -40,7 +44,10 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: mageai/${{ github.event.inputs.name }}:${{ github.event.inputs.tag }}
+          images: mageai/${{ github.event.inputs.name }}
+          tags: |
+            type=raw,value=${{ github.event.inputs.tag }}-python${{ matrix.python-version }}
+            type=raw,value=${{ github.event.inputs.tag }},enable=${{ matrix.python-version == '3.12' }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -54,7 +61,8 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
-          tags: mageai/${{ github.event.inputs.name }}:${{ github.event.inputs.tag }}
+          tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
+            PYTHON_VERSION=${{ matrix.python-version }}
             FEATURE_BRANCH=${{ github.event.inputs.feature_branch }}

@@ -1,4 +1,5 @@
-FROM python:3.10-bookworm
+ARG PYTHON_VERSION=3.12
+FROM python:${PYTHON_VERSION}-bookworm
 LABEL description="Deploy Mage on ECS"
 ARG FEATURE_BRANCH
 USER root
@@ -56,13 +57,17 @@ RUN \
 
 # Mage
 COPY ./mage_ai/server/constants.py /tmp/constants.py
+COPY ./requirements.txt /tmp/requirements.txt
 RUN if [ -z "$FEATURE_BRANCH" ] || [ "$FEATURE_BRANCH" = "null" ] ; then \
   tag=$(tail -n 1 /tmp/constants.py) && \
   VERSION=$(echo "$tag" | tr -d "'") && \
-  uv pip install --system --no-cache-dir "mage-ai[all]==$VERSION"; \
+  grep '^oracledb' /tmp/requirements.txt > /tmp/oracledb-overrides.txt && \
+  uv pip install --system --no-cache-dir \
+    --override /tmp/oracledb-overrides.txt "mage-ai[all]==$VERSION"; \
   else \
   uv pip install --system --no-cache-dir "git+https://github.com/mage-ai/mage-ai.git@$FEATURE_BRANCH#egg=mage-ai[all]"; \
-  fi
+  fi && \
+  rm -f /tmp/oracledb-overrides.txt /tmp/requirements.txt
 
 
 ## Startup Script
