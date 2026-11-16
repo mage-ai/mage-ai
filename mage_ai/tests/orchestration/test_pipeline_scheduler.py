@@ -266,6 +266,49 @@ class PipelineSchedulerTests(DBTestCase):
         )
 
     @freeze_time('2023-10-11 12:13:14')
+    def test_schedule_all_isolates_errors_per_pipeline_schedule(self):
+        shared_attrs = dict(
+            pipeline_uuid='test_pipeline',
+            schedule_interval=ScheduleInterval.HOURLY,
+            schedule_type=ScheduleType.TIME,
+            start_time=datetime(2023, 10, 10, 13, 13, 20),
+            status=ScheduleStatus.ACTIVE,
+        )
+        broken_schedule = PipelineSchedule.create(name='broken_trigger', **shared_attrs)
+        healthy_schedule = PipelineSchedule.create(name='healthy_trigger', **shared_attrs)
+        original_should_schedule = PipelineSchedule.should_schedule
+
+        def should_schedule(pipeline_schedule, *args, **kwargs):
+            if pipeline_schedule.id == broken_schedule.id:
+                raise Exception('Broken pipeline schedule')
+            return original_should_schedule(pipeline_schedule, *args, **kwargs)
+
+        with patch(
+            'mage_ai.orchestration.pipeline_scheduler_original.db_connection.session.rollback',
+        ) as mock_rollback:
+            with patch.object(PipelineScheduler, 'schedule'):
+                with patch.object(PipelineSchedule, 'should_schedule', should_schedule):
+                    with self.assertLogs(
+                        'mage_ai.orchestration.pipeline_scheduler_original',
+                        level='ERROR',
+                    ) as logs:
+                        schedule_all()
+
+        mock_rollback.assert_called_once_with()
+        self.assertTrue(
+            any(
+                f'Failed to schedule pipeline schedule {broken_schedule.id}' in message
+                for message in logs.output
+            )
+        )
+        self.assertEqual(0, broken_schedule.pipeline_runs_count)
+        self.assertEqual(1, healthy_schedule.pipeline_runs_count)
+        self.assertEqual(
+            PipelineRun.PipelineRunStatus.RUNNING,
+            healthy_schedule.pipeline_runs[0].status,
+        )
+
+    @freeze_time('2023-10-11 12:13:14')
     def test_schedule_all_for_pipeline_schedules_with_landing_time(self):
         def new_schedule(self):
             print(f'Mock PipelineScheduler().schedule() for pipeline run {self.pipeline_run.id}.')
