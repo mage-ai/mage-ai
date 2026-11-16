@@ -1883,6 +1883,11 @@ def schedule_all():
                     pipeline_runs_excluded_by_limit.extend(
                         initial_pipeline_runs[pipeline_run_quota:]
                     )
+            except Exception:
+                # One bad schedule must not stop the loop for every other pipeline.
+                db_connection.session.rollback()
+                logger.exception(f'Failed to schedule pipeline schedule {pipeline_schedule.id}')
+                continue
             finally:
                 lock.release_lock(lock_key)
 
