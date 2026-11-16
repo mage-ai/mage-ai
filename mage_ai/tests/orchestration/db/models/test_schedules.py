@@ -1802,6 +1802,28 @@ class BlockRunTests(DBTestCase):
             )
             self.assertEqual(b.logs.get('path'), expected_file_path)
 
+    def test_reset_if_in_progress(self):
+        pipeline_run = create_pipeline_run_with_schedule(pipeline_uuid='test_pipeline')
+        block_run = BlockRun.get(pipeline_run_id=pipeline_run.id, block_uuid='block1')
+
+        for status in [BlockRun.BlockRunStatus.RUNNING, BlockRun.BlockRunStatus.QUEUED]:
+            block_run.update(status=status)
+            self.assertTrue(BlockRun.reset_if_in_progress(block_run.id))
+            block_run.refresh()
+            self.assertEqual(block_run.status, BlockRun.BlockRunStatus.INITIAL)
+
+        for status in [
+            BlockRun.BlockRunStatus.INITIAL,
+            BlockRun.BlockRunStatus.COMPLETED,
+            BlockRun.BlockRunStatus.FAILED,
+            BlockRun.BlockRunStatus.CANCELLED,
+            BlockRun.BlockRunStatus.UPSTREAM_FAILED,
+        ]:
+            block_run.update(status=status)
+            self.assertFalse(BlockRun.reset_if_in_progress(block_run.id))
+            block_run.refresh()
+            self.assertEqual(block_run.status, status)
+
 
 @patch(
     'mage_ai.orchestration.db.models.schedules.project_platform_activated',

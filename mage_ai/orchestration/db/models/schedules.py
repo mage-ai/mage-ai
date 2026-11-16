@@ -1718,6 +1718,32 @@ class BlockRun(BlockRunProjectPlatformMixin, BaseModel):
 
     @classmethod
     @safe_db_query
+    def reset_if_in_progress(self, block_run_id: int) -> bool:
+        """Reset a block run back to INITIAL, but only if it is still RUNNING or QUEUED.
+
+        The scheduler uses this for block runs whose job is gone. The status check is part of
+        the UPDATE because the block run may have finished after its status was read, and a
+        re-read inside the same transaction can return a stale snapshot on some databases
+        (e.g. MySQL with REPEATABLE READ).
+
+        Returns:
+            bool: True if the block run was reset, False if it had already finished.
+        """
+        reset_count = BlockRun.query.filter(
+            BlockRun.id == block_run_id,
+            BlockRun.status.in_([
+                BlockRun.BlockRunStatus.RUNNING,
+                BlockRun.BlockRunStatus.QUEUED,
+            ]),
+        ).update(
+            {BlockRun.status: BlockRun.BlockRunStatus.INITIAL},
+            synchronize_session=False,
+        )
+        db_connection.session.commit()
+        return reset_count > 0
+
+    @classmethod
+    @safe_db_query
     def get(self, pipeline_run_id: int = None, block_uuid: str = None) -> 'BlockRun':
         block_runs = self.query.filter(
             BlockRun.pipeline_run_id == pipeline_run_id,
