@@ -142,8 +142,15 @@ function OutputRenderer({
         selected={selected}
       />
     );
-  } else if (DataTypeEnum.IMAGE_PNG === dataType) {
-    return <ImageOutput data={textValue} />;
+  } else if (
+      [
+        DataTypeEnum.IMAGE_PNG,
+        DataTypeEnum.IMAGE_JPEG,
+        DataTypeEnum.IMAGE_GIF,
+        DataTypeEnum.IMAGE_WEBP,
+      ].includes(dataType)
+  ) {
+    return <ImageOutput data={textValue} mimeType={dataType} />;
   } else {
     const objectData = [data || textData]?.find(obj => obj && isObject(obj));
 
