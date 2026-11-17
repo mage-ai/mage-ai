@@ -1,3 +1,4 @@
+import warnings
 from unittest.mock import patch
 
 import pandas as pd
@@ -54,6 +55,13 @@ class TestModelUtils(TestCase):
         data = LinearRegression()
         variable_type_use, basic_iterable = infer_variable_type(data)
         self.assertEqual(variable_type_use, VariableType.MODEL_SKLEARN)
+
+    def test_non_sklearn_values_do_not_emit_deprecation_warnings(self):
+        with warnings.catch_warnings():
+            warnings.simplefilter('error', DeprecationWarning)
+
+            for data in [{'a': 1}, [1, 2, 3], 'value', None]:
+                infer_variable_type(data)
 
     def test_list_complex(self):
         data = [TestCase(), TestCase()]
