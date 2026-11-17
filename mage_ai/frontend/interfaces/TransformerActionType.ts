@@ -20,6 +20,7 @@ export const COLUMN_ACTIONS: ActionTypeEnum[] = [
   ActionTypeEnum.MEDIAN,
   ActionTypeEnum.MIN,
   ActionTypeEnum.NORMALIZE,
+  ActionTypeEnum.ONE_HOT_ENCODE,
   ActionTypeEnum.REFORMAT,
   ActionTypeEnum.REMOVE,
   ActionTypeEnum.REMOVE_OUTLIERS,
@@ -44,6 +45,7 @@ export enum ActionGroupingEnum {
   SHIFT_ROWS = 'Shift rows in a column',
   MISC = 'Miscellaneous',
   FEATURE_SCALING = 'Feature Scaling',
+  ENCODING = 'Encoding',
 }
 
 export const ACTION_GROUPING_MAPPING = {
@@ -81,6 +83,9 @@ export const ACTION_GROUPING_MAPPING = {
       ActionTypeEnum.NORMALIZE,
       ActionTypeEnum.STANDARDIZE,
     ],
+    [ActionGroupingEnum.ENCODING]: [
+      ActionTypeEnum.ONE_HOT_ENCODE,
+    ],
 
   },
   [AxisEnum.ROW]: {
@@ -111,6 +116,7 @@ export const ACTION_TYPE_HUMAN_READABLE_MAPPING = {
     [ActionTypeEnum.MAX]: 'Aggregate by maximum value',
     [ActionTypeEnum.MEDIAN]: 'Aggregate by median value',
     [ActionTypeEnum.MIN]: 'Aggregate by mininum value',
+    [ActionTypeEnum.ONE_HOT_ENCODE]: 'One Hot Encode Column',
     [ActionTypeEnum.REFORMAT]: 'Reformat',
     [ActionTypeEnum.REMOVE_OUTLIERS]: 'Remove outliers',
     [ActionTypeEnum.REMOVE]: 'Remove column(s)',

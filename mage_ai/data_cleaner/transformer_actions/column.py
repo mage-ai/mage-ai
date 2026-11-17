@@ -247,6 +247,33 @@ def reformat(df, action, **kwargs):
     return df
 
 
+def one_hot_encode(df, action, **kwargs):
+    """Replace selected columns with uint8 indicators, preserving rows and other columns."""
+    columns = action.get('action_arguments')
+    if not isinstance(columns, (list, tuple, pd.Index)) or len(columns) == 0:
+        raise ValueError('One hot encode requires at least one column in arguments.')
+    if not df.columns.is_unique or not pd.Index(columns).is_unique:
+        raise ValueError('One hot encode requires unique column names and selections.')
+    missing = [column for column in columns if column not in df.columns]
+    if missing:
+        raise ValueError(f'One hot encode selected columns not found: {missing}.')
+
+    # Match BaseAction.execute's empty-input behavior.
+    if df.empty:
+        return df.copy()
+
+    encoded = pd.get_dummies(
+        df[list(columns)], columns=list(columns), dummy_na=False, dtype=np.uint8,
+    )
+    remaining = df.drop(columns=list(columns))
+    if not encoded.columns.is_unique or encoded.columns.isin(remaining.columns).any():
+        raise ValueError(
+            'One hot encode would create duplicate column names. '
+            'Rename the conflicting columns or category values before encoding.'
+        )
+    return pd.concat([remaining, encoded], axis=1)
+
+
 def remove_column(df, action, **kwargs):
     cols = action['action_arguments']
     original_columns = df.columns
