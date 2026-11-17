@@ -2152,7 +2152,7 @@ function PipelineDetailPage({
                 uuid: block.uuid,
               },
               pipeline: {
-                blocks: pipeline?.blocks || [],
+                blocks,
               },
             }).then(() => {
               setSelectedBlock(null);
@@ -2177,6 +2177,7 @@ function PipelineDetailPage({
   ), {
   }, [
     addNewBlockAtIndex,
+    blocks,
     pipeline,
   ], {
     background: true,
