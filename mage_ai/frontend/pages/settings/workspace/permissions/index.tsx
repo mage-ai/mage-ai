@@ -74,7 +74,7 @@ function PermissionsListPage() {
           <Divider light />
 
           <Table
-            columnFlex={[3, 1, null, 6, null, null]}
+            columnFlex={[3, 1, null, 6, 1, null, null]}
             columns={[
               {
                 uuid: 'Entity',
@@ -87,6 +87,9 @@ function PermissionsListPage() {
               },
               {
                 uuid: 'Access',
+              },
+              {
+                uuid: 'Scope',
               },
               {
                 uuid: 'Last updated',
@@ -106,6 +109,7 @@ function PermissionsListPage() {
               entity,
               entity_id: entityID,
               entity_name: entityName,
+              entity_scope: entityScope,
               entity_type: entityType,
               id,
               updated_at: updatedAt,
@@ -144,6 +148,9 @@ function PermissionsListPage() {
                     </FlexContainer>
                   )}
                 </div>,
+                <Text default key="entityScope" monospace={!!entityScope}>
+                  {entityScope || '-'}
+                </Text>,
                 <Text monospace default key="updatedAt">
                   {updatedAt && dateFormatLong(updatedAt)}
                 </Text>,

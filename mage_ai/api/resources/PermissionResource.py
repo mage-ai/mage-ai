@@ -38,12 +38,16 @@ class PermissionResource(DatabaseResource):
         if 'entity_name' not in payload:
             payload['entity_name'] = ''
 
+        payload = self.update_payload_for_entity_scope(payload)
+
         return super().create(merge_dict(payload, dict(
             user_id=user.id if user else None,
         )), user, **kwargs)
 
     @safe_db_query
     def update(self, payload, **kwargs):
+        payload = self.update_payload_for_entity_scope(payload)
+
         role_ids = [int(i) for i in payload.get('role_ids') or []]
         roles_mapping = index_by(lambda x: x.id, self.roles or [])
 
@@ -78,6 +82,20 @@ class PermissionResource(DatabaseResource):
         return super().update(ignore_keys(payload, [
             'role_ids',
         ]), **kwargs)
+
+    @classmethod
+    def update_payload_for_entity_scope(self, payload):
+        entity_scope_payload = {}
+        if 'entity_scope' in payload:
+            entity_scope_payload['entity_scope'] = payload.pop('entity_scope')
+
+        if 'entity_scope_id' in payload:
+            entity_scope_payload['entity_scope_id'] = payload.pop('entity_scope_id')
+
+        if entity_scope_payload:
+            payload['options'] = merge_dict(payload.get('options') or {}, entity_scope_payload)
+
+        return payload
 
 
 PermissionResource.register_parent_model('role_id', Role)
