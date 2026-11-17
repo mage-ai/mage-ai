@@ -4,6 +4,7 @@ from typing import List
 from mage_ai.services.discord.config import DiscordConfig
 from mage_ai.services.email.config import EmailConfig
 from mage_ai.services.google_chat.config import GoogleChatConfig
+from mage_ai.services.ntfy.config import NtfyConfig
 from mage_ai.services.opsgenie.config import OpsgenieConfig
 from mage_ai.services.slack.config import SlackConfig
 from mage_ai.services.teams.config import TeamsConfig
@@ -48,4 +49,5 @@ class NotificationConfig(BaseConfig):
     teams_config: TeamsConfig = None
     discord_config: DiscordConfig = None
     telegram_config: TelegramConfig = None
+    ntfy_config: NtfyConfig = None
     message_templates: MessageTemplates = None
