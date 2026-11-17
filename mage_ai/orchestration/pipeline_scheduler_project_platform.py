@@ -260,6 +260,22 @@ class PipelineScheduler:
                         pipeline=self.pipeline,
                         pipeline_run=self.pipeline_run,
                     )
+                    self.__execute_pipeline_callbacks(
+                        'on_success',
+                        callback_kwargs=dict(
+                            pipeline_run=dict(
+                                pipeline_uuid=self.pipeline.uuid,
+                                status='completed',
+                                block_runs=[
+                                    dict(
+                                        block_uuid=br.block_uuid,
+                                        status=br.status,
+                                    )
+                                    for br in self.pipeline_run.block_runs
+                                ],
+                            ),
+                        ),
+                    )
 
                 UsageStatisticLogger().pipeline_run_ended_sync(self.pipeline_run)
 
@@ -345,6 +361,26 @@ class PipelineScheduler:
         )
         # Cancel block runs that are still in progress for the pipeline run.
         cancel_block_runs_and_jobs(self.pipeline_run, self.pipeline)
+
+        failed_block_runs = self.pipeline_run.failed_block_runs
+        self.__execute_pipeline_callbacks(
+            'on_failure',
+            callback_kwargs=dict(
+                pipeline_run=dict(
+                    pipeline_uuid=self.pipeline.uuid,
+                    status='failed',
+                    error=error,
+                    failed_blocks=[br.block_uuid for br in failed_block_runs],
+                    block_runs=[
+                        dict(
+                            block_uuid=br.block_uuid,
+                            status=br.status,
+                        )
+                        for br in self.pipeline_run.block_runs
+                    ],
+                ),
+            ),
+        )
 
     @safe_db_query
     def on_block_complete(
@@ -491,6 +527,39 @@ class PipelineScheduler:
         if HOSTNAME:
             base_tags['hostname'] = HOSTNAME
         return merge_dict(kwargs, base_tags)
+
+    def __execute_pipeline_callbacks(
+        self,
+        callback: str,
+        callback_kwargs: Dict = None,
+    ) -> None:
+        """
+        Execute pipeline-level callback blocks after the pipeline run completes or fails.
+
+        Args:
+            callback: The callback type ('on_success' or 'on_failure').
+            callback_kwargs: Additional keyword arguments passed to callback functions.
+        """
+        try:
+            tags = self.build_tags()
+            global_vars = dict()
+            if self.pipeline_run:
+                global_vars = self.pipeline_run.get_variables(
+                    extra_variables=dict(),
+                    pipeline_uuid=self.pipeline.uuid,
+                )
+            self.pipeline.execute_pipeline_callbacks(
+                callback,
+                callback_kwargs=callback_kwargs,
+                global_vars=global_vars,
+                logger=self.logger,
+                logging_tags=tags,
+            )
+        except Exception as err:
+            self.logger.exception(
+                f'Failed to execute pipeline {callback} callbacks: {err}',
+                **self.build_tags(),
+            )
 
     @safe_db_query
     def __check_pipeline_run_timeout(self) -> bool:
