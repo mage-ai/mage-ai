@@ -19,6 +19,17 @@ from mage_integrations.sources.constants import (
 )
 
 
+TEXT_COMPATIBLE_TYPES = (
+    'CHAR',
+    'JSON',
+    'LONGTEXT',
+    'MEDIUMTEXT',
+    'TEXT',
+    'TINYTEXT',
+    'VARCHAR',
+)
+
+
 def clean_column_name(col, lower_case: bool = True):
     col_new = clean_column_name_orig(col, lower_case=lower_case)
     if col_new.upper() in (RESERVED_WORDS + SQL_RESERVED_WORDS):
@@ -97,11 +108,19 @@ def build_create_table_command(
 def convert_column_to_type(value, column_type: str):
     if 'DOUBLE' in column_type:
         return f'{value}'
+    column_type_upper = column_type.upper()
+    if any(column_type_upper.startswith(text_type) for text_type in TEXT_COMPATIBLE_TYPES):
+        return f"'{value}'"
 
     return convert_column_to_type_orig(value, column_type)
 
 
-def convert_column_type(column_type: str, column_settings: Dict, **kwargs) -> str:
+def convert_column_type(
+    column_type: str,
+    column_settings: Dict,
+    string_type: str = 'CHAR(255)',
+    **kwargs,
+) -> str:
     if COLUMN_TYPE_BOOLEAN == column_type:
         return 'CHAR(52)'
     elif COLUMN_TYPE_INTEGER == column_type:
@@ -114,5 +133,6 @@ def convert_column_type(column_type: str, column_settings: Dict, **kwargs) -> st
         if COLUMN_FORMAT_DATETIME == column_settings.get('format'):
             # Twice as long as the number of characters in ISO date format
             return 'CHAR(52)'
+        return 'CHAR(255)' if string_type == 'VARCHAR' else string_type
 
     return 'CHAR(255)'
