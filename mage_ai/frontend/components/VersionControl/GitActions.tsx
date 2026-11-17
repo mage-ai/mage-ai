@@ -15,6 +15,7 @@ import TextArea from '@oracle/elements/Inputs/TextArea';
 import TextInput from '@oracle/elements/Inputs/TextInput';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import api from '@api';
+import AuthToken from '@api/utils/AuthToken';
 import { Branch } from '@oracle/icons';
 import {
   HeaderStyle,
@@ -23,7 +24,9 @@ import {
   TerminalStyle,
 } from './GitActions.style';
 import { getWebSocket } from '@api/utils/url';
+import { initializeTerminalConnection } from '@components/Terminal/utils';
 import { onSuccess } from '@api/utils/response';
+import { OAUTH2_APPLICATION_CLIENT_ID } from '@api/constants';
 import { remove } from '@utils/array';
 import { getUser } from '@utils/session';
 
@@ -46,6 +49,11 @@ function GitActions({
   fetchBranch,
 }: GitActionsProps) {
   const router = useRouter();
+  const token = useMemo(() => new AuthToken(), []);
+  const oauthWebsocketData = useMemo(() => ({
+    api_key: OAUTH2_APPLICATION_CLIENT_ID,
+    token: token.decodedToken.token,
+  }), [token]);
   const [payload, setPayload] = useState<any>();
   const [confirmMessage, setConfirmMessage] = useState<string>();
   const [action, setAction] = useState<string>();
@@ -206,6 +214,7 @@ function GitActions({
     lastMessage,
     sendMessage,
   } = useWebSocket(getWebSocket('terminal'), {
+    onOpen: event => initializeTerminalConnection(event, oauthWebsocketData),
     shouldReconnect: () => true,
   }, 'cwd' in sharedWebsocketData);
 
