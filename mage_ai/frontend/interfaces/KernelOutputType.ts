@@ -3,7 +3,7 @@ import { BlockTypeEnum, SampleDataType } from './BlockType';
 export enum ExecutionStateEnum {
   BUSY = 'busy', // Code is being executed
   IDLE = 'idle', // Nothing is being done
-  QUEUED = 'queued', // Block is being attempted to run but another block is still busy
+  QUEUED = 'queued', // The block is being attempted to run but another block is still busy
 }
 
 export enum MsgTypeEnum {
@@ -13,6 +13,9 @@ export enum MsgTypeEnum {
 export enum DataTypeEnum {
   GROUP = 'group',
   IMAGE_PNG = 'image/png',
+  IMAGE_JPEG = 'image/jpeg',
+  IMAGE_GIF = 'image/gif',
+  IMAGE_WEBP = 'image/webp',
   OBJECT = 'object',
   PROGRESS = 'progress', // Deprecated; can come from Great Expectations
   PROGRESS_STATUS = 'progress_status',

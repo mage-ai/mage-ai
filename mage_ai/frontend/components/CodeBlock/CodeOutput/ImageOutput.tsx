@@ -5,10 +5,18 @@ import { UNIT } from '@oracle/styles/units/spacing';
 interface ImageOutputProps {
   data: string;
   height?: number;
+  mimeType?: string;
   uuid?: string;
 }
 
-function ImageOutput({ data, height = UNIT * 60, uuid }: ImageOutputProps): JSX.Element {
+function ImageOutput({
+  data,
+  height = UNIT * 60,
+  mimeType = 'image/png',
+  uuid,
+}: ImageOutputProps): JSX.Element {
+  const src = `data:${mimeType};base64,${data.replace(/^\s+|\s+$/g, '')}`;
+
   return (
     <div
       style={{
@@ -21,7 +29,8 @@ function ImageOutput({ data, height = UNIT * 60, uuid }: ImageOutputProps): JSX.
       <Image
         alt={`Image ${uuid ? `${uuid} ` : ''}from code output`}
         layout="fill"
-        src={`data:image/png;base64, ${data}`}
+        src={src}
+        unoptimized
       />
     </div>
   );

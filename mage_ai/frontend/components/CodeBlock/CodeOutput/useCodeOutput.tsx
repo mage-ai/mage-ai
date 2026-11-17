@@ -29,6 +29,7 @@ import Text from '@oracle/elements/Text';
 import Tooltip from '@oracle/components/Tooltip';
 import api from '@api';
 import usePrevious from '@utils/usePrevious';
+import { imageMimeTypeForDataType, isImageOutputDataType } from '@utils/imageOutput';
 import { BorderColorShareProps } from '../index.style';
 import { Check, ChevronDown, ChevronUp, Expand, Save } from '@oracle/icons';
 import {
@@ -438,12 +439,13 @@ export default function useCodeOutput({
               </OutputRowStyle>
             );
           }
-        } else if (dataType === DataTypeEnum.IMAGE_PNG && data?.length >= 1) {
+        } else if (isImageOutputDataType(dataType) && data?.length >= 1) {
+          const mime = imageMimeTypeForDataType(dataType);
           displayElement = (
             <div style={{ backgroundColor: 'white' }}>
               <img
                 alt={`Image ${idx} from code output`}
-                src={`data:image/png;base64, ${data}`}
+                src={`data:${mime};base64,${String(data).replace(/^\s+|\s+$/g, '')}`}
               />
             </div>
           );
