@@ -41,6 +41,18 @@
         "null",
         "integer"
       ]
+    },
+    "default": {
+      "type": [
+        "null",
+        "boolean"
+      ]
+    },
+    "description": {
+      "type": [
+        "null",
+        "string"
+      ]
     }
   }
 }
