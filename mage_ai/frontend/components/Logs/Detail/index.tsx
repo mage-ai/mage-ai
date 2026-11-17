@@ -20,6 +20,7 @@ import { formatTimestamp } from '@utils/models/log';
 import { isJsonString } from '@utils/string';
 import { isObject } from '@utils/hash';
 import { sortByKey } from '@utils/array';
+import { highlightTextMatches } from '@components/Logs/search';
 
 const MESSAGE_KEY = 'message';
 const TAGS_KEY = 'tags';
@@ -34,13 +35,18 @@ export const TAB_ERRORS = { uuid: 'Errors' };
 type LogDetailProps = {
   log: LogType;
   onClose: () => void;
-  selectedTab: TabType;
+  searchQuery?: string;
+  selectedTab: TabType;    
   setSelectedTab: (tab: TabType) => void;
 };
+
+
+
 
 function LogDetail({
   log,
   onClose,
+  searchQuery,
   selectedTab,
   setSelectedTab,
 }: LogDetailProps) {
@@ -191,6 +197,10 @@ function LogDetail({
               valueTitle = JSON.stringify(valueTitle);
             }
 
+            const highlightedValue = typeof valueToDisplay === 'string'
+              ? highlightTextMatches(valueToDisplay, searchQuery, `${k}_${idx}_val`)
+              : valueToDisplay;
+
             return [
               <Text
                 key={`${k}_${idx}_key`}
@@ -208,10 +218,13 @@ function LogDetail({
                   whiteSpaceNormal={(isMessageKey && showFullLogMessage) || isTagsKey}
                   wordBreak={(isMessageKey && showFullLogMessage) || isTagsKey}
                 >
-                  {!isTagsKey && valueToDisplay}
+                  {!isTagsKey && highlightedValue}
                   {isTagsKey && (
                     <pre>
-                      {valueToDisplay}
+                      {typeof valueToDisplay === 'string'
+                        ? highlightTextMatches(valueToDisplay, searchQuery, `${k}_${idx}_tag`)
+                        : valueToDisplay
+                      }
                     </pre>
                   )}
 
@@ -252,7 +265,7 @@ function LogDetail({
                   preWrap
                   small
                 >
-                  {part}
+                  {highlightTextMatches(part, searchQuery, `error_${part}`)}
                 </Text>
               ))
             )),
@@ -275,7 +288,7 @@ function LogDetail({
                     preWrap
                     small
                   >
-                    {line}
+                    {highlightTextMatches(line, searchQuery, `stack_${line}`)}
                   </Text>
                 )),
               )}

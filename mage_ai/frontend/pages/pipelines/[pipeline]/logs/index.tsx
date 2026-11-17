@@ -26,6 +26,8 @@ import PrivateRoute from '@components/shared/PrivateRoute';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
+import TextInput from '@oracle/elements/Inputs/TextInput';
+import Select from '@oracle/elements/Inputs/Select';
 import ToggleSwitch from '@oracle/elements/Inputs/ToggleSwitch';
 import api from '@api';
 import dark from '@oracle/styles/themes/dark';
@@ -47,9 +49,48 @@ import { ignoreKeys, isEmptyObject, isEqual } from '@utils/hash';
 import { initializeLogs } from '@utils/models/log';
 import { numberWithCommas } from '@utils/string';
 import { queryFromUrl } from '@utils/url';
+import {
+  LogSearchFieldEnum,
+  logMatchesSearchByField,
+  normalizeSearchQuery,
+} from '@components/Logs/search';
 
 const PIPELINE_RUN_ID_PARAM = 'pipeline_run_id[]';
 const BLOCK_RUN_ID_PARAM = 'block_run_id[]';
+const SEARCH_FIELD_OPTIONS: Array<{ label: string; value: LogSearchFieldEnum }> = [
+  {
+    label: 'All fields',
+    value: LogSearchFieldEnum.ALL,
+  },
+  {
+    label: 'Message',
+    value: LogSearchFieldEnum.MESSAGE,
+  },
+  {
+    label: 'Error',
+    value: LogSearchFieldEnum.ERROR,
+  },
+  {
+    label: 'Block UUID',
+    value: LogSearchFieldEnum.BLOCK_UUID,
+  },
+  {
+    label: 'Level',
+    value: LogSearchFieldEnum.LEVEL,
+  },
+  {
+    label: 'Pipeline run ID',
+    value: LogSearchFieldEnum.PIPELINE_RUN_ID,
+  },
+  {
+    label: 'Block run ID',
+    value: LogSearchFieldEnum.BLOCK_RUN_ID,
+  },
+  {
+    label: 'Log UUID',
+    value: LogSearchFieldEnum.LOG_UUID,
+  },
+];
 
 type PipelineLogsPageProp = {
   pipeline: {
@@ -70,6 +111,18 @@ function PipelineLogsPage({
   const [errors, setErrors] = useState<ErrorsType>(null);
   const [selectedTab, setSelectedTab] = useState<TabType>(TAB_DETAILS);
   const [autoScrollLogs, setAutoScrollLogs] = useState(get(LOCAL_STORAGE_KEY_AUTO_SCROLL_LOGS, true));
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [searchField, setSearchField] = useState<LogSearchFieldEnum>(LogSearchFieldEnum.ALL);
+  const [pendingSearchDirection, setPendingSearchDirection] = useState<1 | -1>(null);
+  const [refreshVersion, setRefreshVersion] = useState<number>(0);
+
+  useEffect(() => {
+    // Reset page-local navigation state when the route changes to a different pipeline.
+    setSelectedLog(null);
+    setSearchQuery('');
+    setPendingSearchDirection(null);
+    setRefreshVersion(previousValue => previousValue + 1);
+  }, [pipelineUUID]);
 
   const { data: dataPipeline } = api.pipelines.detail(pipelineUUID, {
     includes_content: false,
@@ -226,6 +279,28 @@ function PipelineLogsPage({
       query,
   ]);
   const filteredLogCount = logsFiltered.length;
+  const logIndexByUUID = useMemo(() => logsFiltered.reduce((acc, log, idx) => {
+    const logUUID = log?.data?.uuid;
+    if (logUUID) {
+      acc[logUUID] = idx;
+    }
+
+    return acc;
+  }, {}), [logsFiltered]);
+  const normalizedSearchQuery = useMemo(() => normalizeSearchQuery(searchQuery), [searchQuery]);
+  const matchedLogs: LogType[] = useMemo(() => {
+    if (!normalizedSearchQuery) {
+      return [];
+    }
+
+    return logsFiltered.filter(log => logMatchesSearchByField(log, normalizedSearchQuery, searchField));
+  }, [logsFiltered, normalizedSearchQuery, searchField]);
+  const matchedLogIndices: number[] = useMemo(
+    () => matchedLogs
+      .map(log => logIndexByUUID[log?.data?.uuid])
+      .filter((idx: number) => typeof idx === 'number'),
+    [logIndexByUUID, matchedLogs],
+  );
 
   const qPrev = usePrevious(q);
   useEffect(() => {
@@ -301,16 +376,125 @@ function PipelineLogsPage({
     setAutoScrollLogs(autoScrollLogsVal);
     set(LOCAL_STORAGE_KEY_AUTO_SCROLL_LOGS, autoScrollLogsVal);
   }, [autoScrollLogs]);
+  const jumpToMatch = useCallback((direction = 1) => {
+    if (!normalizedSearchQuery) {
+      return;
+    }
+
+    const currentLogUUID = q?.[LOG_UUID_PARAM] as string;
+    const currentLogIndex = typeof logIndexByUUID?.[currentLogUUID] === 'number'
+      ? logIndexByUUID?.[currentLogUUID]
+      : -1;
+
+    const pickMatchIndex = (fallbackToBoundary = false) => {
+      if (!matchedLogIndices.length) {
+        return -1;
+      }
+
+      if (direction === 1) {
+        const indexInMatchedLogs = matchedLogIndices.findIndex(idx => idx > currentLogIndex);
+        if (indexInMatchedLogs >= 0) {
+          return indexInMatchedLogs;
+        }
+        return fallbackToBoundary ? 0 : -1;
+      }
+
+      let indexInMatchedLogs = -1;
+      matchedLogIndices.forEach((idx, idxMatched) => {
+        if (idx < currentLogIndex) {
+          indexInMatchedLogs = idxMatched;
+        }
+      });
+      if (indexInMatchedLogs >= 0) {
+        return indexInMatchedLogs;
+      }
+      return fallbackToBoundary ? matchedLogIndices.length - 1 : -1;
+    };
+
+    const nextMatchIndex = pickMatchIndex();
+    if (nextMatchIndex >= 0 && matchedLogs[nextMatchIndex]) {
+      const matchedLog = matchedLogs[nextMatchIndex];
+      setPendingSearchDirection(null);
+      goToWithQuery({ [LOG_UUID_PARAM]: matchedLog?.data?.uuid });
+      setSelectedLog(matchedLog || null);
+      return;
+    }
+
+    // If we reached the boundary of currently loaded logs, page and retry.
+    if (direction === 1 && !allPastLogsLoaded) {
+      setPendingSearchDirection(1);
+      loadPastLogInterval();
+      return;
+    }
+
+    if (direction === -1 && offset > 0) {
+      setPendingSearchDirection(-1);
+      loadNewerLogInterval();
+      return;
+    }
+
+    const boundaryMatchIndex = pickMatchIndex(true);
+    if (boundaryMatchIndex >= 0 && matchedLogs[boundaryMatchIndex]) {
+      const matchedLog = matchedLogs[boundaryMatchIndex];
+      setPendingSearchDirection(null);
+      goToWithQuery({ [LOG_UUID_PARAM]: matchedLog?.data?.uuid });
+      setSelectedLog(matchedLog || null);
+    }
+  }, [
+    allPastLogsLoaded,
+    loadNewerLogInterval,
+    loadPastLogInterval,
+    logIndexByUUID,
+    matchedLogIndices,
+    matchedLogs,
+    normalizedSearchQuery,
+    offset,
+    q,
+  ]);
+
+  useEffect(() => {
+    if (!pendingSearchDirection) {
+      return;
+    }
+
+    if (!normalizedSearchQuery) {
+      setPendingSearchDirection(null);
+      return;
+    }
+
+    if (matchedLogs.length >= 1) {
+      jumpToMatch(pendingSearchDirection);
+      return;
+    }
+
+    const noMoreLogsToPage = pendingSearchDirection === 1
+      ? allPastLogsLoaded
+      : offset <= 0;
+
+    if (noMoreLogsToPage) {
+      setPendingSearchDirection(null);
+    }
+  }, [
+    allPastLogsLoaded,
+    jumpToMatch,
+    matchedLogs,
+    normalizedSearchQuery,
+    offset,
+    pendingSearchDirection,
+  ]);
 
   const LogsTableMemo = useMemo(() => (
     <LogsTable
       autoScrollLogs={autoScrollLogs}
       blocksByUUID={blocksByUUID}
+      jumpToLogUUID={q?.[LOG_UUID_PARAM] as string}
       logs={logsFiltered}
       onRowClick={setSelectedTab}
       pipeline={pipeline}
       query={query}
+      refreshVersion={refreshVersion}
       saveScrollPosition={saveScrollPosition}
+      searchQuery={searchQuery}
       setSelectedLog={setSelectedLog}
       tableInnerRef={tableInnerRef}
       themeContext={themeContext}
@@ -320,9 +504,12 @@ function PipelineLogsPage({
     blocksByUUID,
     logsFiltered,
     pipeline,
+    q,
     query,
     saveScrollPosition,
+    searchQuery,
     themeContext,
+    refreshVersion,
   ]);
 
   return (
@@ -334,6 +521,7 @@ function PipelineLogsPage({
             goToWithQuery({ [LOG_UUID_PARAM]: null });
             setSelectedLog(null);
           }}
+          searchQuery={searchQuery}
           selectedTab={selectedTab}
           setSelectedTab={setSelectedTab}
         />
@@ -361,22 +549,105 @@ function PipelineLogsPage({
       uuid="pipeline/logs"
     >
       <Spacing px={PADDING_UNITS} py={1}>
-        <Text>
-          {!isLoading && (
-            <>
+        {!isLoading && (
+          <>
+            <Text>
               {numberWithCommas(filteredLogCount)} logs found
-              <LogToolbar
-                allPastLogsLoaded={allPastLogsLoaded}
-                loadNewerLogInterval={loadNewerLogInterval}
-                loadPastLogInterval={loadPastLogInterval}
-                saveScrollPosition={saveScrollPosition}
-                selectedRange={selectedRange}
-                setSelectedRange={setSelectedRange}
-              />
-            </>
-          )}
-          {isLoading && 'Searching...'}
-        </Text>
+            </Text>
+
+            <LogToolbar
+              allPastLogsLoaded={allPastLogsLoaded}
+              loadNewerLogInterval={loadNewerLogInterval}
+              loadPastLogInterval={loadPastLogInterval}
+              saveScrollPosition={saveScrollPosition}
+              selectedRange={selectedRange}
+              setSelectedRange={setSelectedRange}
+            />
+
+            <Spacing pb={1}>
+              <FlexContainer alignItems="center">
+                <TextInput
+                  compact
+                  defaultColor
+                  onChange={e => setSearchQuery(e.target.value)}
+                  onKeyDown={e => {
+                    if ('Enter' === e.key) {
+                      e.preventDefault();
+                      jumpToMatch(1);
+                    }
+                  }}
+                  placeholder="Search in currently loaded logs"
+                  value={searchQuery}
+                />
+
+                <Spacing mr={1} />
+
+                <Select
+                  compact
+                  defaultColor
+                  onChange={e => setSearchField(e.target.value as LogSearchFieldEnum)}
+                  value={searchField}
+                >
+                  {SEARCH_FIELD_OPTIONS.map(({ label, value }) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </Select>
+
+                <Spacing mr={1} />
+
+                <KeyboardShortcutButton
+                  {...SHARED_BUTTON_PROPS}
+                  disabled={!searchQuery}
+                  onClick={() => {
+                    setSearchQuery('');
+                    setPendingSearchDirection(null);
+                  }}
+                  uuid="logs/clear_search"
+                >
+                  Clear
+                </KeyboardShortcutButton>
+
+                <Spacing mr={1} />
+
+                <KeyboardShortcutButton
+                  {...SHARED_BUTTON_PROPS}
+                  disabled={matchedLogs.length <= 0}
+                  onClick={() => jumpToMatch(-1)}
+                  uuid="logs/previous_match"
+                >
+                  Previous match
+                </KeyboardShortcutButton>
+
+                <Spacing mr={1} />
+
+                <KeyboardShortcutButton
+                  {...SHARED_BUTTON_PROPS}
+                  disabled={matchedLogs.length <= 0}
+                  onClick={() => jumpToMatch(1)}
+                  uuid="logs/next_match"
+                >
+                  Next match
+                </KeyboardShortcutButton>
+
+                <Spacing mr={1} />
+
+                <Text muted small>
+                  {normalizedSearchQuery
+                    ? `${numberWithCommas(matchedLogs.length)} matches in current page (Next/Previous can auto-page)`
+                    : 'Enter text to search logs'}
+                </Text>
+              </FlexContainer>
+            </Spacing>
+          </>
+        )}
+
+        {isLoading && (
+          <Text>
+            Searching...
+          </Text>
+        )}
       </Spacing>
 
       <Divider light />
@@ -394,6 +665,7 @@ function PipelineLogsPage({
           <KeyboardShortcutButton
             {...SHARED_BUTTON_PROPS}
             onClick={() => {
+              setRefreshVersion(previousValue => previousValue + 1); // adding refresh version trigger
               if (q?._offset === '0' && q?._limit === String(LOG_FILE_COUNT_INTERVAL)) {
                 fetchLogs(null);
               } else {
