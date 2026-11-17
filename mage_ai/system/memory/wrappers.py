@@ -109,7 +109,28 @@ def execute_with_memory_tracking(
     log_message_prefix: Optional[str] = None,
     logger: Optional[Logger] = None,
     logging_tags: Optional[Dict] = None,
+    is_async: bool = False,
 ) -> Tuple[Optional[Any], ResourceUsage]:
+    import asyncio
+    import inspect
+
+    # Auto-detect if function is async if not explicitly specified
+    if not is_async and inspect.iscoroutinefunction(func):
+        is_async = True
+
+    # If function is async, use asyncio.run to execute the async memory tracking
+    if is_async:
+        return asyncio.run(
+            execute_with_memory_tracking_async(
+                func=func,
+                args=args,
+                kwargs=kwargs,
+                log_message_prefix=log_message_prefix,
+                logger=logger,
+                logging_tags=logging_tags,
+            )
+        )
+
     def function_with_params(args=args, func=func, kwargs=kwargs):
         if args is not None and kwargs is not None:
             return func(*args, **kwargs)
