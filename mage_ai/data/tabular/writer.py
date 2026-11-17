@@ -1,6 +1,8 @@
 import asyncio
 import glob
 import json
+import os
+from functools import partial
 from typing import Dict, List, Optional, Union
 
 import pandas as pd
@@ -101,14 +103,12 @@ def to_parquet_sync(
         partition_cols=partition_cols,
         settings=settings,
     ):
-        pq.write_to_dataset(
+        __write_to_dataset(
             table,
             basename_template=basename_template,
-            compression='snappy',
             existing_data_behavior=existing_data_behavior,
             partition_cols=partition_columns,
             root_path=output_dir,
-            use_dictionary=True,
         )
         total_rows += table.num_rows
         total_columns = max(len(table.schema.names), total_columns)
@@ -165,7 +165,25 @@ async def __write_to_dataset_async(
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(
         None,
-        pq.write_to_dataset,
+        partial(
+            __write_to_dataset,
+            table,
+            basename_template=basename_template,
+            existing_data_behavior=existing_data_behavior,
+            partition_cols=partition_cols,
+            root_path=root_path,
+        ),
+    )
+
+
+def __write_to_dataset(
+    table: pa.Table,
+    root_path: str,
+    basename_template: Optional[str] = None,
+    existing_data_behavior: Optional[str] = None,
+    partition_cols: Optional[List[str]] = None,
+):
+    pq.write_to_dataset(
         table,
         basename_template=basename_template,
         compression='snappy',
@@ -174,6 +192,30 @@ async def __write_to_dataset_async(
         root_path=root_path,
         use_dictionary=True,
     )
+    __write_empty_table_if_needed(table, root_path, basename_template)
+
+
+def __write_empty_table_if_needed(
+    table: pa.Table,
+    root_path: str,
+    basename_template: Optional[str] = None,
+) -> None:
+    if table.num_rows != 0:
+        return
+
+    if glob.glob(os.path.join(root_path, '**', '*.parquet'), recursive=True):
+        return
+
+    filename = '0-empty.parquet'
+    if basename_template:
+        try:
+            filename = basename_template.format(i=0)
+        except (IndexError, KeyError, ValueError):
+            pass
+
+    file_path = os.path.join(root_path, filename)
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
+    pq.write_table(table, file_path, compression='snappy', use_dictionary=True)
 
 
 def __prepare_data(
