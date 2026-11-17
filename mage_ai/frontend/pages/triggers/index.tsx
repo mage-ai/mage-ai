@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/router';
 
+import Button from '@oracle/elements/Button';
 import Dashboard from '@components/Dashboard';
 import FlexContainer from '@oracle/components/FlexContainer';
 import Paginate, { ROW_LIMIT } from '@components/shared/Paginate';
@@ -10,6 +11,7 @@ import Select from '@oracle/elements/Inputs/Select';
 import Spacing from '@oracle/elements/Spacing';
 import Spinner from '@oracle/components/Spinner';
 import Text from '@oracle/elements/Text';
+import TextInput from '@oracle/elements/Inputs/TextInput';
 import TriggersTable from '@components/Triggers/Table';
 import api from '@api';
 import {
@@ -25,6 +27,9 @@ import { storeLocalTimezoneSetting } from '@components/settings/workspace/utils'
 function TriggerListPage() {
   const router = useRouter();
   const [errors, setErrors] = useState(null);
+  const [searchText, setSearchText] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const debounceTimeout = useRef(null);
 
   const q = queryFromUrl();
   const page = q?.page ? q.page : 0;
@@ -37,10 +42,35 @@ function TriggerListPage() {
     [project?.features],
   );
 
+  // Debounce search input
+  useEffect(() => {
+    if (debounceTimeout.current) {
+      clearTimeout(debounceTimeout.current);
+    }
+
+    debounceTimeout.current = setTimeout(() => {
+      setSearchQuery(searchText);
+    }, 500);
+
+    return () => {
+      if (debounceTimeout.current) {
+        clearTimeout(debounceTimeout.current);
+      }
+    };
+  }, [searchText]);
+
+  // Reset page to 0 when search query changes
+  useEffect(() => {
+    if (searchQuery && page !== 0) {
+      goToWithQuery({ page: 0 });
+    }
+  }, [searchQuery]);
+
   const pipelineSchedulesRequestQuery: PipelineScheduleReqQueryParamsType = {
     _limit: ROW_LIMIT,
     _offset: page * ROW_LIMIT,
     order_by: orderByQuery,
+    ...(searchQuery && { search: searchQuery }),
   };
 
   const {
@@ -71,32 +101,63 @@ function TriggerListPage() {
       uuid="triggers/index"
     >
       <Spacing mx={2} my={1}>
-        <FlexContainer alignItems="center">
-          <Text bold default large>Sort by:</Text>
-          <Spacing mr={1} />
-          <Select
-            compact
-            defaultColor
-            fitContent
-            onChange={e => {
-              e.preventDefault();
-              goToWithQuery(
-                {
-                  order_by: e.target.value,
-                  page: 0,
-                },
-              );
-            }}
-            paddingRight={UNIT * 4}
-            placeholder="Select column"
-            value={orderByQuery || SortQueryParamEnum.CREATED_AT}
-          >
-            {Object.entries(SORT_QUERY_TO_COLUMN_NAME_MAPPING).map(([sortKey, sortDisplayValue]) => (
-              <option key={sortKey} value={sortKey}>
-                {sortDisplayValue}
-              </option>
-            ))}
-          </Select>
+        <FlexContainer alignItems="center" justifyContent="space-between">
+          <FlexContainer alignItems="center">
+            <TextInput
+              compact
+              onChange={e => {
+                setSearchText(e.target.value);
+              }}
+              onKeyPress={e => {
+                if (e.key === 'Enter') {
+                  setSearchQuery(searchText);
+                  goToWithQuery({ page: 0 });
+                }
+              }}
+              placeholder="Search by pipeline or trigger name..."
+              value={searchText}
+              width={UNIT * 30}
+            />
+            <Spacing mr={1} />
+            <Button
+              compact
+              onClick={() => {
+                setSearchQuery(searchText);
+                goToWithQuery({ page: 0 });
+              }}
+              primary
+            >
+              Search
+            </Button>
+          </FlexContainer>
+
+          <FlexContainer alignItems="center">
+            <Text bold default large>Sort by:</Text>
+            <Spacing mr={1} />
+            <Select
+              compact
+              defaultColor
+              fitContent
+              onChange={e => {
+                e.preventDefault();
+                goToWithQuery(
+                  {
+                    order_by: e.target.value,
+                    page: 0,
+                  },
+                );
+              }}
+              paddingRight={UNIT * 4}
+              placeholder="Select column"
+              value={orderByQuery || SortQueryParamEnum.CREATED_AT}
+            >
+              {Object.entries(SORT_QUERY_TO_COLUMN_NAME_MAPPING).map(([sortKey, sortDisplayValue]) => (
+                <option key={sortKey} value={sortKey}>
+                  {sortDisplayValue}
+                </option>
+              ))}
+            </Select>
+          </FlexContainer>
         </FlexContainer>
       </Spacing>
 
