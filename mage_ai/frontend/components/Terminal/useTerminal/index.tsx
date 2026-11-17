@@ -27,6 +27,7 @@ import { getWebSocket } from '@api/utils/url';
 import { keysPresentAndKeysRecent } from '@utils/hooks/keyboardShortcuts/utils';
 import { pushAtIndex } from '@utils/array';
 import { useFileTabs } from '@components/PipelineDetail/FileTabs';
+import { initializeTerminalConnection } from '@components/Terminal/utils';
 
 const UUID_MAIN = 'Main Mage';
 const DEFAULT_ITEM = { selected: true, uuid: UUID_MAIN };
@@ -238,13 +239,13 @@ export default function useTerminal({
     readyState,
     sendMessage,
   } = useWebSocket(getWebSocket(selectedItem ? 'terminal' : null), {
+    onOpen: event => initializeTerminalConnection(event, oauthWebsocketData),
     queryParams: {
       term_name: `${user?.id}--${uuidTerminalController}--${selectedItem?.uuid}`,
     },
     // shouldReconnect: (data) => {
     //   return false;
     // },
-    // onOpen
     // onMessage
   }, !!selectedItem);
 

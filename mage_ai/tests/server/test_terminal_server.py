@@ -125,7 +125,7 @@ class TerminalAuthenticationTest(AsyncHTTPTestCase):
         self.manager.get_terminal.assert_not_called()
 
     @gen_test
-    async def test_editor_can_attach_and_receive_buffer_after_authentication(self):
+    async def test_editor_handshake_attaches_and_replays_buffer_without_input(self):
         self.configure_auth()
         connection = await self.connect()
         connection.write_message(json.dumps({

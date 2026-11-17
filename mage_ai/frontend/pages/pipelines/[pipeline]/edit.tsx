@@ -97,6 +97,7 @@ import { Close } from '@oracle/icons';
 import { DEBUG } from '@utils/environment';
 import { ErrorProvider } from '@context/Error';
 import { INTERNAL_OUTPUT_REGEX } from '@utils/models/output';
+import { initializeTerminalConnection } from '@components/Terminal/utils';
 import {
   LOCAL_STORAGE_KEY_DISABLE_AUTOSAVE,
   LOCAL_STORAGE_KEY_PIPELINE_EDIT_BEFORE_TAB_SELECTED,
@@ -168,11 +169,19 @@ function PipelineDetailPage({
 }: PipelineDetailPageProps) {
   const mainContainerFooterRef = useRef(null);
   const timeoutRef = useRef(null);
+  const token = useMemo(() => new AuthToken(), []);
+  const sharedWebsocketData = useMemo(() => ({
+    api_key: OAUTH2_APPLICATION_CLIENT_ID,
+    token: token.decodedToken.token,
+  }), [
+    token,
+  ]);
 
   const {
     lastMessage: lastTerminalMessage,
     sendMessage: sendTerminalMessage,
   } = useWebSocket(getWebSocket('terminal'), {
+    onOpen: event => initializeTerminalConnection(event, sharedWebsocketData),
     shouldReconnect: () => true,
   });
 
@@ -2413,14 +2422,6 @@ function PipelineDetailPage({
     onSelectBlockFile,
     selectedBlock,
     setHiddenBlocks,
-  ]);
-
-  const token = useMemo(() => new AuthToken(), []);
-  const sharedWebsocketData = useMemo(() => ({
-    api_key: OAUTH2_APPLICATION_CLIENT_ID,
-    token: token.decodedToken.token,
-  }), [
-    token,
   ]);
 
   // WebSocket
