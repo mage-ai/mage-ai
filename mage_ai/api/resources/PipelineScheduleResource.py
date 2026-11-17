@@ -9,7 +9,9 @@ from sqlalchemy.sql.expression import func
 
 from mage_ai.api.resources.DatabaseResource import DatabaseResource
 from mage_ai.data_preparation.models.pipeline import Pipeline
+from mage_ai.api.errors import ApiError
 from mage_ai.data_preparation.models.triggers import (
+    ScheduleInterval,
     ScheduleStatus,
     Trigger,
     add_or_update_trigger_for_pipeline_and_persist,
@@ -245,11 +247,40 @@ class PipelineScheduleResource(DatabaseResource):
             **kwargs,
         )
 
+    @staticmethod
+    def _validate_active_hours(schedule_interval, settings):
+        if schedule_interval != ScheduleInterval.ALWAYS_ON:
+            return
+        active_start = settings.get('active_hours_start')
+        active_end = settings.get('active_hours_end')
+        if active_start is None or active_end is None:
+            error = ApiError.RESOURCE_INVALID.copy()
+            error['message'] = (
+                'active_hours_start and active_hours_end are required for @always_on triggers.'
+            )
+            raise ApiError(error)
+        if not (isinstance(active_start, int) and 0 <= active_start <= 23):
+            error = ApiError.RESOURCE_INVALID.copy()
+            error['message'] = 'active_hours_start must be an integer between 0 and 23.'
+            raise ApiError(error)
+        if not (isinstance(active_end, int) and 0 <= active_end <= 23):
+            error = ApiError.RESOURCE_INVALID.copy()
+            error['message'] = 'active_hours_end must be an integer between 0 and 23.'
+            raise ApiError(error)
+        if active_start == active_end:
+            error = ApiError.RESOURCE_INVALID.copy()
+            error['message'] = 'active_hours_start and active_hours_end cannot be the same.'
+            raise ApiError(error)
+
     @classmethod
     @safe_db_query
     def create(self, payload, user, **kwargs):
         pipeline = kwargs['parent_model']
         payload['pipeline_uuid'] = pipeline.uuid
+
+        settings = payload.get('settings') or {}
+        schedule_interval = payload.get('schedule_interval')
+        self._validate_active_hours(schedule_interval, settings)
 
         if 'repo_path' not in payload:
             payload['repo_path'] = (
@@ -281,6 +312,10 @@ class PipelineScheduleResource(DatabaseResource):
 
     @safe_db_query
     def update(self, payload, **kwargs):
+        settings = payload.get('settings') or {}
+        schedule_interval = payload.get('schedule_interval') or self.schedule_interval
+        self._validate_active_hours(schedule_interval, settings)
+
         # Update associated event matchers
         arr = payload.pop('event_matchers', None)
         event_matchers = []
