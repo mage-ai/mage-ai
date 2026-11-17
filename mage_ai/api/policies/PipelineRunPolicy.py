@@ -101,6 +101,8 @@ PipelineRunPolicy.allow_query([
     'backfill_id',
     'disable_retries_grouping',
     'end_timestamp',
+    'execution_date_end',
+    'execution_date_start',
     'global_data_product_uuid',
     'include_all_pipeline_schedules',
     'include_pipeline_tags',

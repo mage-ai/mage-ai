@@ -71,7 +71,6 @@ export function goToWithQuery(query, opts: GoToWithQueryProps = {}) {
 }
 
 export type GoToWithFiltersProps = {
-  addingMultipleValues?: boolean;
   isList?: boolean,
   itemsPerPage?: number,
   pushHistory?: boolean,
@@ -79,17 +78,41 @@ export type GoToWithFiltersProps = {
   resetPage?: boolean,
 };
 
+// Legacy wrapper used by Logs/Filter. Prefer goToWithMixedFilters for new code.
 export function goToWithFilters(
   query: any,
   additionalQuery: any,
   {
-    addingMultipleValues,
-    isList,
     itemsPerPage,
     pushHistory = false,
     resetLimitParams = false,
     resetPage = false,
   }: GoToWithFiltersProps,
+) {
+  goToWithMixedFilters(query, {}, {}, {
+    itemsPerPage, listFilters: additionalQuery, pushHistory, resetLimitParams, resetPage,
+  });
+}
+
+export type GoToWithMixedFiltersProps = {
+  itemsPerPage?: number;
+  listFilters?: { [key: string]: any };
+  pushHistory?: boolean;
+  resetLimitParams?: boolean;
+  resetPage?: boolean;
+};
+
+export function goToWithMixedFilters(
+  query: any,
+  arrayFilters: { [key: string]: any[] },
+  scalarFilters: { [key: string]: any },
+  {
+    itemsPerPage,
+    listFilters,
+    pushHistory = false,
+    resetLimitParams = false,
+    resetPage = false,
+  }: GoToWithMixedFiltersProps,
 ) {
   let updatedQuery = { ...query };
 
@@ -97,35 +120,34 @@ export function goToWithFilters(
     updatedQuery.page = 0;
   }
 
-  if (addingMultipleValues) {
-    Object.entries(additionalQuery).forEach(([k1, v]) => {
-      if (Array.isArray(v)) {
-        const k2 = `${k1}[]`;
-        updatedQuery[k2] = v.map(String);
-      }
-    });
-  } else if (isList) {
-    Object.entries(additionalQuery).forEach(([k1, v]) => {
+  Object.entries(arrayFilters).forEach(([k, v]) => {
+    if (Array.isArray(v)) {
+      updatedQuery[`${k}[]`] = v.map(String);
+    }
+  });
+
+  // Toggle individual values in/out of existing arrays
+  if (listFilters) {
+    Object.entries(listFilters).forEach(([k, v]) => {
       const value = String(v);
-      const k2 = `${k1}[]`;
-      let arr = updatedQuery[k2];
+      const arrKey = `${k}[]`;
+      let arr = updatedQuery[arrKey];
       if (arr && Array.isArray(arr)) {
         arr = arr.map(String);
         if (arr.includes(value)) {
-          updatedQuery[k2] = remove(arr, val => val === value);
+          updatedQuery[arrKey] = remove(arr, val => val === value);
         } else {
-          updatedQuery[k2] = arr.concat(value);
+          updatedQuery[arrKey] = arr.concat(value);
         }
       } else {
-        updatedQuery[k2] = [value];
+        updatedQuery[arrKey] = [value];
       }
     });
-  } else {
-    updatedQuery = {
-      ...updatedQuery,
-      ...additionalQuery,
-    };
   }
+
+  Object.entries(scalarFilters).forEach(([k, v]) => {
+    updatedQuery[k] = v;
+  });
 
   if (resetLimitParams) {
     updatedQuery[MetaQueryEnum.LIMIT] = itemsPerPage || ITEMS_PER_PAGE;

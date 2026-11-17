@@ -55,6 +55,8 @@ export interface PipelineRunReqQueryParamsType {
   _limit?: number;
   _offset?: number;
   disable_retries_grouping?: boolean;
+  execution_date_end?: number;
+  execution_date_start?: number;
   global_data_product_uuid?: string;
   include_all_pipeline_schedules?: boolean;
   include_pipeline_tags?: boolean;
@@ -64,6 +66,8 @@ export interface PipelineRunReqQueryParamsType {
 }
 
 export enum PipelineRunFilterQueryEnum {
+  EXECUTION_DATE_END = 'execution_date_end',
+  EXECUTION_DATE_START = 'execution_date_start',
   PIPELINE_UUID = 'pipeline_uuid[]',
   STATUS = 'status[]',
   TAG = 'pipeline_tag[]',

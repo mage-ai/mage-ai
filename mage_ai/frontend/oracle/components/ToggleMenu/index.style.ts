@@ -14,6 +14,7 @@ const CONTAINER_MIN_WIDTH = UNIT * 74;
 const MAIN_HEIGHT = UNIT * 48;
 
 export const ContainerStyle = styled.div<{
+  allowOverflow?: boolean;
   compact?: boolean;
   display?: boolean;
   left?: number;
@@ -29,6 +30,10 @@ export const ContainerStyle = styled.div<{
     background-color: ${(props.theme || dark).background.panel};
     border: ${BORDER_WIDTH_THICK}px ${BORDER_STYLE} ${(props.theme || dark).interactive.defaultBackground};
     box-shadow: ${(props.theme.shadow || dark.shadow).window};
+  `}
+
+  ${props => props.allowOverflow && `
+    overflow: visible;
   `}
 
   ${props => props.display && `
@@ -49,6 +54,7 @@ export const ContainerStyle = styled.div<{
 `;
 
 export const MainStyle = styled.div<{
+  allowOverflow?: boolean;
   compact?: boolean;
 }>`
   display: flex;
@@ -59,6 +65,10 @@ export const MainStyle = styled.div<{
   ${props => `
     background-color: ${(props.theme || dark).background.content};
     border: ${BORDER_WIDTH}px ${BORDER_STYLE} ${(props.theme || dark).interactive.defaultBackground};
+  `}
+
+  ${props => props.allowOverflow && `
+    overflow: visible;
   `}
 
   ${props => props.compact && `
@@ -76,10 +86,16 @@ export const BeforeStyle = styled.aside`
   `}
 `;
 
-export const ContentStyle = styled.div`
+export const ContentStyle = styled.div<{
+  allowOverflow?: boolean;
+}>`
   width: 100%;
   overflow: auto;
   ${ScrollbarStyledCss}
+
+  ${props => props.allowOverflow && `
+    overflow: visible;
+  `}
 `;
 
 const SHARED_STYLES = css`
