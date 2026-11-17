@@ -97,7 +97,7 @@
     "rehype-sanitize": "^6.0.0",
     "remark-gfm": "^3.0.1",
     "sass": "^1.77.4",
-    "storybook": "^7.4.2",
+    "storybook": "^7.6.21",
     "styled-bootstrap-grid": "^3.1.2",
     "styled-components": "^5.3.5",
     "styled-system": "^5.1.5",
