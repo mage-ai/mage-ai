@@ -1,7 +1,10 @@
-from unittest.mock import ANY, patch
+from unittest.mock import ANY, MagicMock, patch
 
 from mage_ai.orchestration.notification.config import NotificationConfig
-from mage_ai.orchestration.notification.sender import NotificationSender
+from mage_ai.orchestration.notification.sender import (
+    NotificationSender,
+    format_failed_blocks_dbt_detail,
+)
 from mage_ai.tests.base_test import DBTestCase
 from mage_ai.tests.factory import create_pipeline, create_pipeline_run_with_schedule
 from mage_ai.tests.orchestration.notification.constants import (
@@ -167,3 +170,51 @@ class NotificationSenderTests(DBTestCase):
             message=ANY,
             description=ANY,
         )
+
+    @patch('mage_ai.orchestration.notification.sender.send_slack_message')
+    @patch('mage_ai.orchestration.notification.sender.send_email')
+    def test_send_pipeline_run_failure_message_includes_stacktrace(
+        self, mock_send_email, mock_send_slack
+    ):
+        notification_config = NotificationConfig.load(config=SLACK_NOTIFICATION_CONFIG)
+        sender = NotificationSender(config=notification_config)
+        pipeline_run = self.__class__.pipeline_run
+        sender.send_pipeline_run_failure_message(
+            self.__class__.pipeline,
+            pipeline_run,
+            error='Failed blocks: dbt_block.',
+            stacktrace='Block dbt_block: failed models: my_model; failed tests: test_my_model.',
+        )
+        self.assertEqual(mock_send_email.call_count, 0)
+        call_args = mock_send_slack.call_args[0]
+        message = call_args[1]
+        self.assertIn('Failed blocks: dbt_block.', message)
+        self.assertIn('Block dbt_block: failed models: my_model; failed tests: test_my_model.', message)
+
+    def test_format_failed_blocks_dbt_detail_empty(self):
+        """No block runs returns empty string."""
+        self.assertEqual(format_failed_blocks_dbt_detail([]), '')
+
+    def test_format_failed_blocks_dbt_detail_with_dbt_metrics(self):
+        """Block runs with metrics.error.dbt produce readable failure lines."""
+        br = MagicMock()
+        br.block_uuid = 'dbt/demo/models/example/my_model'
+        br.metrics = {
+            'error': {
+                'dbt': {
+                    'failed_models': ['my_model', 'other_model'],
+                    'failed_tests': ['test_my_model'],
+                }
+            }
+        }
+        result = format_failed_blocks_dbt_detail([br])
+        self.assertIn('dbt/demo/models/example/my_model', result)
+        self.assertIn('failed models: my_model, other_model', result)
+        self.assertIn('failed tests: test_my_model', result)
+
+    def test_format_failed_blocks_dbt_detail_skips_blocks_without_dbt(self):
+        br = MagicMock()
+        br.block_uuid = 'plain_python_block'
+        br.metrics = {'error': {'message': 'Some error'}}
+        result = format_failed_blocks_dbt_detail([br])
+        self.assertEqual(result, '')
