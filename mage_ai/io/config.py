@@ -118,6 +118,12 @@ class ConfigKey(StrEnum):
     POSTGRES_SSH_USERNAME = 'POSTGRES_SSH_USERNAME'
     POSTGRES_USER = 'POSTGRES_USER'
 
+    SFTP_HOST = 'SFTP_HOST'
+    SFTP_USERNAME = 'SFTP_USERNAME'
+    SFTP_PASSWORD = 'SFTP_PASSWORD'
+    SFTP_PKEY = 'SFTP_PKEY'
+    SFTP_PORT = 'SFTP_PORT'
+
     REDSHIFT_CLUSTER_ID = 'REDSHIFT_CLUSTER_ID'
     REDSHIFT_DBNAME = 'REDSHIFT_DBNAME'
     REDSHIFT_DBUSER = 'REDSHIFT_DBUSER'
@@ -361,6 +367,7 @@ class VerboseConfigKey(StrEnum):
     SNOWFLAKE = 'Snowflake'
     SPARK = 'Spark'
     QDRANT = 'Qdrant'
+    SFTP = 'SFTP'
     WEAVIATE = 'Weaviate'
 
 
@@ -481,6 +488,11 @@ class ConfigFileLoader(BaseConfigLoader):
             VerboseConfigKey.WEAVIATE, 'instance_api_key'),
         ConfigKey.WEAVIATE_INFERENCE_API_KEY: (
             VerboseConfigKey.WEAVIATE, 'inference_api_key'),
+        ConfigKey.SFTP_HOST: (VerboseConfigKey.SFTP, 'host'),
+        ConfigKey.SFTP_USERNAME: (VerboseConfigKey.SFTP, 'username'),
+        ConfigKey.SFTP_PASSWORD: (VerboseConfigKey.SFTP, 'password'),
+        ConfigKey.SFTP_PKEY: (VerboseConfigKey.SFTP, 'pkey'),
+        ConfigKey.SFTP_PORT: (VerboseConfigKey.SFTP, 'port'),
     }
 
     def __init__(
