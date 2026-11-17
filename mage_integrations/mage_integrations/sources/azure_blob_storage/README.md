@@ -18,4 +18,4 @@ You must enter the following credentials when configuring this source:
 
 ## How to find connection string
 * Option 1: Get connection string from storage account access keys: https://learn.microsoft.com/en-us/answers/questions/1071173/where-can-i-find-storage-account-connection-string
-* Option 2: If you want to restict the access to the storage account resource, you can generate "Shared access signature" and get the connection string: https://learn.microsoft.com/en-us/azure/applied-ai-services/form-recognizer/create-sas-tokens?view=form-recog-3.0.0#create-your-sas-tokens
+* Option 2: If you want to restrict the access to the storage account resource, you can generate "Shared access signature" and get the connection string: https://learn.microsoft.com/en-us/azure/applied-ai-services/form-recognizer/create-sas-tokens?view=form-recog-3.0.0#create-your-sas-tokens

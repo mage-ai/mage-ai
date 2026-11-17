@@ -20,7 +20,7 @@ You must enter the following credentials when configuring this source:
 | `with_deleted` | `true` or `false`; specifies whether to include logically deleted records in the results. | `true` |
 | `country_codes` | Comma-delimited list of ISO 2-letter country codes for targeting and segmenttation. | `US, CA, MX, DE` |
 | `page_size` | An optional parameter to configure custom page_size. | `1000` |
-| `reports` | Object array of specified reports with name, entity, segment, and granularity. | `[{"name": "campaigns_genders_hourly_report", "enitity": "CAMPAIGN", "segment": "GENDER", "granularity": "HOUR"}]` |
+| `reports` | Object array of specified reports with name, entity, segment, and granularity. | `[{"name": "campaigns_genders_hourly_report", "entity": "CAMPAIGN", "segment": "GENDER", "granularity": "HOUR"}]` |
 | `request_timeout` | To configure the read and connect timeout for twitter-ads client. Default is 300 seconds. | `300` |
 
 <br />
