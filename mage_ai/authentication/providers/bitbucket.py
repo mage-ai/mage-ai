@@ -61,7 +61,7 @@ class BitbucketProvider(OauthProvider):
     async def get_access_token_response(self, code: str, **kwargs) -> Awaitable[Dict]:
         base_url = get_base_url(kwargs.get('redirect_uri'))
         data = dict()
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(trust_env=True) as session:
             async with session.post(
                 f'{self.hostname}/site/oauth2/access_token',
                 headers={
@@ -82,7 +82,7 @@ class BitbucketProvider(OauthProvider):
     async def get_refresh_token_response(self, refresh_token: str) -> Awaitable[Dict]:
         data = dict()
 
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(trust_env=True) as session:
             async with session.post(
                 f'{self.hostname}/site/oauth2/access_token',
                 headers={

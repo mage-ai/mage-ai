@@ -32,7 +32,7 @@ from mage_ai.usage_statistics.logger import UsageStatisticLogger
 @async_ttl_cache(maxsize=1, ttl=600)
 async def get_latest_version() -> str:
     try:
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(trust_env=True) as session:
             async with session.get(
                 'https://pypi.org/pypi/mage-ai/json',
                 timeout=3,
