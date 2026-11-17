@@ -3182,6 +3182,7 @@ function PipelineDetailPage({
       showUpdateBlockModal={showUpdateBlockModalCallbackMemo}
       sideBySideEnabled={sideBySideEnabled}
       textareaFocused={textareaFocused}
+      treeRef={treeRef}
       widgets={widgets}
     />
   ), [
@@ -3242,6 +3243,7 @@ function PipelineDetailPage({
     showUpdateBlockModalCallbackMemo,
     sideBySideEnabled,
     textareaFocused,
+    treeRef,
     widgets,
   ]);
 
