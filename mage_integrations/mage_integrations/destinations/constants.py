@@ -38,6 +38,7 @@ KEY_UNIQUE_CONFLICT_METHOD = 'unique_conflict_method'
 KEY_UNIQUE_CONSTRAINTS = 'unique_constraints'
 KEY_VALUE = 'value'
 KEY_VERSION = 'version'
+KEY_TRUNCATE_FULL_TABLE = 'truncate_full_table'
 
 MB_1 = 1024 * 1000
 MAX_QUERY_STRING_SIZE = 10 * MB_1
