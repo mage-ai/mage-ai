@@ -23,12 +23,17 @@ import { TabType } from '@oracle/components/Tabs/ButtonTabs';
 import { ThemeType } from '@oracle/styles/themes/constants';
 import { UNIT } from '@oracle/styles/units/spacing';
 import { WIDTH_OF_SINGLE_CHARACTER_MONOSPACE } from '@components/DataTable';
-import { formatTimestamp } from '@utils/models/log';
+import {
+  formatTimestamp,
+  getLogDisplayTextForSearch,
+  getLogPlainTextForSearch,
+} from '@utils/models/log';
 import { get, set } from '@storage/localStorage';
 import { getColorsForBlockType } from '@components/CodeBlock/index.style';
 import { getLogScrollPositionLocalStorageKey } from '../utils';
 import { goToWithQuery } from '@utils/routing';
 import { shouldDisplayLocalTimezone } from '@components/settings/workspace/utils';
+import useDebounce from '@utils/hooks/useDebounce';
 import { useWindowSize } from '@utils/sizes';
 
 export const LOG_UUID_PARAM = 'log_uuid';
@@ -42,6 +47,7 @@ type LogsTableProps = {
   pipeline: PipelineType;
   query: FilterQueryType;
   saveScrollPosition?: boolean;
+  searchHighlight?: string;
   setSelectedLog: (log: LogType) => void;
   themeContext: ThemeType;
 };
@@ -55,12 +61,14 @@ function LogsTable({
   pipeline,
   query,
   saveScrollPosition,
+  searchHighlight,
   setSelectedLog,
   themeContext,
 }: LogsTableProps) {
   const displayLocalTimezone = shouldDisplayLocalTimezone();
   const { height: windowHeight } = useWindowSize();
   const tableRef = useRef(null);
+  const [debouncer, cancelDebounce] = useDebounce();
   const isIntegration = useMemo(
     () => PipelineTypeEnum.INTEGRATION === pipeline?.type,
     [pipeline.type],
@@ -87,6 +95,18 @@ function LogsTable({
       tableRef?.current?.scrollTo(get(scrollPositionLocalStorageKey, 0));
     }
   }, [saveScrollPosition, scrollPositionLocalStorageKey]);
+
+  useEffect(() => {
+    const q = searchHighlight?.trim();
+    if (!q || !tableRef?.current) {
+      cancelDebounce();
+      return;
+    }
+    debouncer(() => {
+      tableRef.current?.scrollToItem(0);
+    }, 280);
+    return () => cancelDebounce();
+  }, [searchHighlight, debouncer, cancelDebounce]);
 
   let blockUUIDs = Object.keys(blocksByUUID || {});
   if (isIntegration) {
@@ -138,24 +158,21 @@ function LogsTable({
     const {
       blocksByUUID,
       logs,
+      searchHighlight: searchHighlightInner,
       themeContext,
     } = data;
-    const { content, data: logData, name } = logs[index];
+    const logRow = logs[index];
+    const { data: logData, name } = logRow;
     const {
       block_uuid: blockUUIDProp,
       level,
-      message,
       pipeline_uuid: pipelineUUID,
       timestamp,
       uuid,
     } = logData || {};
 
-    let displayText = message == null ? content : message;
-    if (Array.isArray(displayText)) {
-      displayText = displayText.join(' ');
-    } else if (typeof displayText === 'object') {
-      displayText = JSON.stringify(displayText);
-    }
+    const displayText = getLogDisplayTextForSearch(logRow);
+    const plainForSearch = getLogPlainTextForSearch(logRow);
 
     let idEl;
     const uuidInit = blockUUIDProp || name.split('.log')[0];
@@ -173,6 +190,44 @@ function LogsTable({
     let block = blocksByUUID[blockUUID];
     if (!block) {
       block = blocksByUUID[parts[0]];
+    }
+
+    const searchQ = searchHighlightInner?.trim();
+    let messageInner;
+    if (searchQ) {
+      if (plainForSearch.toLowerCase().includes(searchQ.toLowerCase())) {
+        const escaped = searchQ.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const plainParts = plainForSearch.split(new RegExp(`(${escaped})`, 'gi'));
+        messageInner = plainParts.map((part, pi) => (
+          part.toLowerCase() === searchQ.toLowerCase() ? (
+            <Text
+              backgroundColor={themeContext.accent.yellowLight}
+              default
+              inline
+              key={pi}
+              monospace
+            >
+              {part}
+            </Text>
+          ) : (
+            <Text default inline key={pi} monospace>
+              {part}
+            </Text>
+          )
+        ));
+      } else {
+        messageInner = (
+          <Ansi>
+            {displayText}
+          </Ansi>
+        );
+      }
+    } else {
+      messageInner = (
+        <Ansi>
+          {displayText}
+        </Ansi>
+      );
     }
 
     if (block) {
@@ -286,9 +341,7 @@ function LogsTable({
             textOverflow
             title={displayText}
           >
-            <Ansi>
-              {displayText}
-            </Ansi>
+            {messageInner}
           </Text>
         </Flex>
         <Flex
@@ -344,6 +397,7 @@ function LogsTable({
           blocksByUUID,
           logs,
           pipeline,
+          searchHighlight,
           themeContext,
         }}
         itemSize={UNIT * 3.75}
