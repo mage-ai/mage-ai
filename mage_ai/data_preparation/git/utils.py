@@ -128,6 +128,7 @@ def create_ssh_keys(
                 pass
         else:
             private_key_file = custom_private_key_file
+            os.chmod(private_key_file, 0o600)
 
     url = git_config.remote_repo_link
     if url:
