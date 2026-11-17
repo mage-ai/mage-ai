@@ -1,0 +1,41 @@
+{
+  "properties": {
+    "url": {
+      "type": ["null", "string"]
+    },
+    "status": {
+      "type": ["null", "string"]
+    },
+    "status_code": {
+      "type": ["null", "integer"]
+    },
+    "title": {
+      "type": ["null", "string"]
+    },
+    "text": {
+      "type": ["null", "string"]
+    },
+    "text_truncated": {
+      "type": ["null", "boolean"]
+    },
+    "format": {
+      "type": ["null", "string"]
+    },
+    "published": {
+      "type": ["null", "string"]
+    },
+    "modified": {
+      "type": ["null", "string"]
+    },
+    "read_from": {
+      "type": ["null", "string"]
+    },
+    "captured_at": {
+      "type": ["null", "string"]
+    },
+    "request_id": {
+      "type": ["null", "string"]
+    }
+  },
+  "type": ["null", "object"]
+}

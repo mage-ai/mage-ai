@@ -1,0 +1,52 @@
+---
+title: "SpecStream"
+description: "Load web search results and extracted web pages or documents into a pipeline with the SpecStream API."
+---
+
+[SpecStream](https://specstream.ai) is a live web data API. Use this source to load web search
+results and extracted page or document text (HTML, PDF, Word, Excel) into your data warehouse, for
+example to track public records filings or regulatory notices.
+
+<br />
+
+## Configuration
+
+| Key | Description | Sample value | Required |
+| --- | --- | --- | --- |
+| `api_key` | SpecStream API key. Create one under Agents & API in the [SpecStream workspace](https://specstream.ai/workspace). | `ss_live_...` | ✅ |
+| `urls` | URLs to extract, as a list or comma-separated string. Required for `extracted_pages`. | `["https://example.gov/filing.pdf"]` | |
+| `extract_format` | Output format for `extracted_pages`: `markdown`, `text`, or `html`. Defaults to `markdown`. | `markdown` | |
+| `search_query` | Search query in plain words. Required for `search_results`. | `site:sec.gov "Form 10-K" filetype:pdf` | |
+| `search_limit` | Results per search page (1 to 100). Defaults to `10`. | `20` | |
+| `search_speed` | Search tier: `fast` or `default`. Defaults to `fast`. | `fast` | |
+| `search_language` | Two-letter language code. | `en` | |
+| `search_country` | Two-letter country code. | `US` | |
+| `include_passages` | Include relevant page excerpts (`passages=true`). Defaults to `false`. | `true` | |
+| `max_pages` | Maximum search result pages to fetch (1 to 10). Defaults to `1`. | `2` | |
+
+New SpecStream accounts start with $10 of credit. The Search API is $1 per 1,000 calls on `fast`
+($5 per 1,000 on `default`), and the Extract API is $0.80 per 1,000 pages. See
+[pricing](https://specstream.ai/pricing).
+
+<br />
+
+## Streams
+
+Both streams use `FULL_TABLE` replication with `url` as the key property.
+
+| Stream | One row per | Columns |
+| --- | --- | --- |
+| `extracted_pages` | URL in `urls` | `url`, `status`, `status_code`, `title`, `text`, `text_truncated`, `format`, `published`, `modified`, `read_from`, `captured_at`, `request_id` |
+| `search_results` | Search result | `url`, `title`, `site`, `snippet`, `excerpt`, `published`, `modified`, `cited`, `file_type`, `query`, `page`, `request_id` |
+
+<br />
+
+## Failure handling
+
+- In `extracted_pages`, a URL that cannot be read becomes a row with `status` set (`blocked`,
+  `not_found`, `empty`, `unsupported`, `invalid_url`, or `failed`), and the sync continues. Filter
+  on `status = 'ok'` downstream if you only want extracted text.
+- The sync fails if every URL fails to extract, if the API key is invalid, or if the account
+  balance or key spending limit is exhausted.
+
+<br />
