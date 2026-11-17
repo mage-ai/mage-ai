@@ -80,6 +80,8 @@ class DynamicChildController(DynamicBlockWrapperBase):
                             count = len(values.index)
                         else:
                             count = len(values)
+                        if count == 0:
+                            break
 
                     if count == 0:
                         time.sleep(10)
