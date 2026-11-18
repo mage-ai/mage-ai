@@ -1,0 +1,12 @@
+{
+  "tap_path": "/opt/adanos/bin/tap-adanos",
+  "tap_config": {
+    "api_key": "{{ mage_secret_var('adanos_api_key') }}",
+    "base_url": "https://api.adanos.com",
+    "asset_type": "stock",
+    "stock_source": "reddit",
+    "symbols": ["AAPL", "MSFT"],
+    "start_date": "2026-11-16",
+    "end_date": "2026-11-16"
+  }
+}
