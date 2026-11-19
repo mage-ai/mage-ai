@@ -1,0 +1,72 @@
+blocks:
+- all_upstream_blocks_executed: true
+  downstream_blocks:
+  - clean_manual_products
+  name: load manual products
+  status: not_executed
+  type: data_loader
+  upstream_blocks: []
+  uuid: load_manual_products
+- all_upstream_blocks_executed: true
+  downstream_blocks:
+  - category_revenue
+  name: load manual sales
+  status: not_executed
+  type: data_loader
+  upstream_blocks: []
+  uuid: load_manual_sales
+- all_upstream_blocks_executed: true
+  configuration:
+    data_provider: postgres
+    data_provider_database: analytics
+    data_provider_profile: default
+    data_provider_schema: stg
+    export_write_policy: replace
+    use_raw_sql: true
+  downstream_blocks:
+  - category_revenue
+  language: sql
+  name: clean manual products
+  status: not_executed
+  type: transformer
+  upstream_blocks:
+  - load_manual_products
+  uuid: clean_manual_products
+- all_upstream_blocks_executed: true
+  configuration:
+    data_provider: postgres
+    data_provider_database: analytics
+    data_provider_profile: default
+    data_provider_schema: mart
+    export_write_policy: replace
+    use_raw_sql: true
+  downstream_blocks:
+  - manual_revenue_export
+  language: sql
+  name: category revenue
+  status: not_executed
+  type: transformer
+  upstream_blocks:
+  - load_manual_sales
+  - clean_manual_products
+  uuid: category_revenue
+- all_upstream_blocks_executed: true
+  downstream_blocks:
+  - emit_manual_lineage
+  name: manual revenue export
+  status: not_executed
+  type: data_exporter
+  upstream_blocks:
+  - category_revenue
+  uuid: manual_revenue_export
+- all_upstream_blocks_executed: true
+  downstream_blocks: []
+  name: emit manual lineage
+  status: not_executed
+  type: custom
+  upstream_blocks:
+  - manual_revenue_export
+  uuid: emit_manual_lineage
+name: manual lineage
+type: python
+uuid: manual_lineage

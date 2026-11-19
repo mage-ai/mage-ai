@@ -1,0 +1,4 @@
+# The connector is installed into the Mage image from the mounted checkout:
+#   docker exec -u root mage-demo pip install -e /home/src/connector
+# Project requirements are for the pipeline's own imports only.
+pandas
