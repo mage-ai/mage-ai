@@ -1,0 +1,18 @@
+blocks:
+- all_upstream_blocks_executed: true
+  configuration:
+    data_provider: duckdb
+    data_provider_database: /tmp/duckdb_demo.db
+    data_provider_profile: duck
+    data_provider_schema: main
+    export_write_policy: replace
+    use_raw_sql: true
+  downstream_blocks: []
+  name: local transform
+  status: executed
+  type: transformer
+  upstream_blocks: []
+  uuid: local_transform
+name: duckdb demo
+type: python
+uuid: duckdb_demo

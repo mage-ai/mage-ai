@@ -48,6 +48,7 @@ from mage_ai.orchestration.utils.distributed_lock import DistributedLock
 from mage_ai.orchestration.utils.git import log_git_sync, run_git_sync
 from mage_ai.orchestration.utils.resources import get_compute, get_memory
 from mage_ai.server.logger import Logger
+from mage_ai.services.openmetadata import emit_pipeline_lineage
 from mage_ai.settings import HOSTNAME
 from mage_ai.settings.platform import (
     project_platform_activated,
@@ -261,6 +262,10 @@ class PipelineScheduler:
                 else:
                     self.pipeline_run.complete()
                     self.notification_sender.send_pipeline_run_success_message(
+                        pipeline=self.pipeline,
+                        pipeline_run=self.pipeline_run,
+                    )
+                    emit_pipeline_lineage(
                         pipeline=self.pipeline,
                         pipeline_run=self.pipeline_run,
                     )

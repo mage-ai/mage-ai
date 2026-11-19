@@ -1,0 +1,96 @@
+---
+title: "Lineage with OpenMetadata"
+icon: "diagram-project"
+sidebarTitle: "OpenMetadata"
+---
+
+## Enable OpenMetadata
+
+Set `ENABLE_OPENMETADATA` to `true` in the environment that runs Mage. The next time
+you start the Mage server, successful pipeline runs can publish lineage to
+OpenMetadata. No block needs to be added to the pipeline.
+
+Mage publishes lineage *after* every block in the run succeeds. A failure to reach
+OpenMetadata, or a table that is missing from the catalog, is logged and reported but
+never marks the pipeline run as failed.
+
+## Configuration file
+
+Add `omd_lineage.yaml` to the root of your Mage project. An example file is available
+at `integrations/openmetadata/example_omd_lineage.yaml` in the Mage repository. To
+keep the file elsewhere, set `OPENMETADATA_CONFIG_PATH` to its path.
+
+The file has three parts:
+
+- `openmetadata` — server URL, token, and lineage publishing options.
+- `profiles` — one entry per database that the pipeline reads from or writes to. The
+  `service` value is the OpenMetadata database service name.
+- `pipelines` — per-pipeline switches, trigger modes, and optional block contracts.
+
+OpenMetadata is the source of truth for the catalog. Mage only publishes lineage for
+tables and columns that already exist there; it does not create database services,
+tables, or columns.
+
+## Enable lineage for a pipeline
+
+Opt in per pipeline in `omd_lineage.yaml`:
+
+```yaml
+pipelines:
+  demo_lineage:
+    enabled: true
+    trigger:
+      modes: [on_run]
+```
+
+| Mode | Behavior |
+| --- | --- |
+| `on_run` | Publish after every successful run. |
+| `on_change` | Publish after a successful run when the pipeline fingerprint changed. |
+| `schedule` | Publish through the command-line interface on your own schedule. |
+| `manual` | Never publish automatically; publish through the command-line interface. |
+
+## Configuration example
+
+```yaml
+openmetadata:
+  host: ${OMD_HOST:-http://localhost:8585}
+  token: ${OMD_TOKEN}
+  pipeline_service: mage
+
+profiles:
+  default:
+    service: warehouse_demo
+    driver: postgres
+    database: analytics
+    default_schema: public
+
+pipelines:
+  demo_lineage:
+    enabled: true
+    trigger:
+      modes: [on_run, on_change]
+```
+
+When the pipeline finishes, Mage writes a coverage report to
+`mage_data/<project_uuid>/omd_lineage/coverage.json`. It contains every published edge,
+the missing catalog entities, and the number of edges left in the retry spool.
+
+## Command-line interface
+
+Preview the lineage plan without writing:
+
+```bash
+export OMD_HOST=http://localhost:8585
+export OMD_TOKEN=...
+
+python -m mage_ai.services.openmetadata.lineage plan \
+  --project /path/to/mage/project --all
+```
+
+Publish manually (for example when a pipeline uses the `manual` trigger mode):
+
+```bash
+python -m mage_ai.services.openmetadata.lineage apply \
+  --project /path/to/mage/project --pipeline demo_lineage --yes --non-interactive
+```
