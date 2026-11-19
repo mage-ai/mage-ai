@@ -1,0 +1,94 @@
+# Example OpenMetadata lineage configuration.
+#
+# Copy this file to the root of your Mage project as `omd_lineage.yaml`.
+# Mage publishes lineage automatically after a pipeline run succeeds when both:
+#   1. ENABLE_OPENMETADATA=true is set in the Mage process environment, and
+#   2. the pipeline is opted in with `enabled: true` below.
+#
+# Set OPENMETADATA_CONFIG_PATH to load the file from another location.
+
+openmetadata:
+  # OpenMetadata server URL and a bot/JWT token with permission to write lineage.
+  host: ${OMD_HOST:-http://localhost:8585}
+  token: ${OMD_TOKEN}
+  auth: jwt
+  verify_tls: true
+  timeout_seconds: 15
+
+  # Name of the OpenMetadata pipeline service that Mage creates/updates.
+  pipeline_service: mage
+  pipeline_name_template: "{project}__{pipeline}"
+  source_url:
+
+  catalog:
+    # Only publish lineage for tables and columns that already exist in OpenMetadata.
+    mode: existing_only
+    lookup:
+      fields: [columns]
+      cache_ttl: 3600
+
+  emit:
+    batch_size: 50
+    time_budget_ms: 5000
+    prune: false
+
+  coverage:
+    # Missing catalog entities fail lineage (never create them) and are reported.
+    on_missing: fail
+    on_ambiguous: fail
+    on_column_missing: fail
+    on_unmodelled_block: warn
+    on_unsupported: fail
+    # Publish the edges that resolve even when other edges in the plan do not.
+    emit: resolvable
+    report_path:
+
+  unresolved:
+    spool: true
+    retry_after: 6h
+
+# One profile per database that the pipeline reads from or writes to.
+# `service` is the OpenMetadata database service name.
+profiles:
+  default:
+    service: warehouse_demo
+    driver: postgres
+    database: analytics
+    default_schema: public
+    case: lower
+
+defaults:
+  select_star: expand_from_catalog
+  intermediate: collapse
+  on_unmodelled_block: warn
+
+pipelines:
+  demo_lineage:
+    # Pipeline-level switch. Lineage is only published for enabled pipelines.
+    enabled: true
+    owner: data-platform
+    tags: [analytics]
+    trigger:
+      # on_run: publish after every successful run.
+      # on_change: publish only when the pipeline fingerprint changes.
+      # schedule/manual: publish through the CLI instead of run completion.
+      modes: [on_run, on_change]
+      retry_backoff: 6h
+      emit_on_unchanged: status_only
+
+    # Optional per-block contracts. They fill in table and column lineage for
+    # Python blocks whose DataFrame operations cannot be inferred from SQL.
+    blocks:
+      load_orders:
+        contract:
+          inputs: [raw.orders]
+          outputs: [block:load_orders]
+          columns:
+            - to: id
+              from: [raw.orders.id]
+            - to: customer_id
+              from: [raw.orders.customer_id]
+            - to: amount
+              from: [raw.orders.amount]
+            - to: ordered_at
+              from: [raw.orders.ordered_at]

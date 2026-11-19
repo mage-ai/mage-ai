@@ -826,6 +826,7 @@
               "observability/external/datadog",
               "observability/external/metaplane",
               "observability/external/newrelic",
+              "observability/external/openmetadata",
               "observability/external/opentelemetry",
               "observability/external/prometheus",
               "observability/external/sentry",

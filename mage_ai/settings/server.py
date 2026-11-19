@@ -160,6 +160,12 @@ SENTRY_SERVER_NAME = os.getenv('SENTRY_SERVER_NAME', None)
 ENABLE_NEW_RELIC = os.getenv('ENABLE_NEW_RELIC', False)
 NEW_RELIC_CONFIG_PATH = os.getenv('NEW_RELIC_CONFIG_PATH', '')
 
+# OpenMetadata Configuration
+# When enabled, a successful pipeline run publishes its table and column lineage to
+# OpenMetadata. Each pipeline is opted in through the project's omd_lineage.yaml.
+ENABLE_OPENMETADATA = get_bool_value(os.getenv('ENABLE_OPENMETADATA', 'False'))
+OPENMETADATA_CONFIG_PATH = os.getenv('OPENMETADATA_CONFIG_PATH', '')
+
 # Prometheus Configuration
 # If enabled, the /metrics route will expose Tornado server metrics
 ENABLE_PROMETHEUS = get_bool_value(os.getenv('ENABLE_PROMETHEUS', 'False'))

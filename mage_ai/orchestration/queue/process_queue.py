@@ -15,6 +15,7 @@ from mage_ai.orchestration.db.process import start_session_and_run
 from mage_ai.orchestration.queue.config import QueueConfig
 from mage_ai.orchestration.queue.queue import Queue
 from mage_ai.services.newrelic import initialize_new_relic
+from mage_ai.services.openmetadata import initialize_openmetadata
 from mage_ai.services.redis.redis import init_redis_client
 from mage_ai.settings import (
     HOSTNAME,
@@ -313,6 +314,7 @@ class Worker(mp.Process):
             import atexit
             atexit.register(lambda: sentry_sdk.flush(timeout=5))
         initialize_new_relic()
+        initialize_openmetadata()
 
         set_logging_format(
             logging_format=SERVER_LOGGING_FORMAT,

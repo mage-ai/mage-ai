@@ -11,6 +11,7 @@ from typer.core import TyperGroup
 from mage_ai.cli.utils import parse_runtime_variables
 from mage_ai.data_preparation.repo_manager import ProjectType
 from mage_ai.services.newrelic import initialize_new_relic
+from mage_ai.services.openmetadata import emit_pipeline_lineage, initialize_openmetadata
 from mage_ai.shared.constants import ENV_VAR_INSTANCE_TYPE, InstanceType
 
 
@@ -213,6 +214,7 @@ def run(
         import atexit
         atexit.register(lambda: sentry_sdk.flush(timeout=5))
     (enable_new_relic, application) = initialize_new_relic()
+    initialize_openmetadata()
 
     with (
         newrelic.agent.BackgroundTask(application, name='mage-run', group='Task')
@@ -257,6 +259,8 @@ def run(
                 run_tests=test,
                 update_status=False,
             )
+            if pipeline_run_id is None:
+                emit_pipeline_lineage(pipeline)
         else:
             ExecutorFactory.get_block_executor(
                 pipeline,

@@ -22,6 +22,9 @@ def run(
             run_sensors=run_sensors,
             update_status=False,
         )
+        from mage_ai.services.openmetadata import emit_pipeline_lineage
+
+        emit_pipeline_lineage(pipeline)
     else:
         ExecutorFactory.get_block_executor(pipeline, block_uuid).execute(
             analyze_outputs=False,

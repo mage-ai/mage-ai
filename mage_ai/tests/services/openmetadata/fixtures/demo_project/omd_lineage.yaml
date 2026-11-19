@@ -1,0 +1,109 @@
+# Example configuration for the demo Mage project used in the test suite.
+#
+# Run everything offline:
+#   python -m mage_ai.services.openmetadata.lineage plan \
+#     --project mage_ai/tests/services/openmetadata/fixtures/demo_project --all --offline
+#
+# Talk to a local OpenMetadata:
+#   export OMD_HOST=http://localhost:8585
+#   export OMD_TOKEN=...
+#   python -m mage_ai.services.openmetadata.lineage apply \
+#     --project mage_ai/tests/services/openmetadata/fixtures/demo_project --all --yes
+
+mage:
+  repo_path: .
+  project_uuid: demo_project
+
+openmetadata:
+  host: ${OMD_HOST:-http://localhost:8585}
+  token: ${OMD_TOKEN:-local-development-token}
+  pipeline_service: mage
+  source_url: https://mage.example.com/pipelines
+  catalog:
+    mode: existing_only
+    lookup:
+      fields: [columns]
+  emit:
+    batch_size: 50
+    time_budget_ms: 5000
+  coverage:
+    on_missing: fail
+    on_ambiguous: fail
+    on_column_missing: fail
+    on_unmodelled_block: warn
+    on_unsupported: fail
+    emit: resolvable
+    report_path: mage_data/demo_project/omd_lineage/coverage.json
+  unresolved:
+    spool: true
+    retry_after: 6h
+
+profiles:
+  default:
+    service: warehouse_demo
+    driver: postgres
+    database: analytics
+    default_schema: public
+    case: lower
+  duck:
+    driver: duckdb
+    database: /tmp/duckdb_demo.db
+    default_schema: main
+
+defaults:
+  select_star: expand_from_catalog
+  intermediate: collapse
+  on_unmodelled_block: warn
+
+pipelines:
+  demo_lineage:
+    enabled: true
+    owner: data-platform
+    tags: [demo]
+    trigger:
+      modes: [on_run, on_change, schedule]
+      schedule:
+        every: 6h
+      retry_backoff: 6h
+      emit_on_unchanged: status_only
+    blocks:
+      load_orders:
+        contract:
+          inputs: [raw.orders]
+          outputs: [block:load_orders]
+          columns:
+            - to: id
+              from: [raw.orders.id]
+            - to: customer_id
+              from: [raw.orders.customer_id]
+            - to: amount
+              from: [raw.orders.amount]
+            - to: ordered_at
+              from: [raw.orders.ordered_at]
+      load_customers:
+        contract:
+          inputs: [raw.customers]
+          outputs: [block:load_customers]
+          columns:
+            - to: id
+              from: [raw.customers.id]
+            - to: country
+              from: [raw.customers.country]
+      revenue_export:
+        contract:
+          inputs: [mart.customer_revenue]
+          outputs: [mart.customer_revenue_export]
+          columns:
+            - to: customer_id
+              from: [mart.customer_revenue.customer_id]
+            - to: country
+              from: [mart.customer_revenue.country]
+            - to: order_count
+              from: [mart.customer_revenue.order_count]
+            - to: revenue
+              from: [mart.customer_revenue.revenue]
+
+  duckdb_demo:
+    enabled: true
+    trigger:
+      modes: [on_run]

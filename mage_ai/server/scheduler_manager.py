@@ -10,6 +10,7 @@ from mage_ai.orchestration.db.database_manager import database_manager
 from mage_ai.orchestration.db.process import create_process
 from mage_ai.server.logger import Logger
 from mage_ai.services.newrelic import initialize_new_relic
+from mage_ai.services.openmetadata import initialize_openmetadata
 from mage_ai.settings import (
     SENTRY_DSN,
     SENTRY_SERVER_NAME,
@@ -39,6 +40,7 @@ def run_scheduler():
             server_name=SENTRY_SERVER_NAME,
         )
     (enable_new_relic, application) = initialize_new_relic()
+    initialize_openmetadata()
     try:
         with (
             newrelic.agent.BackgroundTask(application, name='db-migration', group='Task')
