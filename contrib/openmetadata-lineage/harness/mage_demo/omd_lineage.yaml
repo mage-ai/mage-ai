@@ -1,0 +1,136 @@
+# Lineage configuration for the live Mage demo project.
+#
+# OMD runs on the host; from inside the Mage container it is reachable through
+# host.docker.internal. The token is injected into the container at start.
+
+openmetadata:
+  host: ${OMD_HOST:-http://host.docker.internal:8585}
+  token: ${OMD_TOKEN}
+  pipeline_service: mage
+  pipeline_name_template: "{project}__{pipeline}"
+  source_url: http://localhost:6789/pipelines/demo_lineage
+  catalog:
+    mode: existing_only
+    lookup:
+      fields: [columns]
+  emit:
+    batch_size: 50
+    time_budget_ms: 5000
+  coverage:
+    on_missing: fail
+    on_ambiguous: fail
+    on_column_missing: fail
+    on_unmodelled_block: warn
+    on_unsupported: fail
+    emit: resolvable
+    report_path: mage_data/mage_demo/omd_lineage/coverage.json
+  unresolved:
+    spool: true
+    retry_after: 6h
+
+profiles:
+  default:
+    service: warehouse_demo
+    driver: postgres
+    database: analytics
+    default_schema: public
+    case: lower
+
+defaults:
+  select_star: expand_from_catalog
+  intermediate: collapse
+  on_unmodelled_block: warn
+
+pipelines:
+  demo_lineage:
+    enabled: true
+    owner: data-platform
+    tags: [demo]
+    trigger_adapter: sentinel
+    trigger:
+      modes: [on_run]
+    blocks:
+      load_orders:
+        contract:
+          inputs: [raw.orders]
+          outputs: [block:load_orders]
+          columns:
+            - to: id
+              from: [raw.orders.id]
+            - to: customer_id
+              from: [raw.orders.customer_id]
+            - to: amount
+              from: [raw.orders.amount]
+            - to: ordered_at
+              from: [raw.orders.ordered_at]
+      load_customers:
+        contract:
+          inputs: [raw.customers]
+          outputs: [block:load_customers]
+          columns:
+            - to: id
+              from: [raw.customers.id]
+            - to: country
+              from: [raw.customers.country]
+      revenue_export:
+        contract:
+          inputs: [mart.demo_lineage_customer_revenue]
+          outputs: [mart.customer_revenue_export]
+          columns:
+            - to: customer_id
+              from: [mart.demo_lineage_customer_revenue.customer_id]
+            - to: country
+              from: [mart.demo_lineage_customer_revenue.country]
+            - to: order_count
+              from: [mart.demo_lineage_customer_revenue.order_count]
+            - to: revenue
+              from: [mart.demo_lineage_customer_revenue.revenue]
+      emit_lineage:
+        skip: true
+  manual_lineage:
+    enabled: true
+    owner: data-platform
+    tags: [demo, manual]
+    trigger_adapter: sentinel
+    trigger:
+      modes: [on_run]
+    blocks:
+      load_manual_products:
+        contract:
+          inputs: [raw.manual_products]
+          outputs: [block:load_manual_products]
+          columns:
+            - to: id
+              from: [raw.manual_products.id]
+            - to: name
+              from: [raw.manual_products.name]
+            - to: category
+              from: [raw.manual_products.category]
+            - to: price
+              from: [raw.manual_products.price]
+      load_manual_sales:
+        contract:
+          inputs: [raw.manual_sales]
+          outputs: [block:load_manual_sales]
+          columns:
+            - to: id
+              from: [raw.manual_sales.id]
+            - to: product_id
+              from: [raw.manual_sales.product_id]
+            - to: quantity
+              from: [raw.manual_sales.quantity]
+            - to: sale_amount
+              from: [raw.manual_sales.sale_amount]
+      manual_revenue_export:
+        contract:
+          inputs: [mart.manual_category_revenue]
+          outputs: [mart.manual_category_revenue_export]
+          columns:
+            - to: category
+              from: [mart.manual_category_revenue.category]
+            - to: product_count
+              from: [mart.manual_category_revenue.product_count]
+            - to: total_value
+              from: [mart.manual_category_revenue.total_value]
+      emit_manual_lineage:
+        skip: true

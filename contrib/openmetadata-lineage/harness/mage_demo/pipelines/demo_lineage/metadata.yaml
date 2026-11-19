@@ -1,0 +1,72 @@
+blocks:
+- all_upstream_blocks_executed: true
+  downstream_blocks:
+  - clean_orders
+  name: load orders
+  status: not_executed
+  type: data_loader
+  upstream_blocks: []
+  uuid: load_orders
+- all_upstream_blocks_executed: true
+  downstream_blocks:
+  - customer_revenue
+  name: load customers
+  status: not_executed
+  type: data_loader
+  upstream_blocks: []
+  uuid: load_customers
+- all_upstream_blocks_executed: true
+  configuration:
+    data_provider: postgres
+    data_provider_database: analytics
+    data_provider_profile: default
+    data_provider_schema: stg
+    export_write_policy: replace
+    use_raw_sql: true
+  downstream_blocks:
+  - customer_revenue
+  language: sql
+  name: clean orders
+  status: not_executed
+  type: transformer
+  upstream_blocks:
+  - load_orders
+  uuid: clean_orders
+- all_upstream_blocks_executed: true
+  configuration:
+    data_provider: postgres
+    data_provider_database: analytics
+    data_provider_profile: default
+    data_provider_schema: mart
+    export_write_policy: replace
+    use_raw_sql: true
+  downstream_blocks:
+  - revenue_export
+  language: sql
+  name: customer revenue
+  status: not_executed
+  type: transformer
+  upstream_blocks:
+  - clean_orders
+  - load_customers
+  uuid: customer_revenue
+- all_upstream_blocks_executed: true
+  downstream_blocks:
+  - emit_lineage
+  name: revenue export
+  status: not_executed
+  type: data_exporter
+  upstream_blocks:
+  - customer_revenue
+  uuid: revenue_export
+- all_upstream_blocks_executed: true
+  downstream_blocks: []
+  name: emit lineage
+  status: not_executed
+  type: custom
+  upstream_blocks:
+  - revenue_export
+  uuid: emit_lineage
+name: demo lineage
+type: python
+uuid: demo_lineage

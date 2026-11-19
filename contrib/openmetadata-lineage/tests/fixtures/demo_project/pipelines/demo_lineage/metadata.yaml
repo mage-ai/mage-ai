@@ -1,0 +1,61 @@
+blocks:
+- all_upstream_blocks_executed: true
+  downstream_blocks:
+  - clean_orders
+  name: load orders
+  status: executed
+  type: data_loader
+  upstream_blocks: []
+  uuid: load_orders
+- all_upstream_blocks_executed: true
+  downstream_blocks:
+  - customer_revenue
+  name: load customers
+  status: executed
+  type: data_loader
+  upstream_blocks: []
+  uuid: load_customers
+- all_upstream_blocks_executed: true
+  configuration:
+    data_provider: postgres
+    data_provider_database: analytics
+    data_provider_profile: default
+    data_provider_schema: stg
+    export_write_policy: replace
+    use_raw_sql: true
+  downstream_blocks:
+  - customer_revenue
+  name: clean orders
+  status: executed
+  type: transformer
+  upstream_blocks:
+  - load_orders
+  uuid: clean_orders
+- all_upstream_blocks_executed: true
+  configuration:
+    data_provider: postgres
+    data_provider_database: analytics
+    data_provider_profile: default
+    data_provider_schema: mart
+    export_write_policy: replace
+    use_raw_sql: true
+  downstream_blocks:
+  - revenue_export
+  name: customer revenue
+  status: executed
+  type: transformer
+  upstream_blocks:
+  - clean_orders
+  - load_customers
+  uuid: customer_revenue
+- all_upstream_blocks_executed: true
+  downstream_blocks: []
+  name: revenue export
+  status: executed
+  type: data_exporter
+  upstream_blocks:
+  - customer_revenue
+  uuid: revenue_export
+name: demo lineage
+type: python
+uuid: demo_lineage
