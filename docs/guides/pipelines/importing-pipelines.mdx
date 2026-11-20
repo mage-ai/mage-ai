@@ -185,7 +185,12 @@ renamed path, while **Overwrite** intentionally replaces matching block files.
 Upload exactly one ZIP at a time. A single ZIP can contain multiple pipelines or one full Mage
 project.
 
-### How to import pipeline archives in bulk
+### How to import one or more pipelines
+
+Mage Pro uses the same validation and import flow for ZIP archives containing one pipeline or
+multiple pipelines. Descriptions and tags come from the archive metadata. The default **Rename**
+strategy sets each pipeline's name to its imported UUID, adding a suffix to the UUID when it
+conflicts. You can edit the name, description, and tags in the pipeline editor after importing.
 
 1. Go to the Pipelines Dashboard (`/pipelines`).
 1. Click the **New pipeline** menu.
@@ -196,16 +201,17 @@ project.
    total.
 1. Do not select multiple ZIP files. If you have multiple exported pipeline ZIPs, zip their
    exported folders together into one archive before uploading.
-1. If you upload one valid pipeline ZIP with no conflicts or failures, Mage shows a create form.
-   Optionally update the pipeline name, description, and comma-separated tags, then click
-   **Create**.
-1. Otherwise, review the validation results before importing. Mage lists the pipelines found,
+1. Review the validation results before importing. Mage lists the pipelines found,
    conflicts, failures, skipped pipelines, full-project archives, and validation errors such as
    invalid `metadata.yaml` YAML.
-1. If Mage finds conflicts, choose a conflict strategy:
+1. If Mage finds conflicts, choose a conflict strategy under **Import options**:
    - **Rename** keeps existing pipelines and imports conflicting pipelines with suffixed UUIDs.
    - **Overwrite** replaces matching pipeline and block files.
-   - **Skip** leaves conflicting pipelines unchanged.
+   - **Skip** is available only when the archive contains multiple pipelines and leaves
+     conflicting pipelines unchanged.
+
+   Single-pipeline archives offer **Rename** and **Overwrite**. If you change from a bulk archive
+   with **Skip** selected to a single-pipeline archive, Mage switches to **Rename**.
 1. Mage rolls back a pipeline if writing any of its files fails. Other pipelines imported
    successfully from the same archive remain available.
 1. Click **Import pipelines** to process every pipeline in the selected archive.

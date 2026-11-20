@@ -169,6 +169,66 @@ give detailed tables more room, or place related charts side by side. This makes
 collection of charts into a polished dashboard for a meeting, executive review, customer health
 check, or recurring operational workflow.
 
+## Inspect a chart's source and saved query
+
+Open the chart's action menu and select **Chart details** to inspect its saved source details.
+Supported saved queries appear in their native format: SQL, MongoDB JSON, or search text. Click
+**Copy** to copy the displayed query. Charts without a retained query show their available source
+details and **No saved query is available for this chart.** Redacted queries remain hidden.
+
+Saved chart operations or transformations may further shape the results; this view does not
+reconstruct the final executed statement. Opening details or copying a query does not run it,
+refresh the chart, or change its source.
+
+## Email dashboard snapshots
+
+Send dashboard snapshots for recurring reviews or to people outside Mage Pro. Users with permission
+to manage a dashboard can configure its email schedule, send tests, and retry eligible deliveries.
+Mage checks the delivery user’s access to the dashboard and its chart sources.
+
+To schedule an email:
+
+1. Open an Analytics dashboard and select **Schedule email delivery** from its actions menu.
+1. On the **Schedule** tab, turn on **Schedule enabled** and choose **Once**, **Daily**, **Weekly**, or **Monthly**.
+1. Set the delivery time, search for and select a timezone, then enter a subject and message.
+1. Under **Send this dashboard to**, enter each recipient's email address and select **Add**.
+1. Select **Save**.
+
+There is no weekday or date selector. If today's delivery time has passed, **Once** and **Daily**
+start tomorrow, **Weekly** starts in seven days, and **Monthly** starts next month. Weekly schedules
+repeat on that weekday; monthly schedules use the day of the month when set, or the last day of shorter months.
+A **Once** schedule is disabled after its delivery is queued. Check **Next delivery** or **Next delivery after save** in the selected
+timezone before saving.
+
+Deleting a dashboard retires its email schedule. If you recreate the dashboard, configure and save
+a new schedule.
+
+An active schedule or test requires at least one recipient. You can save an inactive draft without
+recipients. Only the addresses you explicitly add receive the email; you are responsible for
+checking that each recipient should receive the dashboard data. Adding an email recipient does not
+grant access to the live dashboard or change its sharing policy.
+
+Select **Send test** to queue a snapshot using the current form values. Sending a test does not save
+or activate the schedule; select **Save** separately. Scheduled emails, tests, and retries need the
+scheduler service to run.
+
+Successful emails include a PDF attachment. Emails can also include embedded dashboard, chart, or
+page images when supported and within delivery limits.
+Each chart's **Data from** label matches its saved dashboard freshness information. The date may
+reflect when the chart was saved, rather than when the underlying source data was updated.
+
+Use the **History** tab to check delivery dates, statuses, recipients, attempts, and errors.
+Viewers can open it from the dashboard actions menu using **View email delivery history**;
+recipient addresses and errors are hidden from users without editor access to the relevant project or pipeline.
+**Queued** means delivery is still being processed or awaiting a provider update. **Sent** means the
+email provider or server accepted or reported the message as sent; it does not guarantee inbox
+receipt. Some failed scheduled deliveries retry automatically, and **Retry** is available for
+eligible failures. For unknown or partial outcomes, retry may be unavailable. Verify who received
+the email before creating a new delivery to avoid duplicates.
+
+Email delivery requires configured Mage managed email or SMTP. Contact your
+administrator if delivery is unavailable.
+
 ## Refresh data
 
 Analytics dashboards are meant to stay useful after the first version. When the source data
@@ -238,6 +298,150 @@ The saved source field is `source_ref.partition_selection`. Its `mode` is `fixed
   }
 }
 ```
+
+## Share a dashboard or chart externally
+
+External sharing creates a read-only link that recipients can open without a Mage account.
+Workspace Editors, Admins, and Owners can create links directly from Analytics. Editors can
+manage their own links; Admins and Owners can also manage other users' links. Viewers do not
+see the sharing controls and cannot create or manage links.
+
+The creator must also have access to the dashboard or chart and each included data source.
+
+<Warning>
+Recipients can access the chart data included in the shared view, including data available
+through hover details, legend toggles, and other interactions. Hiding a series or zooming into
+part of a chart does not remove its data from the shared view. Public links do not verify recipient
+identity or apply different row or customer permissions for each recipient. Do not share data
+that requires those restrictions; prepare a separate output suitable for the intended audience.
+</Warning>
+
+### Create a link
+
+1. Open a dashboard and click **Share**, or open a chart's menu and select **Share chart**.
+1. On **Create link**, confirm **Scope** shows the intended chart or full dashboard and chart
+   count, then choose **Snapshot** or **Live**.
+1. Choose an expiration from 1 to 30 days and optionally enter an access code of at least
+   8 characters. The default expiration is seven days.
+1. Check **I understand recipients can view all data shown in this shared view.**
+1. Click **Create link** and wait for preparation. Once ready, choose **Copy link**.
+
+Changing the mode, expiration, or access code starts a new link configuration and keeps your
+acknowledgment checked. It does not change or revoke a link you already created; use
+**Manage links** to revoke an existing link.
+
+Links and access codes can be forwarded. For a protected link, recipients enter the code
+provided by the sender and choose **View Analytics**.
+
+| Mode | What recipients see |
+| --- | --- |
+| Snapshot | An interactive chart captured during link preparation. Its data and presentation stay frozen for that link. |
+| Live | Interactive charts refreshed in the background every 15 minutes, within the saved source and query scope. Opening the public page does not run a query. |
+
+The timestamp at the top shows when Mage captured or last refreshed the shared view.
+Each pipeline chart shows when its most recently written selected output was saved. SQL charts
+show when Mage fetched the query result. A snapshot captured today can therefore contain a
+pipeline chart from yesterday alongside a SQL chart fetched today.
+When Mage reuses a saved SQL result, the chart shows that result’s original capture time.
+If the data time is unknown, the chart indicates that it is unavailable.
+
+Saved filters, run/partition selection, zoom, and legend state are preserved where supported.
+Recipients can use supported zoom and pan controls. **Reset view** restores the chart's captured
+starting view, including saved zoom and legend selections. Image exports, cloud actions, and
+private editing tools are unavailable.
+
+### Currently supported charts
+
+Sharing uses the chart's rendered Plotly output, preserving its chart type, multiple series,
+and supported interactions. This includes bar, line, scatter, pie, donut, histogram, box,
+violin, heatmap, funnel, treemap, sunburst, and other native Plotly chart types supported by
+Analytics. Supported dashboard card sizing and placement are retained.
+USA-state choropleth maps using built-in state boundaries are also supported without loading
+boundary data from an external service.
+
+Sharing supports a restricted set of in-memory operations, including text cleanup, date grouping,
+category ordering, axis and index reshaping, set-based column checks, local collection iteration,
+arithmetic, numeric summaries, and subplot composition. A chart can render privately but use an
+operation sharing does not support; the sharing dialog identifies the operation when possible.
+Chart code that reads additional files, makes network requests, or depends on custom workspace
+modules is not currently supported.
+
+Each link can contain up to 20 charts. Each chart's saved source and query must return a complete
+result of at most 10,000 rows before the chart's Python code and any saved transform run. This limit
+counts input rows, not plotted points. Narrow the saved filters, use supported query aggregation,
+or prepare a smaller pipeline output to reduce those rows. The entire prepared shared view,
+including all charts in a shared dashboard, must fit within 5 MiB of serialized JSON.
+
+Charts backed by authorized pipeline Parquet or table-shaped JSON outputs, including
+dynamic-block outputs, are supported. Parquet-backed charts also support saved grouping with
+count, sum, average, minimum, and maximum summaries. Sharing preserves the chart's saved output
+and run/partition selection and requires a complete result.
+
+PostgreSQL and MySQL charts support both sharing modes. Snapshot uses an eligible saved chart
+when available, preserving its displayed data without rerunning SQL. Mage must verify that the
+saved chart matches its current source and complete saved result. Missing, redacted, or failing
+SQL does not block this kind of Snapshot. If no eligible saved chart exists, Snapshot uses the
+normal query path and can fail. Its data time comes from the original saved result; if that time
+cannot be established, the chart labels its data time as unavailable.
+
+Live reruns the saved, read-only query during scheduled refreshes. Configure read-only database
+credentials in the workspace connection profile. Mage checks the creator's workspace permissions
+when a recipient opens either type of link. Sharing a saved Snapshot does not recheck current
+database grants; revoke its link to withdraw the prepared view.
+
+If a fresh SQL query cannot complete, sharing can fail or use an eligible saved
+result. Refresh the private chart, narrow or optimize its query, and retry. Live
+sharing requires a saved, credential-free query.
+
+Saved results can include rows visible at capture even if current row-level
+policies exclude them. Refresh the private chart before sharing if those
+policies have changed.
+
+Charts that depend on external resources, unsupported data sources, or configurations that cannot be
+safely prepared for public viewing remain unsupported. Examples include maps that require external
+GeoJSON, tiles, or access tokens, external images, and custom buttons that replace chart data or layout. Recipients receive the prepared chart
+data; their interactions cannot run chart code or request additional source data.
+
+Dashboard sharing requires every included chart to be eligible. If preparation fails, no
+usable link is created; share an eligible chart individually or create a separate dashboard.
+If saved source outputs are missing or have expired, complete a new run of the source pipeline
+and select its output before creating a link.
+
+### Manage and revoke links
+
+Open **Manage links** from either **Share** or **Share chart** to see the same active dashboard
+and chart links for that dashboard. Editors see only links they created; Admins and Owners can
+also see and manage other users' links.
+
+- Select a link's row to copy or regenerate it. Regeneration invalidates
+  the previous link and its access sessions.
+- A lock icon means **Access code required**.
+- Click the trash action and confirm to revoke a link. Admins and Owners can also use
+  **Delete all shared links** from either sharing modal to revoke links for the dashboard and
+  its charts.
+- Expired, revoked, and invalidated links disappear from the table. Their audit history remains.
+
+After a sharing security update, older links may become unavailable. Create new links for
+recipients if this happens.
+
+Dashboard renames and chart display-name changes preserve links. If renaming a chart also
+changes its saved code, a Live link may require replacement when Mage cannot verify that only
+the displayed title changed. Deleting a source dashboard or chart, removing a shared chart from
+its dashboard, moving it outside its workspace, or losing required permissions makes the affected
+link unavailable. Changes to a live link's source, fields, or query scope require a replacement
+link with a new acknowledgment. If Mage temporarily cannot read workspace metadata to verify
+access, the link can be retried after the metadata becomes available.
+
+If a live refresh is delayed or the source is temporarily unavailable, recipients can see the
+last successful data for up to 24 hours after that refresh, with a notice that the data may be
+outdated. Authorization failures never permit stale data delivery. Invalid links show a safe
+unavailable state without exposing internal resource details. Access sessions
+expire after one hour; recipients can reopen the original link to establish a new session while
+the link remains valid.
+
+Creation, access, changes, regeneration, and revocation are recorded in the workspace audit
+history. Anonymous access identifies a shared link, not a verified person. Revocation prevents
+future access; it cannot retract information a recipient has already seen or copied.
 
 ## Recommended dashboard patterns
 
