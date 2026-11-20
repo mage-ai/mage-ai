@@ -1,10 +1,14 @@
 import os
+import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
 import yaml
 
-from mage_ai.data_preparation.models.block.dbt.profiles import Profiles
+from mage_ai.data_preparation.models.block.dbt.profiles import (
+    PROFILES_TEMP_DIR_ENV_VAR,
+    Profiles,
+)
 from mage_ai.tests.base_test import AsyncDBTestCase
 
 
@@ -103,6 +107,29 @@ target: dev
                 profiles.clean()
 
                 self.assertFalse(interpolated_profiles_full_path.exists())
+
+    def test_interpolate_defaults_to_repo_path(self):
+        with patch.dict(os.environ):
+            os.environ.pop(PROFILES_TEMP_DIR_ENV_VAR, None)
+            with Profiles(self.repo_path, self.variables) as profiles:
+                self.assertEqual(
+                    Path(profiles.profiles_dir).parent.resolve(),
+                    Path(self.repo_path).resolve(),
+                )
+
+    def test_interpolate_in_profiles_temp_dir(self):
+        with tempfile.TemporaryDirectory() as root_dir:
+            temp_dir = os.path.join(root_dir, 'missing')
+            with patch.dict(os.environ, {PROFILES_TEMP_DIR_ENV_VAR: temp_dir}):
+                with Profiles(self.repo_path, self.variables) as profiles:
+                    profiles_dir = Path(profiles.profiles_dir)
+                    self.assertEqual(profiles_dir.parent.resolve(), Path(temp_dir).resolve())
+                    self.assertEqual(profiles_dir.stat().st_mode & 0o777, 0o700)
+
+                    with (profiles_dir / 'profiles.yml').open('r') as f:
+                        self.assertEqual(self.interpolated_profiles, yaml.safe_load(f.read()))
+
+                self.assertFalse(profiles_dir.exists())
 
     def test_profiles(self):
         profiles = Profiles(self.repo_path, self.variables)
