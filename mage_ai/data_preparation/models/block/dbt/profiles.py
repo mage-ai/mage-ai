@@ -1,6 +1,7 @@
 import asyncio
 import os
 import shutil
+import tempfile
 import uuid
 import warnings
 from concurrent.futures import ThreadPoolExecutor
@@ -17,6 +18,7 @@ from mage_ai.settings.utils import base_repo_path
 from mage_ai.shared.environments import is_debug
 
 PROFILES_FILE_NAME = 'profiles.yml'
+PROFILES_TEMP_DIR_ENV_VAR = 'MAGE_DBT_PROFILES_TEMP_DIR'
 
 
 class ProfilesError(MageBaseException):
@@ -123,10 +125,19 @@ class Profiles(object):
             Union[str, os.PathLike]: the profiles_dir of the interpolated profiles.yml
         """
         # create dir for temporary interpolated profiles.yml
-        interpolated_profiles_dir = os.path.join(
-            base_repo_path(),
-            f'.profiles_interpolated_temp_{uuid.uuid4()}',
-        )
+        temp_dir = os.getenv(PROFILES_TEMP_DIR_ENV_VAR)
+        if temp_dir:
+            temp_dir = os.path.abspath(temp_dir)
+            os.makedirs(temp_dir, exist_ok=True)
+            interpolated_profiles_dir = tempfile.mkdtemp(
+                prefix='.profiles_interpolated_temp_',
+                dir=temp_dir,
+            )
+        else:
+            interpolated_profiles_dir = os.path.join(
+                base_repo_path(),
+                f'.profiles_interpolated_temp_{uuid.uuid4()}',
+            )
         if not os.path.exists(interpolated_profiles_dir):
             os.makedirs(interpolated_profiles_dir, exist_ok=True)
 
