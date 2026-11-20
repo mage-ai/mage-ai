@@ -24,8 +24,8 @@ Mage allows you to reuse blocks across multiple pipelines within the same projec
 | Scenario | Method | Description | Best For |
 |----------|--------|-------------|----------|
 | **Within Pipeline** | [Replicate blocks](#replicate-blocks-within-a-pipeline) | Right-click to duplicate blocks in the same pipeline | Similar data sources, parallel processing, testing variations |
+| **Across Pipelines** | [Reuse code](#reuse-code-from-the-add-composer) | Open the file browser from the Add composer | Inserting reusable code at a specific notebook position |
 | **Across Pipelines** | [Drag & drop](#drag-and-drop-from-file-browser) | Drag blocks from file browser to pipeline canvas | Quick reuse of existing blocks |
-| **Across Pipelines** | [Search bar](#use-the-search-block-bar) | Search and add blocks from all projects | Finding specific blocks across projects |
 | **Code Reuse** | [Utility files](#create-utility-files-and-import-in-blocks) | Create shared Python modules and import them | Small functions, data processing utilities |
 | **Code Reuse** | [Block templates](#use-block-templates) | Create reusable templates with placeholders | Common patterns with slight variations |
 | **Across Projects** | [Pro templates](#block-templates-across-projects-mage-pro) | Use Mage Pro's template library | Organization-wide standardization |
@@ -56,6 +56,18 @@ This helps you understand the impact of changes to shared blocks across your pro
 
 ## Methods to reuse blocks
 
+### Reuse code from the Add composer
+
+<ProOnly source="add-composer-reuse-code" />
+
+With workspace AI enabled and Sidekick not disabled for your account, insert an existing
+block at a specific position in the notebook:
+
+1. Open the embedded composer, or hover between blocks and click **Add**.
+2. Open **More** and select **Reuse code**.
+3. In the file browser modal, choose the existing block you want to insert.
+4. Click **Add to workflow**.
+
 ### Drag and drop from file browser
 
 This is the most intuitive way to reuse blocks across pipelines:
@@ -83,31 +95,6 @@ This is the most intuitive way to reuse blocks across pipelines:
   **Mage OSS**: Version 0.9.64 or greater is required to add callback and conditional blocks from the file browser.
   
   **Mage Pro**: Callback and conditional blocks are supported by default in all versions.
-</Info>
-
-### Use the search block bar
-
-Search for existing blocks across all your projects:
-
-1. **Click in the search bar** at the bottom of the pipeline editor
-2. **Type keywords** to search for existing blocks (e.g., "load titanic")
-3. **Browse the search results** showing blocks from different projects
-4. **Click on a block** from the dropdown to add it to your pipeline
-5. **The block will be added** to your current pipeline
-
-<Frame>
-    <p align="center">
-        <img
-            alt="Search blocks across entire projects"
-            src="https://mage-ai.github.io/assets/dev-ux/code-editor/block-search.gif"
-        />
-    </p>
-</Frame>
-
-<Info>
-  **Mage OSS**: The "Add new block v2" feature must be enabled in project settings and is available in standard (batch) pipelines. If recently enabled, Mage must be restarted for blocks to be indexed.
-  
-  **Mage Pro**: This feature is enabled by default and available in all pipeline types.
 </Info>
 
 ### Replicate blocks within a pipeline
@@ -212,9 +199,11 @@ Learn more about [creating and using user-defined templates](/guides/blocks/user
 
 **Using block templates:**
 
+The Add composer requires workspace AI to be enabled and Sidekick not to be disabled for your account.
+
 1. **Open pipeline editor** - Navigate to the pipeline where you want to add the block
-2. **Add new block** - Click the "+" button to add a new block
-3. **Browse templates** - Select "Browse templates" from the block creation options
+2. **Open the Add composer** - Use the embedded composer, or hover between blocks and click **Add**
+3. **Browse templates** - Select **More**, then **Templates**
 4. **Choose a source** - Select **Core** for Mage's built-in templates or **Team** for templates created in your workspace
 5. **Select template** - Browse or search the folders, then select a template to preview its code
 6. **Add to workflow** - Click **Add to workflow**. Core templates are added directly; Team templates open the **Block name** dialog so you can enter a name, then click **Save**.

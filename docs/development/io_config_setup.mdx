@@ -249,7 +249,7 @@ Select **Test** to check the current editor contents without saving them. The ac
 - Tests stop after 10 seconds, and only one test can run per project at a time.
 - Most tests open and close a connection without previewing, extracting, or writing data. Success confirms only that lightweight check.
 - Trino also runs `SELECT 1` and requires catalog, host, and user configuration.
-- Mage shows specific configuration errors after redacting known secrets. Provider and driver exceptions use the generic connection-failure message.
+- Mage shows specific configuration, provider, and driver errors after redacting known secrets and other sensitive values. If no usable reason is available, Mage shows a generic connection-failure message.
 
 ### Workflow checklist
 

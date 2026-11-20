@@ -89,6 +89,8 @@ For each chat turn, Mage captures the visible non-chat text from the current bro
 
 The AI Chat sidebar lists active and archived chats, lets you search chat history by title, and loads older chats with **Show more** when more results are available. Mage Pro remembers the selected chat and whether you were viewing active or archived chats for the current workspace, then restores that state when you refresh or reopen AI Chat.
 
+Queued follow-up messages survive a reload in the same browser tab. If AI Chat cannot verify the chat after restoring the queue, it pauses delivery and keeps the queued messages available to edit or delete. Once access or connectivity is restored, select **Retry restoration** to check the chat again and resume delivery when it is safe to do so. A missing or inaccessible chat remains paused.
+
 When AI Chat replies with Markdown image links that resolve through Mage Pro's authenticated preview flow, AI Chat renders those image previews inline. Markdown links to other workspace files still open in the code editor.
 
 ### Inspect delegated subagent work

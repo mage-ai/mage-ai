@@ -351,6 +351,29 @@ the loaded preview window, not the total number of rows in the source table. To
 answer full-table cardinality questions, run an exact `COUNT(*)` query against
 the selected table or filtered query.
 
+Click **Export CSV** to download all columns and rows in the current successful
+preview or query result. The download uses the returned window, including
+rows hidden by column filters, and does not run the request again. A successful
+result with no rows produces a CSV with column headers. Editing the query or row
+limit does not change the current result until you run another request. Starting
+a new request clears the previous result, including when the request fails.
+
+Null values are exported as empty cells and nested objects and arrays as JSON
+text. To reduce spreadsheet formula injection, text values and column names
+with potentially unsafe leading characters are prefixed with an underscore.
+The prefix is part of the exported text and may affect imports into other
+programs. Spreadsheet applications can handle CSV escaping differently,
+especially after saving and reopening a file. Integer values outside the safe
+JavaScript number range are sent to the browser as text to avoid JavaScript
+rounding. Supported SQL loaders also preserve decimal values as text. Some
+providers may still lose precision before returning query results.
+
+Excel can automatically convert numeric-looking cells and round values with
+more than 15 significant digits when opening a CSV. To retain those values,
+[import the affected columns as text](https://support.microsoft.com/en-us/excel/keeping-leading-zeros-and-large-numbers)
+and save them in an Excel workbook; opening the CSV directly can change the
+values again.
+
 When a tabular result is available, click **Expand results** to hide the
 connection, schema, and query browser and give the results table more space.
 Click **Back** to restore the explorer panels. Data Explorer remembers this

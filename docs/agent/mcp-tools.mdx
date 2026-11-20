@@ -167,6 +167,12 @@ lists, run-once schedules, and next run dates, use `pipeline_schedules`. Use
 
 ## Blocks
 
+For `block_get`, `block_update`, and `block_code_update`, pass nested UUIDs
+such as `folder/subfolder/load_data` unchanged. The tools encode identifiers
+for API requests. Recognized block-type names such as `data_loader` and
+`transformer` are reserved as the first path segment and are rejected as
+block-type prefixes.
+
 <AccordionGroup>
   <Accordion title="block_list">
     List all blocks in a pipeline.
@@ -177,12 +183,19 @@ lists, run-once schedules, and next run dates, use `pipeline_schedules`. Use
   </Accordion>
 
   <Accordion title="block_get">
-    Get block details including source code.
+    Get block details by UUID, including blocks in nested folders.
 
     | Parameter | Type | Required | Description |
     |---|---|---|---|
     | `pipeline_uuid` | string | yes | Pipeline UUID |
-    | `uuid` | string | yes | Block UUID |
+    | `block_uuid` | string | yes | Block UUID, for example `load_data` or `folder/load_data`; do not add a block-type prefix such as `data_loader/` |
+
+    Correct arguments look like `{"pipeline_uuid": "example_pipeline",
+    "block_uuid": "folder/load_data"}` for a block in a nested folder. Pass the
+    UUID as returned by the pipeline, without URL encoding it. Do not send
+    `include_content` to `block_get` or generic `blocks` `action="get"`. That query key is accepted
+    only for `blocks` `action="list"`. Use `block_code_update` for source-code
+    edits.
   </Accordion>
 
   <Accordion title="block_create">
@@ -197,11 +210,18 @@ lists, run-once schedules, and next run dates, use `pipeline_schedules`. Use
     | `content` | string | no | Initial source code |
     | `upstream_blocks` | array | no | UUIDs of upstream blocks |
     | `config` | object | no | Additional block configuration |
+    | `priority` | integer | no | Nonnegative, zero-based notebook insertion position |
+    | `insert_before_block_uuid` | string | no | UUID of an existing block in the target pipeline to insert before |
+    | `insert_after_block_uuid` | string | no | UUID of an existing block in the target pipeline to insert after |
+
+    Mage resolves anchors against the pipeline's current order: a valid
+    `insert_before_block_uuid` takes precedence, then a valid `insert_after_block_uuid`,
+    then `priority`. Use `upstream_blocks` separately to define dependencies.
 
     **Supported block types:**
-    `ai`, `data_loader`, `transformer`, `data_exporter`, `sensor`, `callback`, `chart`, `conditional`, `custom`, `dbt`, `extension`, `global_data_product`, `markdown`, `scratchpad`
+    `agent`, `ai`, `data_loader`, `transformer`, `data_exporter`, `sensor`, `callback`, `chart`, `conditional`, `custom`, `dbt`, `extension`, `global_data_product`, `markdown`, `scratchpad`
 
-    AI blocks are available in Mage Pro only. For Sidekick-powered agent blocks, use `type="ai"`, `language="yaml"`, and YAML content with top-level `type: agent`.
+    AI and Agent blocks are available in Mage Pro only. For new Sidekick-powered agent blocks, use `type="agent"`, `language="yaml"`, and YAML content with `message`. Do not add a top-level YAML `type: agent` field for new Agent blocks; that field remains supported only for legacy AI blocks.
 
     <Note>
       If no `config` is provided, mage-agent automatically matches a block template for you. For `integration` pipelines, it also auto-detects available sources and destinations.
@@ -211,15 +231,35 @@ lists, run-once schedules, and next run dates, use `pipeline_schedules`. Use
   </Accordion>
 
   <Accordion title="block_update">
-    Update a block's code or configuration.
+    Update a block's metadata, dependencies, or configuration.
 
     | Parameter | Type | Required | Description |
     |---|---|---|---|
     | `pipeline_uuid` | string | yes | Pipeline UUID |
-    | `uuid` | string | yes | Block UUID |
-    | `content` | string | no | New source code |
-    | `name` | string | no | New name |
-    | `upstream_blocks` | array | no | Updated upstream block UUIDs |
+    | `block_uuid` | string | yes | Block UUID, including nested paths such as `folder/load_data`; keep `block_type` separate when source-code edits need it |
+    | `payload` | object | yes | Fields to update, such as name, configuration, or upstream blocks |
+    | `block_type` | string | no | Required when `payload.content` is present so mage-agent can delegate to the canonical code update workflow |
+
+    <Note>
+      For source-code edits, use `block_code_update` directly. Use
+      `block_get` afterward when you need to verify the saved result.
+    </Note>
+  </Accordion>
+
+  <Accordion title="block_code_update">
+    Update a block's source code.
+
+    | Parameter | Type | Required | Description |
+    |---|---|---|---|
+    | `pipeline_uuid` | string | yes | Pipeline UUID |
+    | `block_type` | string | yes | Block type, such as `data_loader`, `transformer`, or `data_exporter` |
+    | `block_uuid` | string | yes | Block UUID, including nested paths such as `folder/load_data`, without a `block_type/` prefix |
+    | `content` | string | yes | New source code |
+    | `payload` | object | no | Additional fields for the code update; use a separate `block_update` to persist metadata or dependency changes |
+
+    When a code edit also needs metadata or dependency changes, make a separate
+    `block_update` call without `content`, then use `block_get` to verify those
+    changes in fresh readback. Code and metadata updates are separate operations.
   </Accordion>
 
   <Accordion title="block_templates_list">

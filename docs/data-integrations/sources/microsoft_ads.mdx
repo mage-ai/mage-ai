@@ -3,10 +3,9 @@ title: "Microsoft Ads"
 description: "Sync performance reports from the Microsoft Advertising API (Bing Ads v13) using OAuth 2.0 and the official bingads Python SDK."
 ---
 
-import { ProButton } from '/snippets/pro/button.mdx';
 import { ProOnly } from '/snippets/pro/only.mdx';
 
-<ProOnly source="data-integration" />
+<ProOnly source="microsoft-ads" />
 
 ## Overview
 
@@ -34,6 +33,7 @@ Authentication uses **OAuth 2.0** with a `refresh_token` (no service accounts). 
 | `insights_lookback_window` | | `0` | Days to rewind from the saved report bookmark when syncing performance reports. Never goes earlier than `start_date`. |
 | `ad_labels_max_ads` | | `10000` | Maximum current ads to scan per account when syncing `ad_labels`; increase only when large-account sync time and API quota are acceptable. |
 | `ad_labels_max_hierarchy_requests` | | `1000` | Maximum campaign/ad group/ad hierarchy API requests per account when syncing `ad_labels`. |
+| `ad_title_enrichment_max_ad_groups` | | `1000` | Maximum ad groups per account queried through Campaign Management to fill missing `AdTitle` values in `ad_performance_report`. |
 | `environment`           | | `production` | API environment: `production` or `sandbox`. |
 | `aggregation`           | | `Daily` | Report aggregation period. Common values: `Daily`, `Weekly`, `Monthly`. |
 | `report_time_zone`      | | — | [ReportTimeZone](https://learn.microsoft.com/en-us/advertising/reporting-service/reporttimezonetype) value. Leave empty to use the account's default time zone. |
@@ -94,6 +94,10 @@ environment: sandbox
 | `ad_labels` | [Campaign Management label associations](https://learn.microsoft.com/en-us/advertising/guides/labels) | Full-table rows for current ad label associations. |
 
 Performance report streams sync **incrementally** on `TimePeriod` (one bookmark per ad account). On the first run the full history from `start_date` is fetched; subsequent runs fetch only new or updated days. The `ad_labels` stream syncs as **full table** from the current label associations returned by the Campaign Management API.
+
+The `ad_performance_report` stream is keyed by ad, day, device, network, and `FinalUrl`. Microsoft can split a dynamic ad across multiple final URLs for the same ad/day/device/network combination, so `FinalUrl` is part of the grain to preserve those rows during destination deduplication.
+
+When a report row has no `AdTitle`, the connector uses available title or headline fields, then tries Campaign Management for that ad. If enrichment fails or reaches the configured ad-group limit, `AdTitle` remains empty and the performance row still syncs.
 
 <br/>
 

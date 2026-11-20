@@ -3,10 +3,9 @@ title: "Google Ads"
 description: "Sync campaign, ad group, keyword, and performance report data from the Google Ads API v23 using OAuth 2.0 authentication."
 ---
 
-import { ProButton } from '/snippets/pro/button.mdx';
 import { ProOnly } from '/snippets/pro/only.mdx';
 
-<ProOnly source="data-integration" />
+<ProOnly source="google-ads" />
 
 ![Google Ads](https://hellomidia.com.br/wp-content/uploads/2018/06/google-ads.png)
 
@@ -61,6 +60,21 @@ This source handles state internally, meaning **INCREMENTAL sync selection is no
 | `request_timeout`     | | `900` | HTTP timeout in seconds for API calls. |
 | `conversion_window`   | | `30` | Conversion attribution window in days. Allowed: `1`–`30`, `60`, `90`. |
 | `query_limit`         | | `1000000` | Max rows per query for core streams. |
+
+<br/>
+
+## Ad performance streams
+
+Google Ads exposes several performance grains. Use the stream that matches the
+grain you need:
+
+| Stream | Grain | Notes |
+| ------ | ----- | ----- |
+| `ad_performance_report` | Date, customer, campaign, ad group, ad, and keyword criterion | Preserves the existing keyword-attributed Search ad behavior. Because it includes `segments.keyword.ad_group_criterion`, non-keyword campaign types such as Demand Gen can be excluded by Google Ads. |
+| `ad_group_ad_performance_report` | Date, customer, campaign, ad group, and ad | Use this stream for true ad-level reporting, including Demand Gen ad fields and video metrics such as `video_trueview_views` and video quartile rates. |
+| `ad_group_ad_asset_view_report` | Date, customer, campaign, ad group, ad, and asset association | Use this stream to inspect the images, videos, headlines, descriptions, and other assets attached to an ad. One ad can have multiple assets, so it can return more rows than the ad-level report. |
+
+Newly added streams preselect the connector's existing key properties as Unique constraints. You can change those columns in stream schema settings; existing saved selections are not changed. Review the key before syncing reports with additional selected segments: for example, `ad_performance_report` can return rows that differ by keyword, but keyword is not part of its default key.
 
 <br/>
 

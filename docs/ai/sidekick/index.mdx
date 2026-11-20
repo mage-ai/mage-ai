@@ -78,6 +78,93 @@ Sidekick streams its progress as it works. For changes that affect Mage objects
 or project files, it can read back the result, refresh the open page, and keep
 the conversation tied to the exact run, block, preview, chart, or file it used.
 
+## Find and organize chats
+
+In the Sidekick sidebar, choose **New** to start a chat or **Search** to find a
+chat by title and resume it. When saved agents are enabled, the same search
+also finds agents by name. Choose **Show more** under **Chats** or **Agents**
+to see more matches in that group. Choose **Agents** in the sidebar to browse the
+**Subagents** section. Selecting an available agent prepares a draft you can edit and send.
+
+**Chats and tasks** shows your 20 most recent unpinned chats.
+Choose **View all** to browse your full list of active chats in the right panel,
+with each conversation’s last active time.
+In **All chats** or **Archived**, search by title and check the matching total.
+Use the sort menu to order the results by **Last updated** or **Name**.
+
+When Sidekick is docked beside a Mage page, opening the sidebar or right panel
+widens Sidekick just enough to fit the panel and chat, if space allows. Closing
+the panel gives that space back. If you resize Sidekick yourself using its
+outer divider, it keeps your chosen width as the starting point.
+
+Drag the sidebar’s own divider to adjust its width. Below 150 pixels, the sidebar
+previews its collapsed state. Release to keep it collapsed, or drag back to
+150 pixels or wider before releasing to keep it open. If resizing the workspace leaves
+less than 150 pixels for the sidebar, Sidekick closes it temporarily. Use the
+sidebar button to reopen it when there is room.
+
+To keep an active chat handy, hover over or focus its row, open the **…** menu, and
+choose **Pin chat**. The chat moves to **Pinned** above the recent list and
+stays there when you return. Use the same menu to unpin, rename, mark a chat as
+read or unread, copy its session ID, or archive it.
+
+The sidebar initially shows up to 20 pinned chats. Choose **More pinned chats** to
+show up to 20 more, or **Less pinned chats** to return to the first 20.
+
+To find an archived conversation, open the **…** menu beside **Chats and tasks**
+and choose **Archived**. Select a row to read the conversation while it stays
+archived. Open its **…** menu and choose **Unarchive chat** to return it to
+your active chats. Sending a new message also restores the conversation before
+the message is sent.
+
+To permanently remove an archived conversation, open its **…** menu, choose
+**Delete chat**, and confirm.
+
+In the right panel, choose **+** to open **Artifacts**, **Subagents**, **All
+chats**, or **Archived**. Select a tab to switch views. Use the **×** on a tab
+to close that view, or the **×** at the far right to collapse the panel and
+keep its tabs. You can also drag the right panel’s divider until the panel is
+220 pixels wide or narrower, then release to collapse it. The number on the
+collapsed panel button shows how many views are open.
+
+## Customize Sidekick with AGENTS.md
+
+Add `AGENTS.md` at the Mage project root when you want Sidekick to follow
+project-wide instructions.
+
+Use `AGENTS.md` for durable guidance such as project conventions, preferred
+commands, validation requirements, or directories that should not be changed.
+Keep instructions specific, testable, and free of secrets. For example:
+
+```md
+# Project instructions
+
+- Put reusable data-cleaning helpers in `utils/` instead of duplicating them across blocks.
+- Run `pytest tests/unit` after changing Python files.
+- Do not edit files under `generated/`.
+- Ask before changing a pipeline schedule.
+```
+
+Sidekick starts from the project root and loads its instructions for the chat.
+Direct instructions in your current chat and Mage's safety and permission rules
+still take precedence over project instructions.
+
+To verify your instructions:
+
+1. Save `AGENTS.md` in the project.
+1. Start a new Sidekick chat so the instruction context is loaded cleanly.
+1. Ask Sidekick to summarize the project instructions that apply to a specific
+   file or task.
+1. Give it a harmless task that exercises one distinctive instruction, then
+   confirm the response or proposed change follows that instruction.
+
+`AGENTS.md` provides guidance to the AI; it does not grant additional Mage
+permissions, bypass approval steps, or override platform safety controls. Avoid
+using it as the only enforcement mechanism for security, authorization, or
+deployment policy. Sidekick uses the instruction files available in the Mage
+project; do not rely on a personal `AGENTS.md` from a developer's local machine
+being available in the Mage runtime.
+
 ## What AI Sidekick Can Do
 
 ### Build Pipelines from a Prompt

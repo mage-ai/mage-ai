@@ -73,6 +73,12 @@ Use Mage’s visual interface to:
 
 This saves time during development and debugging.
 
+When a project declares packages in `packages.yml` or `dependencies.yml`, Mage
+ensures they are installed before running the dbt block. Dependency installation
+is serialized per dbt project, so concurrent blocks can share installed
+packages without an installation replacing `dbt_packages` during another
+block’s run.
+
 ### Exclude Models When Running All
 
 ![](https://raw.githubusercontent.com/mage-ai/assets/main/dbt/add-dbt-models.gif)

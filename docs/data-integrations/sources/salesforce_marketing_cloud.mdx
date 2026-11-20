@@ -3,7 +3,6 @@ title: "Salesforce Marketing Cloud"
 description: "Sync campaigns, journeys, assets, subscribers, and engagement events from Salesforce Marketing Cloud using the REST and SOAP APIs."
 ---
 
-import { ProButton } from '/snippets/pro/button.mdx';
 import { ProOnly } from '/snippets/pro/only.mdx';
 
 <ProOnly source="data-integration" />
@@ -48,6 +47,8 @@ Create an **Installed Package** in Marketing Cloud:
 | `subdomain` | ✅ | — | Tenant-specific subdomain. Accepts a bare subdomain (`mc563885gzs27c5t9-63k636ttgm`) or a full URL — the connector parses the subdomain automatically. |
 | `account_id` | | — | MID of the child business unit to target. Omit to use the top-level account. |
 | `start_date` | | — | ISO 8601 lower bound for incremental streams. **Required** for event streams (`sent_events`, `open_events`, `click_events`, `bounce_events`, `unsub_events`). Example: `2024-01-01T00:00:00Z`. |
+| `end_date` | | — | Default inclusive ISO 8601 upper bound for configured Data Extension streams. Does not limit REST or event streams. |
+| `data_extension_streams.<stream>.end_date` | | Inherits `end_date` | Inclusive upper bound for this stream. Set a timezone-aware ISO 8601 datetime to override the default, or `null` to disable it for this stream. |
 
 
 ## Sample configs
@@ -69,6 +70,32 @@ subdomain: mc563885gzs27c5t9-63k636ttgm
 account_id: "7281234"
 start_date: "2024-01-01T00:00:00Z"
 ```
+
+**With a default bound and per-stream overrides:**
+
+```yaml
+client_id: YOUR_CLIENT_ID
+client_secret: YOUR_CLIENT_SECRET
+subdomain: mc563885gzs27c5t9-63k636ttgm
+start_date: "2024-01-01T00:00:00Z"
+end_date: "2024-02-29T23:59:59Z"
+data_extension_streams:
+  journey_sends_to_adverity:
+    name: JourneySends2Adverity
+    filter_field: LastRefreshDate
+    end_date: "2024-01-31T23:59:59Z"
+  other_sends:
+    name: OtherSends
+    filter_field: LastRefreshDate
+  historical_sends:
+    name: HistoricalSends
+    filter_field: LastRefreshDate
+    end_date: null
+```
+
+`journey_sends_to_adverity` uses its January bound, `other_sends` inherits the global February bound, and `historical_sends` has no upper bound. For each configured Data Extension, the selected catalog bookmark column determines the date field; otherwise, its `filter_field` is used. A saved bookmark takes precedence over global `start_date` as the inclusive lower bound. An effective `end_date` without either date field raises an error. Date bounds require timezone-aware ISO 8601 datetimes. Loading sample data ignores them.
+
+To verify a sync's effective filter, check its source logs for `Data Extension "<name>" date filter`. The entry shows the field and effective `lower` and `upper` bounds. `mode=soap` also shows the operator and values sent to Salesforce; `mode=client_side` means Mage filters the retrieved rows. `mode=none sample_mode=True` is expected when loading sample data. If a bookmark is later than the upper bound, the log says `reason=lower_after_upper` and no rows are fetched.
 
 
 ## Streams

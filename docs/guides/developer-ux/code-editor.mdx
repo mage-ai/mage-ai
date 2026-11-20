@@ -6,6 +6,8 @@ icon: "code"
 "og:image": "https://qph.cf2.quoracdn.net/main-qimg-3aed77679a9fbe28bcae784d8fb831a8"
 ---
 
+import { ProOnly } from '/snippets/pro/only.mdx';
+
 ## Adding blocks made easy
 
 You can quickly add blocks of code to your pipeline with these methods:
@@ -35,43 +37,42 @@ You can quickly add blocks of code to your pipeline with these methods:
         </Frame>
     </Accordion>
 
-    <Accordion title="Search blocks across entire projects" icon="searchengin" iconType="duotone">
-        Find existing code and add it to the current pipeline.
+    <Accordion title="Add the next outcome" icon="wand-magic-sparkles" iconType="duotone">
+        <ProOnly source="add-outcomes" />
 
-        <Note>
-            You must first enable the feature named <b>Add new block v2</b> in your
-            [project settings](http://localhost:6789/settings/workspace/preferences).
-            This feature is available in standard (batch) pipelines.
+        When workspace AI is enabled and Sidekick is not disabled for your account:
 
-            If you just recently enabled the feature <b>Add new block v2</b>, you must restart Mage
-            so that your blocks can be indexed.
+        1. Choose where the new work should appear:
+           - In an empty notebook, use the embedded **What should happen?** composer.
+           - At the end of a notebook, use the persistent embedded **What should happen next?**
+             composer.
+           - Between blocks, hover over the insertion space to reveal **Add**, then click it to open
+             the composer.
+        2. Describe the result you want, such as
+           `Remove duplicate customer rows and summarize them by region`.
+        3. Click **Generate** or press <kbd>Enter</kbd>.
+        4. Follow the response and progress in Sidekick.
 
-            Version 0.9.64 or greater is required to add `callback` and `conditional`
-            blocks from the block search.
-        </Note>
+        Describe the outcome rather than choosing a block type. The composer sends your original
+        request and the selected insertion point to Sidekick. Sidekick may answer a question or ask
+        for clarification without changing the notebook. When changes are needed, it may create,
+        update, remove, or reorganize one or several blocks to produce the result. Sidekick also
+        shows generation errors. The request uses the active Sidekick conversation. While a request
+        is being handed off, **Add**, the prompt, and **Generate** are disabled; wait for the
+        handoff to finish before submitting another outcome from that composer.
 
-        Instead of clicking a button to add a new block, type in the search bar to find an
-        existing block across all your projects.
+        Between blocks, the composer opens as a viewport-aware popup without shifting notebook
+        content. Empty and terminal composers remain embedded in the notebook.
 
-        <Frame>
-            <p align="center">
-                <img
-                    alt="Search blocks across entire projects"
-                    src="https://mage-ai.github.io/assets/dev-ux/code-editor/block-search.gif"
-                />
-            </p>
-        </Frame>
+        Open **More** for **Reuse code**, **Templates**, **Data product**, **Markdown**, or
+        **Scratchpad**. **Data product** opens the global data products browser.
 
-        <Tip>
-            ⌘ + / (Command + Forward Slash) keyboard shortcut will instantly focus your typing on the
-            search bar from anywhere on the page (as long as you aren’t already typing in a
-            block of code).
-        </Tip>
+        Use **Code** immediately to the left of **More** to insert a blank **Python**,
+        **SQL**, or **R** transformer block, a **dbt** run block, or an **AI block**. The AI block
+        option is available only while workspace AI is enabled.
 
-        <Tip>
-            Use the arrow up and arrow down key to browse
-            through the results.
-        </Tip>
+        When workspace AI is disabled or you disable Sidekick for your account, the original
+        block creation controls appear instead of the composer.
     </Accordion>
 
     <Accordion title="Custom code templates for reducing boilerplate work" icon="cauldron" iconType="duotone">
@@ -318,10 +319,43 @@ Enhance your code with these quick power-ups:
 
 ## Add new block v2
 
-An improved experience for adding new blocks to your pipeline in the
-Pipeline Editor (`/pipelines/[pipeline_uuid]/edit`), which allows you to
-search for existing block files and use data integration blocks inside of
-a standard (batch) pipeline.
+<ProOnly source="add-new-block-v2" />
+
+In Mage Pro, Add new block v2 provides an outcome-first creation flow in the Pipeline Editor
+(`/pipelines/[pipeline_uuid]/edit`) when workspace AI is enabled and Sidekick is not
+disabled for your account. In an empty
+notebook, start with the embedded **What should happen?** composer. After blocks
+exist, use the persistent embedded **What should happen next?** composer at the
+end of the notebook. To insert work
+between blocks, hover over the insertion space to reveal **Add**, then click it to
+open the composer.
+
+Describe the result you want instead of selecting a block type, then click
+**Generate**. The composer sends your original request and selected insertion
+point to Sidekick. Sidekick may answer a question or ask for clarification
+without changing the notebook. When changes are needed, it may create, update,
+remove, or reorganize one block or multiple blocks. Sidekick owns generation
+progress and errors. The request uses the active Sidekick conversation. While a
+request is being handed off, **Add**, the prompt, and **Generate** are disabled,
+so another outcome cannot be submitted from that composer until the handoff
+finishes.
+
+Only the between-block composer opens as a viewport-aware popup; the empty and
+terminal composers remain embedded in the notebook. Open **More** for
+**Reuse code**, **Templates**, **Data product**, **Markdown**, or **Scratchpad**.
+**Data product** opens the global data products browser.
+
+Use **Code** immediately to the left of **More** to insert a blank
+**Python**, **SQL**, or **R** transformer block, a **dbt** run block, or an
+**AI block**. The AI block option is available only while workspace AI is enabled.
+
+When workspace AI is disabled or you disable Sidekick for your account, the original
+block creation controls appear instead of the composer. To change your account preference,
+open **Workspace preferences**, find **Account settings**, toggle **Disable AI Sidekick**,
+then click **Save**. This preference applies only to your account.
+
+To add existing block files instead of creating a new implementation, drag them
+from the file browser into the notebook.
 
 ---
 
@@ -339,6 +373,11 @@ every column, while **Reset** restores the initial selection. Wide DataFrame
 previews initially show the first 100 columns, and the picker can reveal any of
 up to 1,000 sampled columns. These controls are temporary preview tools and don’t
 change the underlying block output.
+
+In Mage Pro only, open a code block’s **…** menu and select **Clear output** to
+delete its saved notebook output while leaving other blocks’ output unchanged.
+The output stays cleared after refreshing the page. Run the block again to
+create fresh output for display and downstream blocks.
 
 <Frame>
     <p align="center">
