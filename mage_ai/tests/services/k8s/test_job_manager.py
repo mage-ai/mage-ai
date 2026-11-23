@@ -19,6 +19,10 @@ from kubernetes.client import (
 )
 
 from mage_ai.services.k8s.config import K8sExecutorConfig
+from mage_ai.services.k8s.constants import (
+    K8S_BLOCK_FAILED_EXIT_CODE,
+    MAGE_K8S_JOB_NAME_ENV_VAR,
+)
 from mage_ai.services.k8s.job_manager import (
     JobManager,
     filter_used_volumes,
@@ -291,6 +295,7 @@ class JobManagerTests(TestCase):
             template=mock_v1_pod_template_spec,
             active_deadline_seconds=None,
             backoff_limit=0,
+            pod_failure_policy=mock_client.V1PodFailurePolicy.return_value,
             ttl_seconds_after_finished=None
         )
         mock_client.V1Job.assert_called_once_with(
@@ -328,10 +333,12 @@ class JobManagerTests(TestCase):
         # Assertions
         self.assertEqual(job.spec.template.spec.containers[0].image, 'test_image_2')
         self.assertEqual(job.spec.template.spec.containers[0].image_pull_policy, 'Always')
+        # MAGE_K8S_JOB_NAME is injected so the block executor knows it runs in a block pod.
         self.assertEqual(job.spec.template.spec.containers[0].env, [
             dict(name='spark_host', value='127.0.0.1'),
             V1EnvVar(name='VAR1', value='VALUE1'),
             V1EnvVar(name='VAR2', value='VALUE2'),
+            V1EnvVar(name=MAGE_K8S_JOB_NAME_ENV_VAR, value='test_job_name'),
         ])
         self.assertEqual(
             job.spec.template.spec.containers[0].resources,
@@ -502,6 +509,11 @@ class JobManagerTests(TestCase):
         self.assertEqual(job.spec.active_deadline_seconds, 0)
         self.assertEqual(job.spec.backoff_limit, 3)
         self.assertEqual(job.spec.ttl_seconds_after_finished, 100)
+        # A failed block exits with K8S_BLOCK_FAILED_EXIT_CODE: that fails the Job outright.
+        rule = job.spec.pod_failure_policy.rules[0]
+        self.assertEqual(rule.action, 'FailJob')
+        self.assertEqual(rule.on_exit_codes.operator, 'In')
+        self.assertEqual(rule.on_exit_codes.values, [K8S_BLOCK_FAILED_EXIT_CODE])
 
     @patch('mage_ai.services.k8s.job_manager.client')
     @patch('mage_ai.services.k8s.job_manager.config')
