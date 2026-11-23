@@ -8,3 +8,6 @@ CONFIG_FILE = os.getenv('K8S_CONFIG_FILE', '')
 DEFAULT_NAMESPACE = os.getenv(KUBE_POD_NAMESPACE_ENV_VAR, 'default')
 DEFAULT_SERVICE_ACCOUNT_NAME = os.getenv('KUBE_SERVICE_ACCOUNT_NAME', 'default')
 DEFAULT_STORAGE_CLASS_NAME = os.getenv('KUBE_STORAGE_CLASS_NAME', 'default')
+
+# Block run metric holding the k8s Job of the block, so cancelling the run can delete it.
+K8S_JOB_METRIC_KEY = 'k8s_job'
