@@ -139,7 +139,7 @@ setuptools.setup(
         'all': [
             'PyGithub==1.59.0',
             'astor>=0.8.1',
-            'aws-secretsmanager-caching==1.1.1.5',
+            'aws-secretsmanager-caching==1.1.2',
             'azure-eventhub==5.11.2',
             'azure-identity==1.12.0',
             'azure-keyvault-certificates==4.6.0',
