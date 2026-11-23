@@ -23,11 +23,21 @@ class K8sBlockExecutorTestCase(unittest.TestCase):
         self.executor.logger_manager = self.logger_manager
         self.executor.logger = self.logger
 
+        # _execute records the Job on the block run; these tests have no database.
+        block_run_patcher = patch(
+            'mage_ai.data_preparation.executors.k8s_block_executor.BlockRun',
+        )
+        self.block_run_mock = block_run_patcher.start()
+        self.addCleanup(block_run_patcher.stop)
+        self.block_run = self.block_run_mock.query.get.return_value
+        self.block_run.metrics = dict(mage=1)
+
     @patch('mage_ai.data_preparation.executors.k8s_block_executor.K8sJobManager')
     def test_execute(self, job_manager_mock):
         # Mock the necessary objects and methods
         self.executor._run_commands = MagicMock(return_value='mocked_cmd')
         job_manager_instance_mock = MagicMock()
+        job_manager_instance_mock.job_name = 'mage-data-prep-block-1'
         job_manager_mock.return_value = job_manager_instance_mock
 
         # Call the method to test
@@ -48,6 +58,21 @@ class K8sBlockExecutorTestCase(unittest.TestCase):
             'mocked_cmd',
             k8s_config=K8sExecutorConfig.load(config={}),
         )
+        # The Job is recorded on the block run, so cancelling the run can delete it.
+        self.block_run_mock.query.get.assert_called_once_with(1)
+        self.block_run.update.assert_called_once_with(metrics=dict(
+            mage=1,
+            k8s_job=dict(name='mage-data-prep-block-1', namespace='default'),
+        ))
+
+    @patch('mage_ai.data_preparation.executors.k8s_block_executor.K8sJobManager')
+    def test_execute_without_block_run(self, job_manager_mock):
+        self.executor._run_commands = MagicMock(return_value='mocked_cmd')
+        self.block_run_mock.query.get.return_value = None
+
+        self.executor._execute(block_run_id=1, global_vars={'key': 'value'})
+
+        job_manager_mock.return_value.run_job.assert_called_once()
 
     @patch('mage_ai.data_preparation.executors.k8s_block_executor.K8sJobManager')
     def test_execute_with_custom_job_name_prefix(self, job_manager_mock):

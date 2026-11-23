@@ -66,6 +66,8 @@ class K8sBlockExecutor(BlockExecutor):
         # Lets cancel_block_runs_and_jobs delete the Job: killing this process alone
         # would leave the pod running and Kubernetes retrying it.
         block_run = BlockRun.query.get(block_run_id)
+        if block_run is None:
+            return
         block_run.update(metrics=merge_dict(
             block_run.metrics or {},
             {K8S_JOB_METRIC_KEY: dict(name=job_name, namespace=namespace)},
